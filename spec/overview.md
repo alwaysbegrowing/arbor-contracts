@@ -6,17 +6,10 @@ It may help if we start with the simpliest design - no factories - no convertabi
 # EasyAuction
 @namaskar fill this out:
 
-AuctionFactory
-new AuctionContract(...auctionDetails, collateralAddress, collateral amount)
-This creats a new contract address 
+We should probably follow how easyAuction is implemented with a single auction contract that holds all of the auctions. 
 
-```solidity
-contract AuctionFactory {
-    function CreateAuction(assetAddressToBorrow, maxInterestRate, termLengthDays, maxIssuanceSize, minIssuanceSize, collateralAddress, collateralAmount, convertable ) {
 
-    }
-}
-```
+
 
 # BondToken
 Upon the completion of a successful auction a new bond contract is deployed. Terms of the bond were determined by the auction. Bond tokens need minted and sent to investors who won the auction. 
