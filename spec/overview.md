@@ -1,6 +1,6 @@
 # Porter Protocol Technical Specification 
 
-It may help if we start with the simpliest design - no factories - no convertability - no upgradability -imagine we want to create just a single auction. 
+It may help if we start with the simplest design - no factories - no convertibility - no upgradability -imagine we want to create just a single auction. 
 
 
 # EasyAuction
