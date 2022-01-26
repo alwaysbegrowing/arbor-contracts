@@ -25,18 +25,19 @@ Bond token is an ERC20 token.
 `standing` // good | defaulted | paid 
 `maturityDate` // https://github.com/porter-finance/v1-core/issues/2
 
-# Flash loans for repayment 
-Imagine a situation where a DAO needs to pay back a 100m  DAI loan. 
+# Flash Loans
+Example:
+A DAO owes 100m DAI to the porter protocol. They have 10,000 ETH (at $2000/eth, 20m USD) as collateral in the porter protocol, and $90m liquid DAI. 
 
-Let's say they have 90m DAI and 50m in deposited collateral. 
+The DAO can use a flash loan to liquidate part of their collateral to pay back their debt. 
 
-We want to enable them to repay the debt and release the collateral through a flash loan. 
-
-Here's the sequence of events that would need to take place. This would all need to occur in a single transaction. 
-1. DAO uses `aave` flashloan to borrow 10m DAI
-2. DAO uses 10m DAI to payback the porter debt - which releases their collateral 
+Example Transaction:  
+1. DAO uses [Aave Flash Loan](https://docs.aave.com/developers/guides/flash-loans) to borrow 10m DAI
+2. DAO pays back their full 100m porter debt (which releases their collateral)
 3. DAO withdraws with their collateral and swaps some amount of it for 10m DAI on uniswap
 4. DAO repays aave 10m DAI flashloan
+
+[Aave example](https://github.com/aave/code-examples-protocol/tree/main/V2/Flash%20Loan%20-%20Batch)
 
 
 
@@ -49,6 +50,16 @@ Current liquidity numbers (jan 26 2022):
 6m FEI 
 26m FRAX
 350m USDT
+
+If a DAO needed to pay back 50m in FEI what could they do? 
+They could:
+1. Borrow 50m USDC from aave
+2. Swap 50m USDC to 50m FEI on dex
+3. Pay 50m to porter to release their collateral
+4. Sell their collateral for enough USDC to repay the debt to aave
+5. Repay aave 
+
+
 
 
 Flash loan 2 (in progress)
