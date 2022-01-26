@@ -35,8 +35,9 @@ Here are two exampls of how that would work. Fees are ignored for simplicity.
 A DAO owes 100m DAI to the porter protocol. They have 10,000 stETH (at $2000/eth, 20m USD) as collateral in the porter protocol. They also have 90m liquid DAI in their treasury. 
 1. DAO uses [Aave Flash Loan](https://docs.aave.com/developers/guides/flash-loans) to borrow 10m DAI
 2. DAO pays back their full 100m DAI porter debt (which releases their collateral)
-3. DAO withdraws with their collateral and swaps some amount of it for 10m DAI on a DEX
+3. DAO withdraws their collateral and swaps some amount of it for 10m DAI on a DEX
 4. DAO repays Aave 10m DAI flash loan
+5. DAO now has their porter debt repaid and has their remaining collateral 
 
 ### Example 2:  
 A DAO owes 100m FEI to the porter protocol. They have 30,000 stETH (at $2000/eth, 60m USD) as collateral in the porter protocol, and $70m liquid FEI in their treasury. 
@@ -45,6 +46,8 @@ A DAO owes 100m FEI to the porter protocol. They have 30,000 stETH (at $2000/eth
 3. DAO pays back their full 100m porter debt (which releases their collateral)
 4. DAO withdraws with their collateral and swaps some amount of it for 30m FEI on a DEX
 5. DAO repays Aave 30m FEI flash loan
+6. DAO now has their porter debt repaid and has their remaining collateral 
+
 
 [Aave flash loan example](https://github.com/aave/code-examples-protocol/tree/main/V2/Flash%20Loan%20-%20Batch)
 
