@@ -6,49 +6,39 @@ import "./QaraghandyToken.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract Auction {
+import "./CollateralLockerFactory.sol";
+import "./EasyAuction.sol";
+
+/// @title Porter auction wrapping EasyAuction
+/// @author Porter
+/// @notice This allows for the creation of an auction
+/// @dev This deviates from EasyAuction by not having an auctioning token until the auction is settling
+contract Auction is EasyAuction {
     EasyAuction public auction;
-    constructor(address _easyAuctionAddress) public {
-        auction = EasyAuction(_easyAuctionAddress);
+    CollateralLockerFactory _collateralLockerFactory;
+
+    constructor(address collateralLockerFactoryAddress) public {
+        _collateralLockerFactory = CollateralLockerFactory(
+            collateralLockerFactoryAddress
+        );
     }
 
-    mapping(uint256 => address) public auctionToToken;
-    mapping(address => uint256) public tokenToAuction;
-
+    /// @notice An EasyAuction is created with auction parameters
+    /// @dev auctionId is returned from the auction contract
+    /// @param creator the caller of the auction
+    /// @param auctionId the id of the auction
     event AuctionCreated(address indexed creator, uint256 indexed auctionId);
-    event TokenDeployed(address indexed creator, address indexed tokenAddress);
 
     function auctionCount() public view returns (uint256) {
-        return auction.auctionCounter();
+        return auctionCounter;
     }
 
-    function deployUniqueToken(uint256 auctionId, uint96 _auctionedSellAmount)
-        public
-        returns (QaraghandyToken)
-    {
-        QaraghandyToken token = new QaraghandyToken(
-            "QaraghandyToken",
-            "QH",
-            _auctionedSellAmount
-        );
-        address tokenAddress = address(token);
-        
-        auctionToToken[auctionId] = tokenAddress;
-        tokenToAuction[tokenAddress] = auctionId;
-
-        emit TokenDeployed(msg.sender, tokenAddress);
-        return QaraghandyToken(tokenAddress);
-    }
-
-    function increaseAuctionAllowance(
-        QaraghandyToken token,
-        address _auctionAddress,
-        uint256 _amount
-    ) internal returns (bool) {
-        return token.increaseAllowance(_auctionAddress, _amount);
-    }
-
+    /// @notice This entry needs a bond config + auction config + collateral config
+    /// @dev Explain to a developer any extra details
+    /// @param bondContract this is the address of the bond with config
+    /// @return auctionCounter the id of the auction
     function createAuction(
+        /* auction config */
         IERC20 _biddingToken,
         uint256 orderCancellationEndDate,
         uint256 auctionEndDate,
@@ -58,21 +48,21 @@ contract Auction {
         uint256 minFundingThreshold,
         bool isAtomicClosureAllowed,
         address accessManagerContract,
-        bytes memory accessManagerContractData
+        bytes memory accessManagerContractData,
+        /* bond config */
+        address bondContract,
+        /* collateral config */
+        address collateralLockerAddress,
+        uint256 collateralizationRatio
     ) public returns (uint256 auctionCounter) {
-        QaraghandyToken auctioningToken = deployUniqueToken(
-            auctionCounter,
-            _auctionedSellAmount
+        console.log(collateralLockerAddress);
+        console.log(_collateralLockerFactory.owner(collateralLockerAddress));
+        require(
+            _collateralLockerFactory.owner(collateralLockerAddress) ==
+                address(_collateralLockerFactory),
+            "collateral locker owner mismatch"
         );
-
-        increaseAuctionAllowance(
-            auctioningToken,
-            address(auction),
-            _auctionedSellAmount
-        );
-
-        uint256 auctionCounter = auction.initiateAuction(
-            auctioningToken,
+        uint256 _auctionCounter = initiateAuction(
             _biddingToken,
             orderCancellationEndDate,
             auctionEndDate,
@@ -84,6 +74,7 @@ contract Auction {
             accessManagerContract,
             accessManagerContractData
         );
-        emit AuctionCreated(msg.sender, auctionCounter);
+
+        emit AuctionCreated(msg.sender, _auctionCounter);
     }
 }

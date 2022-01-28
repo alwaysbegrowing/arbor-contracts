@@ -37,7 +37,8 @@ export interface Order {
 
 export const createAuctionWithDefaults = async (
   biddingToken: Contract,
-  auction: Contract
+  auction: Contract,
+  collateralLockerAddress: string
 ) => {
   const biddingTokenAddress = biddingToken.address;
   const orderCancellationEndDate = 1619195139;
@@ -49,6 +50,8 @@ export const createAuctionWithDefaults = async (
   const isAtomicClosureAllowed = false;
   const allowListManager = ethers.constants.AddressZero;
   const allowListData = ethers.constants.AddressZero;
+  const bondContract = ethers.constants.AddressZero;
+  const collateralizationRatio = 50;
 
   // act
   const tx = await auction.createAuction(
@@ -61,7 +64,10 @@ export const createAuctionWithDefaults = async (
     minFundingThreshold,
     isAtomicClosureAllowed,
     allowListManager,
-    allowListData
+    allowListData,
+    bondContract,
+    collateralLockerAddress,
+    collateralizationRatio
   );
   const receipt = await tx.wait();
 

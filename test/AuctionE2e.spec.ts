@@ -16,14 +16,16 @@ describe("Auction", async () => {
   let addr1: SignerWithAddress;
   let auction: Contract;
   let biddingToken: Contract;
-  let easyAuction: Contract;
+  let collateralLockerFactory: Contract;
   beforeEach(async () => {
     [owner, addr1] = await ethers.getSigners();
-    const EasyAuction = await ethers.getContractFactory("EasyAuction");
-    easyAuction = await EasyAuction.deploy();
+    const CollateralLockerFactory = await ethers.getContractFactory(
+      "CollateralLockerFactory"
+    );
+    collateralLockerFactory = await CollateralLockerFactory.deploy();
 
     const Auction = await ethers.getContractFactory("Auction");
-    auction = await Auction.deploy(easyAuction.address);
+    auction = await Auction.deploy(collateralLockerFactory.address);
 
     const BiddingToken = await ethers.getContractFactory("QaraghandyToken");
     biddingToken = await BiddingToken.deploy(
@@ -36,9 +38,13 @@ describe("Auction", async () => {
     it("creates an auction, accepts orders, and settles auction", async () => {
       // setup
       const { auctionId, auctioningTokenAddress } =
-        await createAuctionWithDefaults(biddingToken, auction);
+        await createAuctionWithDefaults(
+          biddingToken,
+          auction,
+          collateralLockerFactory.address
+        );
       await createTokensAndMintAndApprove(
-        easyAuction,
+        auction,
         biddingToken,
         owner,
         [addr1],
@@ -51,7 +57,7 @@ describe("Auction", async () => {
       };
       const orderTx = await placeOrders(
         addr1,
-        easyAuction,
+        auction,
         sellOrder,
         auctionId,
         hre
@@ -61,11 +67,11 @@ describe("Auction", async () => {
         (e: Event) => e.event === "NewSellOrder"
       ).args.sellAmount;
 
-      await closeAuction(easyAuction, auctionId);
-      const tx = await easyAuction.settleAuction(auctionId);
+      await closeAuction(auction, auctionId);
+      const tx = await auction.settleAuction(auctionId);
       const gasUsed = (await tx.wait()).gasUsed;
 
-      const claimTx = await easyAuction.claimFromParticipantOrder(auctionId, [
+      const claimTx = await auction.claimFromParticipantOrder(auctionId, [
         encodeOrder(sellOrder),
       ]);
       const claimRecipt = await claimTx.wait();
