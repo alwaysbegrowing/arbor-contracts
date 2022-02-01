@@ -48,7 +48,7 @@ CollateralConfig {
 }
 ```
 ### Methods
-`initiateAuction()` The entry-point which is called by a borrower to start the auction process. This function accepts an auction config, bond config, and collateral config. This is because in order to have a valid aucction, all three of these pices must be valid and set when the auction begins as the lenders need to have this information.
+`initiateAuction()` The entry-point which is called by a borrower to start the auction process. This function accepts an auction config, bond config, and collateral config. This is because in order to have a valid auction, all three of these pieces must be valid and set when the auction begins as the lenders need to have this information.
 
 Parameters
 ```
