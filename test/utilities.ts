@@ -1,9 +1,8 @@
 import { BigNumber, Contract, Event } from "ethers";
-
 import { ethers } from "hardhat";
 import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { BiddingToken, EasyAuction as GnosisAuction } from "../typechain";
 
 export interface Price {
   priceNumerator: BigNumber;
@@ -35,91 +34,113 @@ export interface Order {
   userId: BigNumber;
 }
 
+export interface AuctionData {
+  _biddingToken: string;
+  orderCancellationEndDate: BigNumber;
+  auctionEndDate: BigNumber;
+  _auctionedSellAmount: BigNumber;
+  _minBuyAmount: BigNumber;
+  minimumBiddingAmountPerOrder: BigNumber;
+  minFundingThreshold: BigNumber;
+  isAtomicClosureAllowed: boolean;
+  accessManagerContract: string;
+  accessManagerContractData: Uint8Array;
+}
+
+export interface BondData {
+  bondContract: string;
+  maturityDate: BigNumber;
+  maturityValue: BigNumber;
+}
+
+export interface CollateralData {
+  collateralAddress: string;
+  collateralValue: BigNumber;
+}
+export const addDaysToNow = (days: number = 0) => {
+  return BigNumber.from(
+    Math.floor(new Date().getTime() / 1000) + days * 24 * 60 * 60
+  );
+};
 export const createAuctionWithDefaults = async (
+  signer: SignerWithAddress,
   biddingToken: Contract,
-  auction: Contract,
-  collateralLockerAddress: string
+  collateralData: CollateralData,
+  porterAuction: Contract
 ) => {
-  const biddingTokenAddress = biddingToken.address;
-  const orderCancellationEndDate = 1619195139;
-  const auctionEndDate = 1819195139;
-  const _auctionedSellAmount = ethers.utils.parseEther("10");
-  const _minBuyAmount = ethers.utils.parseEther("1");
-  const minimumBiddingAmountPerOrder = ethers.utils.parseEther(".01");
-  const minFundingThreshold = ethers.utils.parseEther("1");
-  const isAtomicClosureAllowed = false;
-  const allowListManager = ethers.constants.AddressZero;
-  const allowListData = ethers.constants.AddressZero;
-  const bondContract = ethers.constants.AddressZero;
-  const collateralizationRatio = 50;
+  const auctionData: AuctionData = {
+    _biddingToken: biddingToken.address,
+    orderCancellationEndDate: addDaysToNow(1),
+    auctionEndDate: addDaysToNow(2),
+    _auctionedSellAmount: ethers.utils.parseEther("100"),
+    _minBuyAmount: ethers.utils.parseEther("1"),
+    minimumBiddingAmountPerOrder: ethers.utils.parseEther(".01"),
+    minFundingThreshold: ethers.utils.parseEther("1"),
+    isAtomicClosureAllowed: false,
+    accessManagerContract: ethers.constants.AddressZero,
+    accessManagerContractData: ethers.utils.arrayify("0x00"),
+  };
+  const bondData: BondData = {
+    bondContract: ethers.constants.AddressZero,
+    maturityDate: addDaysToNow(3),
+    maturityValue: BigNumber.from(1),
+  };
 
   // act
-  const tx = await auction.createAuction(
-    biddingTokenAddress,
-    orderCancellationEndDate,
-    auctionEndDate,
-    _auctionedSellAmount,
-    _minBuyAmount,
-    minimumBiddingAmountPerOrder,
-    minFundingThreshold,
-    isAtomicClosureAllowed,
-    allowListManager,
-    allowListData,
-    bondContract,
-    collateralLockerAddress,
-    collateralizationRatio
-  );
+  const tx = await porterAuction
+    .connect(signer)
+    .createAuction(auctionData, bondData, collateralData);
   const receipt = await tx.wait();
-
-  const auctionId = receipt.events.find(
+  const { auctionId, bondTokenAddress } = receipt.events.find(
     (e: Event) => e.event === "AuctionCreated"
-  ).args.auctionId;
-  const auctioningTokenAddress = receipt.events.find(
-    (e: Event) => e.event === "TokenDeployed"
-  ).args.tokenAddress;
+  )?.args;
 
   return {
     auctionId,
-    auctioningTokenAddress,
+    bondTokenAddress,
   };
 };
 
 export const queueStartElement =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
 
-export const placeOrders = async (
-  signer: SignerWithAddress,
-  easyAuction: Contract,
-  sellOrder: Order,
-  auctionId: BigNumber,
-  hre: HardhatRuntimeEnvironment
-): Promise<any> => {
-  return await easyAuction
-    .connect(signer)
-    .placeSellOrders(
-      auctionId,
-      [sellOrder.buyAmount],
-      [sellOrder.sellAmount],
-      [queueStartElement],
-      "0x"
-    );
-};
+export async function placeOrders(
+  gnosisAuction: Contract,
+  sellOrders: Order[],
+  auctionId: BigNumber
+): Promise<any[]> {
+  return sellOrders.map(async (sellOrder: Order) => {
+    const orderTx = await gnosisAuction
+      .connect((await ethers.getSigners())[sellOrder.userId.toNumber()])
+      .placeSellOrders(
+        auctionId,
+        [sellOrder.buyAmount],
+        [sellOrder.sellAmount],
+        [queueStartElement],
+        "0x"
+      );
+    const orderRecipt = await orderTx.wait();
+    const { buyAmount, sellAmount } = orderRecipt.events.find(
+      (e: Event) => e.event === "NewSellOrder"
+    )?.args;
+    return { sellAmount, buyAmount };
+  });
+}
 
 export const createTokensAndMintAndApprove = async (
-  easyAuction: Contract,
-  biddingToken: Contract,
+  gnosisAuction: GnosisAuction,
+  biddingToken: BiddingToken,
   owner: SignerWithAddress,
-  users: SignerWithAddress[],
-  hre: HardhatRuntimeEnvironment
+  bidders: SignerWithAddress[]
 ): Promise<void> => {
-  for (const user of users) {
+  for (const bidder of bidders) {
     await biddingToken
       .connect(owner)
-      .transfer(user.address, ethers.utils.parseEther("10"));
+      .transfer(bidder.address, ethers.utils.parseEther("100"));
 
     await biddingToken
-      .connect(user)
-      .approve(easyAuction.address, ethers.utils.parseEther("10"));
+      .connect(bidder)
+      .approve(gnosisAuction.address, ethers.utils.parseEther("100"));
   }
 };
 
@@ -129,11 +150,11 @@ export async function increaseTime(duration: number): Promise<void> {
 }
 
 export const closeAuction = async (
-  instance: Contract,
+  gnosisAuction: GnosisAuction,
   auctionId: BigNumber
 ): Promise<void> => {
   const timeRemaining = (
-    await instance.getSecondsRemainingInBatch(auctionId)
+    await gnosisAuction.getSecondsRemainingInBatch(auctionId)
   ).toNumber();
   await increaseTime(timeRemaining + 1);
 };
