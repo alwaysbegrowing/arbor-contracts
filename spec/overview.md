@@ -78,18 +78,17 @@ bytes32[] memory _sellOrders
 `getAuctionConfig() view returns(AuctionConfig, BondConfig, CollateralConfig)` This function returns the auction config for a given auction.
 
 # BondToken
-Upon the completion of a successful auction a new bond contract is deployed. Terms of the bond were determined by the auction. Bond tokens need minted and sent to investors who won the auction. 
-
-Bond token is an ERC20 token. 
+A `bondToken` factory will create a new ERC20 `bondToken` for each auction that is initiated on our platform. We are currently exploring if we should use a regular factory, or a cloneFactory: https://github.com/porter-finance/v1-core/issues/15
 
 ### Methods
-`mint()` `isAuction` // callable by the auction contract to mint bond tokens and send them to investors who won the auction
-
-`redeem()`  checks maturity date & bond standing - if it's past maturity date and the loan as been repayed then burn the bonds and send the repayment tokens to the address calling redeem() - maybe we follow the rocketpool method and calculate the % of total bond tokens a user holds, then allow them to claim that % amount of the total repayment tokens
+`redeemBond()`  checks maturity date & bond standing - if it's past maturity date and the loan as been repayed then burn the bonds and send the repayment tokens to the address calling redeem() - maybe we follow the rocketpool method and calculate the % of total bond tokens a user holds, then allow them to claim that % amount of the total repayment tokens
 
 ### State Variables
-`standing` // good | defaulted | paid 
-`maturityDate` // https://github.com/porter-finance/v1-core/issues/2
+`currentBondStanding`
+`maturityDate`
+
+# BondToken Alternatives considered
+Deploying the bondToken upon the completion of an auction. 
 
 # Flash Loans
 DAOs can use a flash loan to liquidate part of their collateral to pay back their debt. 
