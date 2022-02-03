@@ -9,9 +9,7 @@ import "./libraries/SafeCast.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/AllowListVerifier.sol";
 
-import "hardhat/console.sol";
-
-contract EasyAuction is Ownable { 
+contract EasyAuction is Ownable {
     using SafeERC20 for IERC20;
     using SafeMath for uint64;
     using SafeMath for uint96;
@@ -79,6 +77,7 @@ contract EasyAuction is Ownable {
     event NewUser(uint64 indexed userId, address indexed userAddress);
     event NewAuction(
         uint256 indexed auctionId,
+        IERC20 indexed _auctioningToken,
         IERC20 indexed _biddingToken,
         uint256 orderCancellationEndDate,
         uint256 auctionEndDate,
@@ -92,12 +91,14 @@ contract EasyAuction is Ownable {
     );
     event AuctionCleared(
         uint256 indexed auctionId,
+        uint96 soldAuctioningTokens,
         uint96 soldBiddingTokens,
         bytes32 clearingPriceOrder
     );
     event UserRegistration(address indexed user, uint64 userId);
 
     struct AuctionData {
+        IERC20 auctioningToken;
         IERC20 biddingToken;
         uint256 orderCancellationEndDate;
         uint256 auctionEndDate;
@@ -149,6 +150,7 @@ contract EasyAuction is Ownable {
     // Prices between biddingToken and auctioningToken are expressed by a
     // fraction whose components are stored as uint96.
     function initiateAuction(
+        IERC20 _auctioningToken,
         IERC20 _biddingToken,
         uint256 orderCancellationEndDate,
         uint256 auctionEndDate,
@@ -161,14 +163,14 @@ contract EasyAuction is Ownable {
         bytes memory accessManagerContractData
     ) public returns (uint256) {
         // withdraws sellAmount + fees
-        // XXX: Commented because we do not need to withdraw the funds
-        // _auctioningToken.safeTransferFrom(
-        //     msg.sender,
-        //     address(this),
-        //     _auctionedSellAmount.mul(FEE_DENOMINATOR.add(feeNumerator)).div(
-        //         FEE_DENOMINATOR
-        //     ) //[0]
-        // );
+        _auctioningToken.safeTransferFrom(
+            msg.sender,
+            address(this),
+            _auctionedSellAmount.mul(FEE_DENOMINATOR.add(feeNumerator)).div(
+                FEE_DENOMINATOR
+            ) //[0]
+        );
+        require(_auctionedSellAmount > 0, "cannot auction zero tokens");
         require(_minBuyAmount > 0, "tokens cannot be auctioned for free");
         require(
             minimumBiddingAmountPerOrder > 0,
@@ -186,6 +188,7 @@ contract EasyAuction is Ownable {
         sellOrders[auctionCounter].initializeEmptyList();
         uint64 userId = getUserId(msg.sender);
         auctionData[auctionCounter] = AuctionData(
+            _auctioningToken,
             _biddingToken,
             orderCancellationEndDate,
             auctionEndDate,
@@ -208,6 +211,7 @@ contract EasyAuction is Ownable {
         auctionAccessData[auctionCounter] = accessManagerContractData;
         emit NewAuction(
             auctionCounter,
+            _auctioningToken,
             _biddingToken,
             orderCancellationEndDate,
             auctionEndDate,
@@ -548,7 +552,7 @@ contract EasyAuction is Ownable {
         );
         emit AuctionCleared(
             auctionId,
-            // fillVolumeOfAuctioneerOrder,
+            fillVolumeOfAuctioneerOrder,
             uint96(currentBidSum),
             clearingOrder
         );
@@ -600,12 +604,12 @@ contract EasyAuction is Ownable {
                 //[23]
                 if (orders[i] == auction.clearingPriceOrder) {
                     //[25]
-                    // sumAuctioningTokenAmount = sumAuctioningTokenAmount.add(
-                    //     auction
-                    //         .volumeClearingPriceOrder
-                    //         .mul(priceNumerator)
-                    //         .div(priceDenominator)
-                    // );
+                    sumAuctioningTokenAmount = sumAuctioningTokenAmount.add(
+                        auction
+                            .volumeClearingPriceOrder
+                            .mul(priceNumerator)
+                            .div(priceDenominator)
+                    );
                     sumBiddingTokenAmount = sumBiddingTokenAmount.add(
                         sellAmount.sub(auction.volumeClearingPriceOrder)
                     );
@@ -627,7 +631,7 @@ contract EasyAuction is Ownable {
         }
         sendOutTokens(
             auctionId,
-            // sumAuctioningTokenAmount,
+            sumAuctioningTokenAmount,
             sumBiddingTokenAmount,
             userId
         ); //[3]
@@ -646,7 +650,7 @@ contract EasyAuction is Ownable {
         if (auctionData[auctionId].minFundingThresholdNotReached) {
             sendOutTokens(
                 auctionId,
-                //fullAuctionedAmount.add(feeAmount),
+                fullAuctionedAmount.add(feeAmount),
                 0,
                 auctioneerId
             ); //[4]
@@ -656,27 +660,27 @@ contract EasyAuction is Ownable {
                 auctionData[auctionId].clearingPriceOrder.decodeOrder();
             uint256 unsettledAuctionTokens =
                 fullAuctionedAmount.sub(fillVolumeOfAuctioneerOrder);
-            // uint256 auctioningTokenAmount =
-            //     unsettledAuctionTokens.add(
-            //         feeAmount.mul(unsettledAuctionTokens).div(
-            //             fullAuctionedAmount
-            //         )
-            //     );
+            uint256 auctioningTokenAmount =
+                unsettledAuctionTokens.add(
+                    feeAmount.mul(unsettledAuctionTokens).div(
+                        fullAuctionedAmount
+                    )
+                );
             uint256 biddingTokenAmount =
                 fillVolumeOfAuctioneerOrder.mul(priceDenominator).div(
                     priceNumerator
                 );
             sendOutTokens(
                 auctionId,
-                // auctioningTokenAmount,
+                auctioningTokenAmount,
                 biddingTokenAmount,
                 auctioneerId
             ); //[5]
             sendOutTokens(
                 auctionId,
-                // feeAmount.mul(fillVolumeOfAuctioneerOrder).div(
-                //     fullAuctionedAmount
-                // ),
+                feeAmount.mul(fillVolumeOfAuctioneerOrder).div(
+                    fullAuctionedAmount
+                ),
                 0,
                 feeReceiverUserId
             ); //[7]
@@ -685,18 +689,17 @@ contract EasyAuction is Ownable {
 
     function sendOutTokens(
         uint256 auctionId,
-        //uint256 auctioningTokenAmount,
+        uint256 auctioningTokenAmount,
         uint256 biddingTokenAmount,
         uint64 userId
     ) internal {
         address userAddress = registeredUsers.getAddressAt(userId);
-        // XXX: create bond & Send tokens here?
-        // if (auctioningTokenAmount > 0) {
-        //     auctionData[auctionId].auctioningToken.safeTransfer(
-        //         userAddress,
-        //         auctioningTokenAmount
-        //     );
-        // }
+        if (auctioningTokenAmount > 0) {
+            auctionData[auctionId].auctioningToken.safeTransfer(
+                userAddress,
+                auctioningTokenAmount
+            );
+        }
         if (biddingTokenAmount > 0) {
             auctionData[auctionId].biddingToken.safeTransfer(
                 userAddress,
