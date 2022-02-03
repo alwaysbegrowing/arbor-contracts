@@ -67,11 +67,6 @@ describe("Auction", async () => {
       );
       expect(auctionId).to.be.equal(1);
     });
-    it("should start with 0 auction ID", async () => {
-      // setup
-      const auctionId = await auction.auctionCount();
-      expect(auctionId).to.be.equal(0);
-    });
     it("should accept bids", async () => {
       const collateralData: CollateralData = {
         collateralAddress: collateralToken.address,

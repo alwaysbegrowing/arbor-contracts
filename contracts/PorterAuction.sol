@@ -126,12 +126,6 @@ contract PorterAuction {
         gnosisAuction = IGnosisAuction(gnosisAuctionAddress);
     }
 
-    /// @notice This returns the Gnosis Auction auctionCounter
-    function auctionCount() public view returns (uint256 count) {
-        count = gnosisAuction.auctionCounter();
-        console.log("Auction/auctionCount\ncount: %s", count);
-    }
-
     /// @notice Transfer collateral from the caller to the auction. The collateral is stored in the auction.
     /// @dev The collateral is mapped from the msg.sender & address to the collateral value.
     /// @dev Required msg.sender to have adequate balance, and the transfer to be successful (returns true).
