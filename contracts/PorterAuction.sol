@@ -3,79 +3,15 @@ pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
 // --- Import statements ---
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./BondToken.sol";
 import "./CollateralToken.sol";
+import "./interfaces/IGnosisAuction.sol";
 import "hardhat/console.sol";
 
 // --- Interfaces ---
-interface IGnosisAuction {
-    function initiateAuction(
-        IERC20 _auctioningToken,
-        IERC20 _biddingToken,
-        uint256 orderCancellationEndDate,
-        uint256 auctionEndDate,
-        uint96 _auctionedSellAmount,
-        uint96 _minBuyAmount,
-        uint256 minimumBiddingAmountPerOrder,
-        uint256 minFundingThreshold,
-        bool isAtomicClosureAllowed,
-        address accessManagerContract,
-        bytes memory accessManagerContractData
-    ) external returns (uint256);
-
-    function auctionCounter() external view returns (uint256);
-
-    function auctionData(uint256 auctionId)
-        external
-        view
-        returns (AuctionType.AuctionData memory);
-
-    function auctionAccessManager(uint256 auctionId)
-        external
-        view
-        returns (address);
-
-    function auctionAccessData(uint256 auctionId)
-        external
-        view
-        returns (bytes memory);
-
-    function FEE_DENOMINATOR() external view returns (uint256);
-
-    function feeNumerator() external view returns (uint256);
-
-    function settleAuction(uint256 auctionId) external returns (bytes32);
-
-    function placeSellOrders(
-        uint256 auctionId,
-        uint96[] memory _minBuyAmounts,
-        uint96[] memory _sellAmounts,
-        bytes32[] memory _prevSellOrders,
-        bytes calldata allowListCallData
-    ) external returns (uint64);
-
-    function claimFromParticipantOrder(
-        uint256 auctionId,
-        bytes32[] memory orders
-    ) external returns (uint256, uint256);
-}
-
 // --- Libraries ---
-library AuctionType {
-    struct AuctionData {
-        IERC20 _biddingToken;
-        uint256 orderCancellationEndDate;
-        uint256 auctionEndDate;
-        uint96 _auctionedSellAmount;
-        uint96 _minBuyAmount;
-        uint256 minimumBiddingAmountPerOrder;
-        uint256 minFundingThreshold;
-        bool isAtomicClosureAllowed;
-        address accessManagerContract;
-        bytes accessManagerContractData;
-    }
-}
 
 /// @title Porter auction wrapping EasyAuction
 /// @author Porter
@@ -86,12 +22,11 @@ contract PorterAuction {
     struct BondData {
         address bondContract;
         uint256 maturityDate;
-        uint256 maturityValue;
     }
 
     struct CollateralData {
         address collateralAddress;
-        uint256 collateralValue;
+        uint256 collateralAmount;
     }
 
     // --- State Variables ---
@@ -110,13 +45,20 @@ contract PorterAuction {
         uint256 indexed auctionId,
         address bondTokenAddress
     );
+
+    /// @notice Collateral for an auctioneer is added to the porter auction contract
+    /// @param collateralDepositor the address of the caller of the deposit
+    /// @param collateralAddress the address of the token being deposited
+    /// @param collateralAmount the number of the tokens being deposited
     event CollateralDeposited(
         address indexed collateralDepositor,
         address indexed collateralAddress,
-        uint256 collateralValue
+        uint256 collateralAmount
     );
 
     // --- Modifiers ---
+    using SafeERC20 for ERC20;
+
     // --- Functions ---
     constructor(address gnosisAuctionAddress) public {
         console.log(
@@ -131,41 +73,38 @@ contract PorterAuction {
     /// @dev Required msg.sender to have adequate balance, and the transfer to be successful (returns true).
     /// @param collateralData is a struct containing the address of the collateral and the value of the collateral
     function configureCollateral(CollateralData memory collateralData) public {
-        CollateralToken collateralToken = CollateralToken(
+        ERC20 collateralToken = CollateralToken(
             collateralData.collateralAddress
         );
         console.log(
             "Auction/configureCollateral\n\taddress: %s\n\tvalue: %s",
             collateralData.collateralAddress,
-            collateralData.collateralValue
+            collateralData.collateralAmount
         );
         require(
             collateralToken.balanceOf(msg.sender) >=
-                collateralData.collateralValue,
+                collateralData.collateralAmount,
             "configureCollateral/sender-inadequate-collateral"
         );
-        require(
-            collateralToken.transferFrom(
-                msg.sender,
-                address(this),
-                collateralData.collateralValue
-            ),
-            "configureCollateral/transfer-failed"
+        collateralToken.safeTransferFrom(
+            msg.sender,
+            address(this),
+            collateralData.collateralAmount
         );
         // After a successul transfer, set the mapping of the sender of the collateral
         collateralInContract[msg.sender][
             collateralData.collateralAddress
-        ] += collateralData.collateralValue;
+        ] += collateralData.collateralAmount;
 
         emit CollateralDeposited(
             msg.sender,
             address(collateralToken),
-            collateralData.collateralValue
+            collateralData.collateralAmount
         );
     }
 
     /// @notice This entry needs a bond config + auction config + collateral config
-    /// @dev required to have a 0 fee auction
+    /// @dev required to have a 0 fee gnosis auction
     /// @notice collateral must be deposited before the auction is created
     /// @param auctionData the auction data
     /// @param bondData the bond data
@@ -185,7 +124,7 @@ contract PorterAuction {
         require(
             collateralInContract[msg.sender][
                 collateralData.collateralAddress
-            ] >= collateralData.collateralValue,
+            ] >= collateralData.collateralAmount,
             "createAuction/not-enough-collateral"
         );
         require(
@@ -196,11 +135,11 @@ contract PorterAuction {
         // Remove collateral from contract mapping before creating the auction
         collateralInContract[msg.sender][
             collateralData.collateralAddress
-        ] -= collateralData.collateralValue;
+        ] -= collateralData.collateralAmount;
         auctionCounter = initiateAuction(auctionData);
         collateralInAuction[auctionCounter][
             collateralData.collateralAddress
-        ] += collateralData.collateralValue;
+        ] += collateralData.collateralAmount;
     }
 
     /// @notice Use to create an auction after collateral has been deposited
@@ -219,9 +158,12 @@ contract PorterAuction {
             auctionData._auctionedSellAmount
         );
         // Approve the auction to transfer all the tokens
-        auctioningToken.approve(
-            address(gnosisAuction),
-            auctionData._auctionedSellAmount
+        require(
+            auctioningToken.approve(
+                address(gnosisAuction),
+                auctionData._auctionedSellAmount
+            ) == true,
+            "initiateAuction/approve-failed"
         );
 
         // Create a new GnosisAuction

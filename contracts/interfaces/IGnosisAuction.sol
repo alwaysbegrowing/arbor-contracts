@@ -5,20 +5,16 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 library AuctionType {
     struct AuctionData {
-        IERC20 auctioningToken;
-        IERC20 biddingToken;
+        IERC20 _biddingToken;
         uint256 orderCancellationEndDate;
         uint256 auctionEndDate;
-        bytes32 initialAuctionOrder;
+        uint96 _auctionedSellAmount;
+        uint96 _minBuyAmount;
         uint256 minimumBiddingAmountPerOrder;
-        uint256 interimSumBidAmount;
-        bytes32 interimOrder;
-        bytes32 clearingPriceOrder;
-        uint96 volumeClearingPriceOrder;
-        bool minFundingThresholdNotReached;
-        bool isAtomicClosureAllowed;
-        uint256 feeNumerator;
         uint256 minFundingThreshold;
+        bool isAtomicClosureAllowed;
+        address accessManagerContract;
+        bytes accessManagerContractData;
     }
 }
 

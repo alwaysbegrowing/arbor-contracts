@@ -32,6 +32,7 @@ describe("Auction", async () => {
   let biddingToken: BiddingTokenType;
   let collateralToken: CollateralTokenType;
   let bondToken: BondTokenType;
+
   beforeEach(async () => {
     [porterSigner, auctioneerSigner, ...bidders] = await ethers.getSigners();
 
@@ -90,7 +91,7 @@ describe("Auction", async () => {
       ---------------------------------------------------- */
       const collateralData: CollateralData = {
         collateralAddress: collateralToken.address,
-        collateralValue: ethers.utils.parseEther("100"),
+        collateralAmount: ethers.utils.parseEther("100"),
       };
 
       // from auctioneerSigner, approve the value of collateral to the porterAuction contract
@@ -98,7 +99,7 @@ describe("Auction", async () => {
         .connect(auctioneerSigner)
         .increaseAllowance(
           porterAuction.address,
-          collateralData.collateralValue
+          collateralData.collateralAmount
         );
 
       const configureCollateralTx = await porterAuction
@@ -110,7 +111,7 @@ describe("Auction", async () => {
         .withArgs(
           auctioneerSigner.address,
           collateralToken.address,
-          collateralData.collateralValue
+          collateralData.collateralAmount
         );
 
       // The deposited collateral should exist in the porterAuction contract
@@ -120,7 +121,7 @@ describe("Auction", async () => {
           collateralToken.address
         ),
         "Collateral in contract"
-      ).to.be.equal(collateralData.collateralValue);
+      ).to.be.equal(collateralData.collateralAmount);
 
       /* --------------------------------------------------
       |                                                    |
@@ -139,7 +140,7 @@ describe("Auction", async () => {
       expect(auctionId, "GnosisAuction counter incremented").to.be.equal(1);
 
       // After the auction is created, the collateralInContract should be 0
-      // (or in practice, the existing value minus the collateralValue)
+      // (or in practice, the existing value minus the collateralAmount)
       expect(
         await porterAuction.collateralInContract(
           auctioneerSigner.address,
@@ -148,14 +149,14 @@ describe("Auction", async () => {
         "Collateral stored in contract"
       ).to.be.equal(0);
 
-      // The collateralInAuction should be the collateralValue (note the mapping looks up the auctionId)
+      // The collateralInAuction should be the collateralAmount (note the mapping looks up the auctionId)
       expect(
         await porterAuction.collateralInAuction(
           auctionId,
           collateralToken.address
         ),
         "Collateral stored in auction"
-      ).to.be.equal(collateralData.collateralValue);
+      ).to.be.equal(collateralData.collateralAmount);
 
       /* --------------------------------------------------
       |                                                    |

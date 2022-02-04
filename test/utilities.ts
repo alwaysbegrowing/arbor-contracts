@@ -55,7 +55,7 @@ export interface BondData {
 
 export interface CollateralData {
   collateralAddress: string;
-  collateralValue: BigNumber;
+  collateralAmount: BigNumber;
 }
 export const addDaysToNow = (days: number = 0) => {
   return BigNumber.from(
