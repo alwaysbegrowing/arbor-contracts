@@ -30,12 +30,12 @@ A DAO owes 100m FEI to the porter protocol. They have 30,000 stETH (at $2000/eth
 ### Flash Loan alternatives considered
 Implementing flash loans in our protocol. 
 
-Example 3: \
+Example 3:  
 A DAO owes 100m DAI to the porter protocol. They have 10,000 stETH (at $2000/eth, 20m USD) as collateral in the porter protocol, and $90m liquid DAI in their treasury. 
 1. DAO withdraws their collateral
 2. DAO swaps some amount of the collateral for 10m DAI with a DEX
 3. DAO pays back their porter debt, which allows DAO to keep their collateral
 4. If they don't pay back the debt in the same transaction everything is reverted
 
-Pros: Avoid .09% aave fee \
+Pros: Avoid .09% aave fee  
 Cons: Would need to add flash loan logic to our protocol vs leveraging an existing one 
