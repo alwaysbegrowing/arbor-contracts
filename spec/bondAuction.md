@@ -72,3 +72,12 @@ bytes32[] memory _sellOrders
 
 `getAuctionConfig() view returns(AuctionConfig, BondConfig, CollateralConfig)` This function returns the auction config for a given auction.
 
+
+# End to End auction flow
+Example: DAI as borrowing asset
+Max interest rate: 10%
+Term length: 1 year
+Min issuance size: 50m
+Max issuance size: 100m
+
+Bonds may be sold in a mechanism other than an auction in the future - so we should keep that in mind when designing how we are storing collateral, repayment, etc
