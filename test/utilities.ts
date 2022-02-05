@@ -1,4 +1,4 @@
-import { BigNumber, Contract, Event } from "ethers";
+import { BigNumber, Contract, ContractTransaction, Event } from "ethers";
 import { ethers } from "hardhat";
 import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -66,7 +66,7 @@ export const createAuctionWithDefaults = async (
   signer: SignerWithAddress,
   biddingToken: Contract,
   collateralData: CollateralData,
-  porterAuction: Contract
+  broker: Contract
 ) => {
   const auctionData: AuctionData = {
     _biddingToken: biddingToken.address,
@@ -80,6 +80,7 @@ export const createAuctionWithDefaults = async (
     accessManagerContract: ethers.constants.AddressZero,
     accessManagerContractData: ethers.utils.arrayify("0x00"),
   };
+  console.log("auctionData", auctionData);
   const bondData: BondData = {
     bondContract: ethers.constants.AddressZero,
     maturityDate: addDaysToNow(3),
@@ -87,17 +88,20 @@ export const createAuctionWithDefaults = async (
   };
 
   // act
-  const tx = await porterAuction
+  const tx = await broker
     .connect(signer)
     .createAuction(auctionData, bondData, collateralData);
+
+  await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
+
   const receipt = await tx.wait();
-  const { auctionId, bondTokenAddress } = receipt.events.find(
+  const { auctionId, porterBondAddress } = receipt.events.find(
     (e: Event) => e.event === "AuctionCreated"
   )?.args;
 
   return {
     auctionId,
-    bondTokenAddress,
+    porterBondAddress,
   };
 };
 
@@ -105,13 +109,15 @@ export const queueStartElement =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 export async function placeOrders(
-  gnosisAuction: Contract,
+  gnosisAuction: GnosisAuction,
   sellOrders: Order[],
-  auctionId: BigNumber
-): Promise<any[]> {
-  return sellOrders.map(async (sellOrder: Order) => {
-    const orderTx = await gnosisAuction
-      .connect((await ethers.getSigners())[sellOrder.userId.toNumber()])
+  auctionId: BigNumber,
+  bidders: SignerWithAddress[]
+): Promise<void> {
+  for (let i = 0; i < sellOrders.length; i++) {
+    const sellOrder = sellOrders[i];
+    await gnosisAuction
+      .connect(bidders[sellOrder.userId.toNumber() - 2])
       .placeSellOrders(
         auctionId,
         [sellOrder.buyAmount],
@@ -119,12 +125,7 @@ export async function placeOrders(
         [queueStartElement],
         "0x"
       );
-    const orderRecipt = await orderTx.wait();
-    const { buyAmount, sellAmount } = orderRecipt.events.find(
-      (e: Event) => e.event === "NewSellOrder"
-    )?.args;
-    return { sellAmount, buyAmount };
-  });
+  }
 }
 
 export const createTokensAndMintAndApprove = async (
@@ -158,6 +159,10 @@ export const closeAuction = async (
   ).toNumber();
   await increaseTime(timeRemaining + 1);
 };
+
+export async function mineBlock(): Promise<void> {
+  ethers.provider.send("evm_mine", []);
+}
 
 export function encodeOrder(order: Order): string {
   return (

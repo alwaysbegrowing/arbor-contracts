@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 // --- Import statements ---
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./BondToken.sol";
+import "./PorterBond.sol";
 import "./CollateralToken.sol";
 import "./interfaces/IGnosisAuction.sol";
 import "hardhat/console.sol";
@@ -13,11 +13,12 @@ import "hardhat/console.sol";
 // --- Interfaces ---
 // --- Libraries ---
 
-/// @title Porter auction wrapping EasyAuction
+/// @title Porter auction wrapping Gnosis EasyAuction
 /// @author Porter
-/// @notice This allows for the creation of an auction
+/// @notice Single instance which maps to one EasyAuction
+/// @notice Controlls the auction, collateral, and bond issuace
 /// @dev This deviates from EasyAuction by not having an auctioning token until the auction is settling
-contract PorterAuction {
+contract Broker {
     // --- Type Declarations ---
     struct BondData {
         address bondContract;
@@ -31,9 +32,25 @@ contract PorterAuction {
 
     // --- State Variables ---
     IGnosisAuction public gnosisAuction;
-    // mapping of address to uint256
-    mapping(uint256 => mapping(address => uint256)) public collateralInAuction;
+    PorterBond public porterBond;
+
+    /// TODO: need to associate the collateral to the bond. Make a bond contract 
+    /// @notice A mapping of stored collateral in the contract from depositCollateral
+    /// @dev address the bond issuer storing the collateral
+    /// @dev uint256 the address of the collateral token
+    /// @dev uint256 the amount of that collateral token locked
     mapping(address => mapping(address => uint256)) public collateralInContract;
+
+    /// @notice When an auction begins, the collateral is moved from collateralInContract into this mapping
+    /// @dev uint256 auctionId is the id of the auction
+    /// @dev address the address of the collateral
+    /// @dev uint256 the amount of collateral
+    mapping(uint256 => mapping(address => uint256)) public collateralInAuction;
+
+    /// @notice The bond data for a specific auction
+    /// @dev uint256 auctionId is the id of the auction
+    /// @dev BondData the bond data
+    mapping(uint256 => BondData) public auctionToBondData;
 
     // --- Events ---
     /// @notice A GnosisAuction is created with auction parameters
@@ -43,7 +60,7 @@ contract PorterAuction {
     event AuctionCreated(
         address indexed creator,
         uint256 indexed auctionId,
-        address bondTokenAddress
+        address porterBondAddress
     );
 
     /// @notice Collateral for an auctioneer is added to the porter auction contract
@@ -56,35 +73,47 @@ contract PorterAuction {
         uint256 collateralAmount
     );
 
+    /// @notice Collateral for an auctioneer is removed from the auction contract
+    /// @param collateralRedeemer the address of the caller of the redemption
+    /// @param collateralAddress the address of the token being redeemed
+    /// @param collateralAmount the number of the tokens redeemed
+    event CollateralRedeemed(
+        address indexed collateralRedeemer,
+        address indexed collateralAddress,
+        uint256 collateralAmount
+    );
+
     // --- Modifiers ---
     using SafeERC20 for ERC20;
 
     // --- Functions ---
-    constructor(address gnosisAuctionAddress) public {
+    constructor(address gnosisAuctionAddress, address porterBondAddress) public {
         console.log(
-            "Auction constructor\n\tauction address: %s",
-            gnosisAuctionAddress
+            "Auction constructor\n\tauction address: %s\n\tporter bond address: %s",
+            gnosisAuctionAddress,
+            porterBondAddress
         );
         gnosisAuction = IGnosisAuction(gnosisAuctionAddress);
+        porterBond = PorterBond(porterBondAddress);
     }
 
     /// @notice Transfer collateral from the caller to the auction. The collateral is stored in the auction.
     /// @dev The collateral is mapped from the msg.sender & address to the collateral value.
     /// @dev Required msg.sender to have adequate balance, and the transfer to be successful (returns true).
     /// @param collateralData is a struct containing the address of the collateral and the value of the collateral
-    function configureCollateral(CollateralData memory collateralData) public {
+    function depositCollateral(CollateralData memory collateralData) public {
         ERC20 collateralToken = CollateralToken(
             collateralData.collateralAddress
         );
         console.log(
-            "Auction/configureCollateral\n\taddress: %s\n\tvalue: %s",
+            "Auction/depositCollateral\n\taddress: %s\n\tamount: %s",
             collateralData.collateralAddress,
             collateralData.collateralAmount
         );
         require(
             collateralToken.balanceOf(msg.sender) >=
                 collateralData.collateralAmount,
-            "configureCollateral/sender-inadequate-collateral"
+            "depositCollateral/inadequate"
         );
         collateralToken.safeTransferFrom(
             msg.sender,
@@ -100,6 +129,50 @@ contract PorterAuction {
             msg.sender,
             address(collateralToken),
             collateralData.collateralAmount
+        );
+    }
+
+    /// @notice After a bond has matured AND the issuer has returned the auctioningToken, the issuer can redeem the collateral.
+    /// @dev Required timestamp to be later than bond maturity timestamp.
+    /// @dev Required bond to have been repaid.
+    /// @param auctionId the ID of the auction containing the collateral
+    /// @param collateralAddress the address of the collateral
+    function redeemCollateralFromAuction(
+        uint256 auctionId,
+        address collateralAddress
+    ) public {
+        ERC20 collateralToken = CollateralToken(collateralAddress);
+
+        uint256 collateralAmount = collateralInAuction[auctionId][
+            collateralAddress
+        ];
+        console.log(
+            "Auction/redeemCollateralFromAuction\n\tauctionId: %s\n\taddress: %s\n\tamount: %s",
+            auctionId,
+            collateralAddress,
+            collateralAmount
+        );
+        BondData memory bondData = auctionToBondData[auctionId];
+        console.log(
+            "Auction/redeemCollateralFromAuction\n\tmaturitDate: %s",
+            bondData.maturityDate
+        );
+        require(
+            now >= bondData.maturityDate,
+            "redeemCollateralFromAuction/invalid"
+        );
+        // Set collateral to zero here to prevent double redemption
+        collateralInAuction[auctionId][collateralAddress] = 0;
+
+        require(
+            collateralToken.transfer(msg.sender, collateralAmount) == true,
+            "redeemCollateralFromAuction/transfer"
+        );
+
+        emit CollateralRedeemed(
+            msg.sender,
+            address(collateralToken),
+            collateralAmount
         );
     }
 
@@ -132,11 +205,18 @@ contract PorterAuction {
                 bondData.maturityDate >= auctionData.auctionEndDate,
             "createAuction/invalid-maturity-date"
         );
+
+        // set the bond data
+        auctionToBondData[auctionCounter] = bondData;
+
         // Remove collateral from contract mapping before creating the auction
         collateralInContract[msg.sender][
             collateralData.collateralAddress
         ] -= collateralData.collateralAmount;
+
         auctionCounter = initiateAuction(auctionData);
+
+        // Add collateral to the auction
         collateralInAuction[auctionCounter][
             collateralData.collateralAddress
         ] += collateralData.collateralAmount;
@@ -144,16 +224,16 @@ contract PorterAuction {
 
     /// @notice Use to create an auction after collateral has been deposited
     /// @dev auctionId is returned from the newly created auction contract
-    /// @dev New BondTokens are minted from the auctionData._auctionedSellAmount
+    /// @dev New PorterBonds are minted from the auctionData._auctionedSellAmount
     /// @param auctionData the auction data
     function initiateAuction(AuctionType.AuctionData memory auctionData)
         public
         returns (uint256 auctionId)
     {
         console.log("Auction/initiateAuction");
-        // Create a new instance of BondToken
-        ERC20 auctioningToken = new BondToken(
-            "BondToken",
+        // Create a new instance of PorterBond
+        ERC20 auctioningToken = new PorterBond(
+            "PorterBond",
             "BOND",
             auctionData._auctionedSellAmount
         );
@@ -183,4 +263,7 @@ contract PorterAuction {
 
         emit AuctionCreated(msg.sender, auctionId, address(auctioningToken));
     }
+
+    // TODO: on auction fail or ending, burn remaining tokens feeAmount.mul(fillVolumeOfAuctioneerOrder).div(
+    // TODO: on return of principle, check that principle == total supply of bond token
 }

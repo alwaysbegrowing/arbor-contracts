@@ -8,6 +8,7 @@ import "./libraries/IdToAddressBiMap.sol";
 import "./libraries/SafeCast.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/AllowListVerifier.sol";
+import "hardhat/console.sol";
 
 contract EasyAuction is Ownable {
     using SafeERC20 for IERC20;
@@ -20,6 +21,7 @@ contract EasyAuction is Ownable {
     using IdToAddressBiMap for IdToAddressBiMap.Data;
 
     modifier atStageOrderPlacement(uint256 auctionId) {
+        console.log(block.timestamp);
         require(
             block.timestamp < auctionData[auctionId].auctionEndDate,
             "no longer in order placement phase"

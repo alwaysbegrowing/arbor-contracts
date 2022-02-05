@@ -1,6 +1,6 @@
 import { BigNumber } from "ethers";
 
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -9,140 +9,167 @@ import {
   createAuctionWithDefaults,
   createTokensAndMintAndApprove,
   encodeOrder,
+  mineBlock,
   placeOrders,
 } from "./utilities";
 import { expect } from "chai";
 import type {
-  BondToken as BondTokenType,
-  CollateralToken as CollateralTokenType,
-  PorterAuction as PorterAuctionType,
-  EasyAuction as GnosisAuctionType,
-  BiddingToken as BiddingTokenType,
+  PorterBond as PorterBond,
+  CollateralToken as CollateralToken,
+  Broker as Broker,
+  EasyAuction as GnosisAuction,
+  BiddingToken as BiddingToken,
 } from "../typechain";
 
+const GNOSIS_AUCTION_ADDRESS = {
+  mainnet: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
+};
 describe("Auction", async () => {
   // default deployer address of contracts
-  let porterSigner: SignerWithAddress;
+  let owner: SignerWithAddress;
   // address of the example DAO which configures and runs the auction
   let auctioneerSigner: SignerWithAddress;
   // addresses of the bidders
   let bidders: SignerWithAddress[];
-  let porterAuction: PorterAuctionType;
-  let gnosisAuction: GnosisAuctionType;
-  let biddingToken: BiddingTokenType;
-  let collateralToken: CollateralTokenType;
-  let bondToken: BondTokenType;
+  let broker: Broker;
+  let gnosisAuction: GnosisAuction;
+  let biddingToken: BiddingToken;
+  let collateralToken: CollateralToken;
+  let porterBond: PorterBond;
+  let collateralData: CollateralData;
 
   beforeEach(async () => {
-    [porterSigner, auctioneerSigner, ...bidders] = await ethers.getSigners();
-
-    const GnosisAuction = await ethers.getContractFactory("EasyAuction");
-    gnosisAuction = (await GnosisAuction.deploy()) as GnosisAuctionType;
-
-    const PorterAuction = await ethers.getContractFactory("PorterAuction");
-    porterAuction = (await PorterAuction.deploy(
-      gnosisAuction.address
-    )) as PorterAuctionType;
+    // reset the chain if not forking
+    await network.provider.request({
+      method: "hardhat_reset",
+      params: [],
+    });
+    collateralData = {
+      collateralAddress: ethers.constants.AddressZero,
+      collateralAmount: ethers.utils.parseEther("100"),
+    };
+    [owner, auctioneerSigner, ...bidders] = await ethers.getSigners();
+    bidders = bidders.slice(0, 3);
 
     const BiddingToken = await ethers.getContractFactory("BiddingToken");
     biddingToken = (await BiddingToken.deploy(
       "Bidding Token",
       "BT",
       ethers.utils.parseEther("10000")
-    )) as BiddingTokenType;
+    )) as BiddingToken;
 
     // Mint 100 ether of tokens of collateral for auctioneerSigner
     const CollateralToken = await ethers.getContractFactory("CollateralToken");
     collateralToken = (await CollateralToken.connect(auctioneerSigner).deploy(
       "Collateral Token",
       "CT",
-      ethers.utils.parseEther("100")
-    )) as CollateralTokenType;
+      collateralData.collateralAmount
+    )) as CollateralToken;
+    // set collateral address
+    collateralData.collateralAddress = collateralToken.address;
 
-    // The tokens minted here do not matter. The Porter Auction will mint the bondToken
-    const BondToken = await ethers.getContractFactory("BondToken");
-    bondToken = (await BondToken.connect(porterSigner).deploy(
+    // The tokens minted here do not matter. The Porter Auction will mint the porterBond
+    const PorterBond = await ethers.getContractFactory("PorterBond");
+    porterBond = (await PorterBond.connect(owner).deploy(
       "Bond Token",
       "BT",
       ethers.utils.parseEther("100")
-    )) as BondTokenType;
+    )) as PorterBond;
+
+    const GnosisAuction = await ethers.getContractFactory("EasyAuction");
+    gnosisAuction = (await GnosisAuction.deploy()) as GnosisAuction;
+    // gnosisAuction = gnosisAuction.attach(GNOSIS_AUCTION_ADDRESS.mainnet);
+
+    const Broker = await ethers.getContractFactory("Broker");
+    broker = (await Broker.deploy(
+      gnosisAuction.address,
+      porterBond.address
+    )) as Broker;
+
+    await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
   });
   describe("Porter Auction E2E", async () => {
     it("deposits collateral, initiates auction, settles auction", async () => {
-      /* --------------------------------------------------
-      |                                                    |
-      |                   debug info                       |
-      |                                                    |
-      -------------------------------------------------- */
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/debug info"); //                     |
+      //                                                    |
+      // ----------------------------------------------------
+
       console.log({
-        porter: porterSigner.address,
+        porter: owner.address,
         auctioneer: auctioneerSigner.address,
         [`bidders(${bidders.length})`]: bidders.map((b) => b.address),
-        bondTokenAddress: bondToken.address,
+        porterBondAddress: porterBond.address,
         collateralTokenAddress: collateralToken.address,
         biddingTokenAddress: biddingToken.address,
-        porterAuctionAddress: porterAuction.address,
-        gnosisAuctionAddress: gnosisAuction.address,
+        brokerAddress: broker.address,
+        gnosisAuctionAddress: GNOSIS_AUCTION_ADDRESS.mainnet,
       });
-      /* --------------------------------------------------
-      |                                                    |
-      |                 set up collateral                  |
-      |                                                    |
-      ---------------------------------------------------- */
-      const collateralData: CollateralData = {
-        collateralAddress: collateralToken.address,
-        collateralAmount: ethers.utils.parseEther("100"),
-      };
 
-      // from auctioneerSigner, approve the value of collateral to the porterAuction contract
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/set up collateral"); //              |
+      //                                                    |
+      // ----------------------------------------------------
+      // from auctioneerSigner, approve the value of collateral to the broker contract
       await collateralToken
         .connect(auctioneerSigner)
-        .increaseAllowance(
-          porterAuction.address,
-          collateralData.collateralAmount
-        );
-
-      const configureCollateralTx = await porterAuction
+        .increaseAllowance(broker.address, collateralData.collateralAmount);
+      expect(
+        await collateralToken.balanceOf(auctioneerSigner.address)
+      ).to.be.eq(ethers.utils.parseEther("100"));
+      const depositCollateralTx = await broker
         .connect(auctioneerSigner)
-        .configureCollateral(collateralData);
+        .depositCollateral(collateralData);
 
-      expect(configureCollateralTx, "Collateral deposited")
-        .to.emit(porterAuction, "CollateralDeposited")
+      await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
+
+      expect(
+        await collateralToken.balanceOf(auctioneerSigner.address)
+      ).to.be.eq(0);
+
+      expect(depositCollateralTx, "Collateral deposited")
+        .to.emit(broker, "CollateralDeposited")
         .withArgs(
           auctioneerSigner.address,
           collateralToken.address,
           collateralData.collateralAmount
         );
 
-      // The deposited collateral should exist in the porterAuction contract
+      // The deposited collateral should exist in the broker contract
       expect(
-        await porterAuction.collateralInContract(
+        await broker.collateralInContract(
           auctioneerSigner.address,
           collateralToken.address
         ),
         "Collateral in contract"
       ).to.be.equal(collateralData.collateralAmount);
 
-      /* --------------------------------------------------
-      |                                                    |
-      |               set up GnosisAuction                 |
-      |                                                    |
-      ---------------------------------------------------- */
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/set up gnosis auction"); //          |
+      //                                                    |
+      // ----------------------------------------------------
+
+      const auctionCounter = (await gnosisAuction.auctionCounter()).toNumber();
       // This creates the GnosisAuction and returns the auctionId of the newly created auction
-      const { auctionId, bondTokenAddress } = await createAuctionWithDefaults(
+      const { auctionId, porterBondAddress } = await createAuctionWithDefaults(
         auctioneerSigner,
         biddingToken,
         collateralData,
-        porterAuction
+        broker
       );
 
-      // After the auction is created, the auctionCount should be 1
-      expect(auctionId, "GnosisAuction counter incremented").to.be.equal(1);
+      // After the auction is created, the auctionCount should be auctionCounter + 1
+      expect(auctionId, "GnosisAuction counter incremented").to.be.equal(
+        auctionCounter + 1
+      );
 
       // After the auction is created, the collateralInContract should be 0
       // (or in practice, the existing value minus the collateralAmount)
       expect(
-        await porterAuction.collateralInContract(
+        await broker.collateralInContract(
           auctioneerSigner.address,
           collateralToken.address
         ),
@@ -151,26 +178,25 @@ describe("Auction", async () => {
 
       // The collateralInAuction should be the collateralAmount (note the mapping looks up the auctionId)
       expect(
-        await porterAuction.collateralInAuction(
-          auctionId,
-          collateralToken.address
-        ),
+        await broker.collateralInAuction(auctionId, collateralToken.address),
         "Collateral stored in auction"
       ).to.be.equal(collateralData.collateralAmount);
 
-      /* --------------------------------------------------
-      |                                                    |
-      |                 place orders                       |
-      |                                                    |
-      ---------------------------------------------------- */
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/place orders"); //                   |
+      //                                                    |
+      // ----------------------------------------------------
 
-      // Give tokens from porterSigner to bidders and approve for transfer to gnosis auction
+      // Give tokens from owner to bidders and approve for transfer to gnosis auction
       await createTokensAndMintAndApprove(
         gnosisAuction,
         biddingToken,
-        porterSigner,
+        owner,
         bidders
       );
+
+      await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
 
       // create sell orders for all bidders addresses
       const nrTests = bidders.length;
@@ -184,51 +210,57 @@ describe("Auction", async () => {
             userId: BigNumber.from(i + 2),
           },
         ];
-        await placeOrders(gnosisAuction, sellOrder, auctionId);
+        // add all transactions
+        await placeOrders(gnosisAuction, sellOrder, auctionId, bidders);
       }
+      await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
 
-      /* ----------------------------------------------------
-      |                                                     |
-      |                     close auction                   |
-      |                                                     |
-      ---------------------------------------------------- */
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/close auction"); //                  |
+      //                                                    |
+      // ----------------------------------------------------
+
       // This increases the time to the end of the auction
       await closeAuction(gnosisAuction, auctionId);
 
-      /* ----------------------------------------------------
-      |                                                     |
-      |              partially settle orders                |
-      |                     (for fun)                       |
-      |                                                     |
-      ---------------------------------------------------- */
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/partially settle orders"); //        |
+      //                                                    |
+      // ----------------------------------------------------
+
       // This settles some of the orders and moves the queue element
       // there is an order left over (bidders.length - 1) because there needs to be
       // at least one order left over to be able to settle the auction
-      await gnosisAuction.precalculateSellAmountSum(
-        auctionId,
-        bidders.length - 1
-      );
+      // await gnosisAuction.precalculateSellAmountSum(
+      //   auctionId,
+      //   bidders.length - 1
+      // );
 
-      /* ----------------------------------------------------
-      |                                                     |
-      |                 settle auction                      |
-      |                                                     |
-      ---------------------------------------------------- */
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/settle auction"); //                 |
+      //                                                    |
+      // ----------------------------------------------------
       const settleTx = await gnosisAuction.settleAuction(auctionId);
       expect(settleTx).to.emit(gnosisAuction, "AuctionCleared");
 
-      /* --------------------------------------------------
-      |                                                    |
-      |                 check results                      |
-      |                                                    |
-      ---------------------------------------------------- */
+      await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
+
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/check results"); //                  |
+      //                                                    |
+      // ----------------------------------------------------
+
       // TODO: not sure what to expect here, probably something with getting the settlement amount
       // and checking that each bidder has the correct amount of tokens for now
-      // confirm that there is a change in bondTokens
+      // confirm that there is a change in porterBonds
 
       // before claiming from all orders, the bidding token should be 0
       expect(
-        await bondToken.attach(bondTokenAddress).balanceOf(bidders[0].address)
+        await porterBond.attach(porterBondAddress).balanceOf(bidders[0].address)
       ).to.be.eq(0);
 
       for (let i = 0; i < nrTests; i++) {
@@ -246,10 +278,34 @@ describe("Auction", async () => {
         expect(claimTx).to.emit(gnosisAuction, "ClaimedFromOrder");
       }
 
+      await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
+
       // after, the bond token should be assigned to the account
       expect(
-        await bondToken.attach(bondTokenAddress).balanceOf(bidders[0].address)
+        await porterBond.attach(porterBondAddress).balanceOf(bidders[0].address)
       ).to.be.gt(0);
+
+      // ----------------------------------------------------
+      //                                                    |
+      console.log("e2e/redeem collateral"); //              |
+      //                                                    |
+      // ----------------------------------------------------
+      expect(
+        await collateralToken.balanceOf(auctioneerSigner.address),
+        "collateral in auction"
+      ).to.be.eq(0);
+
+      const redeemTx = await broker
+        .connect(auctioneerSigner)
+        .redeemCollateralFromAuction(auctionId, collateralToken.address);
+      expect(redeemTx).to.emit(broker, "CollateralRedeemed");
+
+      await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
+
+      expect(
+        await collateralToken.balanceOf(auctioneerSigner.address),
+        "collateral in auctioneer"
+      ).to.be.eq(collateralData.collateralAmount);
     });
   });
 });
