@@ -34,7 +34,7 @@ contract Broker {
     IGnosisAuction public gnosisAuction;
     PorterBond public porterBond;
 
-    /// TODO: need to associate the collateral to the bond. Make a bond contract 
+    /// TODO: need to associate the collateral to the bond. Make a bond contract
     /// @notice A mapping of stored collateral in the contract from depositCollateral
     /// @dev address the bond issuer storing the collateral
     /// @dev uint256 the address of the collateral token
@@ -87,7 +87,9 @@ contract Broker {
     using SafeERC20 for ERC20;
 
     // --- Functions ---
-    constructor(address gnosisAuctionAddress, address porterBondAddress) public {
+    constructor(address gnosisAuctionAddress, address porterBondAddress)
+        public
+    {
         console.log(
             "Auction constructor\n\tauction address: %s\n\tporter bond address: %s",
             gnosisAuctionAddress,
@@ -101,7 +103,7 @@ contract Broker {
     /// @dev The collateral is mapped from the msg.sender & address to the collateral value.
     /// @dev Required msg.sender to have adequate balance, and the transfer to be successful (returns true).
     /// @param collateralData is a struct containing the address of the collateral and the value of the collateral
-    function depositCollateral(CollateralData memory collateralData) public {
+    function depositCollateral(CollateralData memory collateralData) external {
         ERC20 collateralToken = CollateralToken(
             collateralData.collateralAddress
         );
@@ -140,7 +142,7 @@ contract Broker {
     function redeemCollateralFromAuction(
         uint256 auctionId,
         address collateralAddress
-    ) public {
+    ) external {
         ERC20 collateralToken = CollateralToken(collateralAddress);
 
         uint256 collateralAmount = collateralInAuction[auctionId][
@@ -187,7 +189,7 @@ contract Broker {
         AuctionType.AuctionData memory auctionData,
         BondData memory bondData,
         CollateralData memory collateralData
-    ) public returns (uint256 auctionCounter) {
+    ) external returns (uint256 auctionCounter) {
         console.log("Auction/createAuction");
         // only create auction if there is no fee (will need to redeploy contract in this case)
         require(
@@ -227,7 +229,7 @@ contract Broker {
     /// @dev New PorterBonds are minted from the auctionData._auctionedSellAmount
     /// @param auctionData the auction data
     function initiateAuction(AuctionType.AuctionData memory auctionData)
-        public
+        internal
         returns (uint256 auctionId)
     {
         console.log("Auction/initiateAuction");
