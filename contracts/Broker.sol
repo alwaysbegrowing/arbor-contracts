@@ -5,6 +5,8 @@ pragma experimental ABIEncoderV2;
 // --- Import statements ---
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+//import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./PorterBond.sol";
 import "./CollateralToken.sol";
 import "./interfaces/IGnosisAuction.sol";
@@ -18,7 +20,10 @@ import "hardhat/console.sol";
 /// @notice Single instance which maps to one EasyAuction
 /// @notice Controlls the auction, collateral, and bond issuace
 /// @dev This deviates from EasyAuction by not having an auctioning token until the auction is settling
-contract Broker {
+contract Broker is
+    Ownable //,
+    //ReentrancyGuard
+{
     // --- Type Declarations ---
     struct BondData {
         address bondContract;
@@ -98,7 +103,10 @@ contract Broker {
     /// @dev The collateral is mapped from the msg.sender & address to the collateral value.
     /// @dev Required msg.sender to have adequate balance, and the transfer to be successful (returns true).
     /// @param collateralData is a struct containing the address of the collateral and the value of the collateral
-    function depositCollateral(CollateralData memory collateralData) external {
+    function depositCollateral(CollateralData memory collateralData)
+        external
+    // nonReentrant
+    {
         IERC20 collateralToken = CollateralToken(
             collateralData.collateralAddress
         );
