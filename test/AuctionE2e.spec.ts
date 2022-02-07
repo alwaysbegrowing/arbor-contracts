@@ -81,10 +81,7 @@ describe("Auction", async () => {
     // gnosisAuction = gnosisAuction.attach(GNOSIS_AUCTION_ADDRESS.mainnet);
 
     const Broker = await ethers.getContractFactory("Broker");
-    broker = (await Broker.deploy(
-      gnosisAuction.address,
-      porterBond.address
-    )) as Broker;
+    broker = (await Broker.deploy(gnosisAuction.address)) as Broker;
 
     await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
   });

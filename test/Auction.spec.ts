@@ -65,8 +65,7 @@ describe("Auction", async () => {
 
     const Broker = await ethers.getContractFactory("Broker");
     broker = (await Broker.deploy(
-      "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
-      porterBond.address
+      "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101"
     )) as BrokerType;
     return {
       porterBond,

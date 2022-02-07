@@ -31,8 +31,7 @@ contract Broker {
     }
 
     // --- State Variables ---
-    IGnosisAuction public gnosisAuction;
-    PorterBond public porterBond;
+    IGnosisAuction public immutable gnosisAuction;
 
     /// TODO: need to associate the collateral to the bond. Make a bond contract
     /// @notice A mapping of stored collateral in the contract from depositCollateral
@@ -87,16 +86,14 @@ contract Broker {
     using SafeERC20 for IERC20;
 
     // --- Functions ---
-    constructor(address gnosisAuctionAddress, address porterBondAddress)
+    constructor(address gnosisAuctionAddress)
         public
     {
         console.log(
-            "Auction constructor\n\tauction address: %s\n\tporter bond address: %s",
-            gnosisAuctionAddress,
-            porterBondAddress
+            "Auction constructor\n\tauction address: %s",
+            gnosisAuctionAddress
         );
         gnosisAuction = IGnosisAuction(gnosisAuctionAddress);
-        porterBond = PorterBond(porterBondAddress);
     }
 
     /// @notice Transfer collateral from the caller to the auction. The collateral is stored in the auction.
