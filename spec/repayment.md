@@ -41,7 +41,7 @@ Pros: Avoid .09% aave fee
 Cons: Would need to add flash loan logic to our protocol vs leveraging an existing one 
 
 # Default & Liquidations 
-Our protocol avoids using any pricing oracles to reduce the effect of price manulation or oracle risk.  
+Our protocol avoids using any pricing oracles to reduce the effect of price manipulation & oracle risk.  
 
 Upon a default - bondholders are able to redeem their bond tokens for a pro-rata share of the collateral & repayment amount.
 
