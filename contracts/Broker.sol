@@ -86,9 +86,7 @@ contract Broker {
     using SafeERC20 for IERC20;
 
     // --- Functions ---
-    constructor(address gnosisAuctionAddress)
-        public
-    {
+    constructor(address gnosisAuctionAddress) public {
         console.log(
             "Auction constructor\n\tauction address: %s",
             gnosisAuctionAddress
@@ -105,7 +103,7 @@ contract Broker {
             collateralData.collateralAddress
         );
         console.log(
-            "Auction/depositCollateral\n\taddress: %s\n\tamount: %s",
+            "Broker/depositCollateral\n\taddress: %s\n\tamount: %s",
             collateralData.collateralAddress,
             collateralData.collateralAmount
         );
@@ -146,14 +144,14 @@ contract Broker {
             collateralAddress
         ];
         console.log(
-            "Auction/redeemCollateralFromAuction\n\tauctionId: %s\n\taddress: %s\n\tamount: %s",
+            "Broker/redeemCollateralFromAuction\n\tauctionId: %s\n\taddress: %s\n\tamount: %s",
             auctionId,
             collateralAddress,
             collateralAmount
         );
         BondData memory bondData = auctionToBondData[auctionId];
         console.log(
-            "Auction/redeemCollateralFromAuction\n\tmaturitDate: %s",
+            "Broker/redeemCollateralFromAuction\n\tmaturitDate: %s",
             bondData.maturityDate
         );
         require(
@@ -162,7 +160,6 @@ contract Broker {
         );
         // Set collateral to zero here to prevent double redemption
         collateralInAuction[auctionId][collateralAddress] = 0;
-
         require(
             collateralToken.transfer(msg.sender, collateralAmount) == true,
             "redeemCollateralFromAuction/transfer"
@@ -177,18 +174,21 @@ contract Broker {
 
     /// @notice This entry needs a bond config + auction config + collateral config
     /// @dev required to have a 0 fee gnosis auction
+    /// @dev auctionId is returned from the newly created auction contract
+    /// @dev New PorterBonds are minted from the auctionData._auctionedSellAmount
     /// @notice collateral must be deposited before the auction is created
     /// @param auctionData the auction data
     /// @param bondData the bond data
     /// @param collateralData the collateral data
-    /// @return auctionCounter the id of the auction
+    /// @return auctionId the id of the auction
     function createAuction(
         AuctionType.AuctionData memory auctionData,
         BondData memory bondData,
         CollateralData memory collateralData
-    ) external returns (uint256 auctionCounter) {
-        console.log("Auction/createAuction");
+    ) external returns (uint256 auctionId) {
+        console.log("Broker/createAuction");
         // only create auction if there is no fee (will need to redeploy contract in this case)
+        // NOTE: To be more flexible, a possibly non-zero argument can be passed and checked against the auction fee
         require(
             gnosisAuction.feeNumerator() == 0,
             "createAuction/non-zero-fee"
@@ -205,37 +205,19 @@ contract Broker {
             "createAuction/invalid-maturity-date"
         );
 
-        // set the bond data
-        auctionToBondData[auctionCounter] = bondData;
-
         // Remove collateral from contract mapping before creating the auction
         collateralInContract[msg.sender][
             collateralData.collateralAddress
         ] -= collateralData.collateralAmount;
 
-        auctionCounter = initiateAuction(auctionData);
-
-        // Add collateral to the auction
-        collateralInAuction[auctionCounter][
-            collateralData.collateralAddress
-        ] += collateralData.collateralAmount;
-    }
-
-    /// @notice Use to create an auction after collateral has been deposited
-    /// @dev auctionId is returned from the newly created auction contract
-    /// @dev New PorterBonds are minted from the auctionData._auctionedSellAmount
-    /// @param auctionData the auction data
-    function initiateAuction(AuctionType.AuctionData memory auctionData)
-        internal
-        returns (uint256 auctionId)
-    {
-        console.log("Auction/initiateAuction");
-        // Create a new instance of PorterBond
+        // TODO: use the passed in bondContract to create this?
+        // IERC20 auctioningToken = IERC20(bondContract);
         IERC20 auctioningToken = new PorterBond(
+            "Porter Bond",
             "PorterBond",
-            "BOND",
             auctionData._auctionedSellAmount
         );
+
         // Approve the auction to transfer all the tokens
         require(
             auctioningToken.approve(
@@ -245,6 +227,28 @@ contract Broker {
             "initiateAuction/approve-failed"
         );
 
+        auctionId = initiateAuction(auctionData, auctioningToken);
+
+        // set the bond data
+        auctionToBondData[auctionId] = bondData;
+
+        // Add collateral to the auction
+        collateralInAuction[auctionId][
+            collateralData.collateralAddress
+        ] += collateralData.collateralAmount;
+
+        emit AuctionCreated(msg.sender, auctionId, address(auctioningToken));
+    }
+
+    /// @notice Use to create an auction after collateral has been deposited
+    /// @dev auctionId is returned from the newly created auction contract
+    /// @dev New PorterBonds are minted from the auctionData._auctionedSellAmount
+    /// @param auctionData the auction data
+    function initiateAuction(
+        AuctionType.AuctionData memory auctionData,
+        IERC20 auctioningToken
+    ) internal returns (uint256 auctionId) {
+        console.log("Broker/initiateAuction");
         // Create a new GnosisAuction
         auctionId = gnosisAuction.initiateAuction(
             auctioningToken,
@@ -259,10 +263,7 @@ contract Broker {
             auctionData.accessManagerContract,
             auctionData.accessManagerContractData
         );
-
-        emit AuctionCreated(msg.sender, auctionId, address(auctioningToken));
     }
-
     // TODO: on auction fail or ending, burn remaining tokens feeAmount.mul(fillVolumeOfAuctioneerOrder).div(
     // TODO: on return of principle, check that principle == total supply of bond token
 }

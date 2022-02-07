@@ -4,11 +4,13 @@ import { ethers, network } from "hardhat";
 import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
+  addDaysToNow,
   closeAuction,
   CollateralData,
   createAuctionWithDefaults,
   createTokensAndMintAndApprove,
   encodeOrder,
+  increaseTime,
   mineBlock,
   placeOrders,
 } from "./utilities";
@@ -292,12 +294,15 @@ describe("Auction", async () => {
         "collateral in auction"
       ).to.be.eq(0);
 
+      increaseTime(addDaysToNow(2).toNumber()); // ⌚️⌚️⌚️ Time passes... ⌚️⌚️⌚️
+
       const redeemTx = await broker
         .connect(auctioneerSigner)
         .redeemCollateralFromAuction(auctionId, collateralToken.address);
-      expect(redeemTx).to.emit(broker, "CollateralRedeemed");
 
       await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
+
+      expect(redeemTx).to.emit(broker, "CollateralRedeemed");
 
       expect(
         await collateralToken.balanceOf(auctioneerSigner.address),
