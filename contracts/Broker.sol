@@ -84,7 +84,7 @@ contract Broker {
     );
 
     // --- Modifiers ---
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
 
     // --- Functions ---
     constructor(address gnosisAuctionAddress, address porterBondAddress)
@@ -104,7 +104,7 @@ contract Broker {
     /// @dev Required msg.sender to have adequate balance, and the transfer to be successful (returns true).
     /// @param collateralData is a struct containing the address of the collateral and the value of the collateral
     function depositCollateral(CollateralData memory collateralData) external {
-        ERC20 collateralToken = CollateralToken(
+        IERC20 collateralToken = CollateralToken(
             collateralData.collateralAddress
         );
         console.log(
@@ -143,7 +143,7 @@ contract Broker {
         uint256 auctionId,
         address collateralAddress
     ) external {
-        ERC20 collateralToken = CollateralToken(collateralAddress);
+        IERC20 collateralToken = CollateralToken(collateralAddress);
 
         uint256 collateralAmount = collateralInAuction[auctionId][
             collateralAddress
@@ -234,7 +234,7 @@ contract Broker {
     {
         console.log("Auction/initiateAuction");
         // Create a new instance of PorterBond
-        ERC20 auctioningToken = new PorterBond(
+        IERC20 auctioningToken = new PorterBond(
             "PorterBond",
             "BOND",
             auctionData._auctionedSellAmount
@@ -250,7 +250,7 @@ contract Broker {
 
         // Create a new GnosisAuction
         auctionId = gnosisAuction.initiateAuction(
-            IERC20(auctioningToken),
+            auctioningToken,
             auctionData._biddingToken,
             auctionData.orderCancellationEndDate,
             auctionData.auctionEndDate,
