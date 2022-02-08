@@ -54,7 +54,7 @@ contract SimpleBond is ERC20Burnable, Ownable, ReentrancyGuard {
     currentBondStanding = newStanding;
   }
 
-  function redeemBond(uint256 bondShares) external nonReentrant {
+  function redeemBond(uint256 bondShares) external onlyOwner nonReentrant {
     require(bondShares > 0, "invalid amount");
     require(block.timestamp >= maturityDate, "bond still immature");
 
