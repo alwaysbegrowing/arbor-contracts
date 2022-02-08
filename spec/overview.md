@@ -48,7 +48,7 @@ A new `BondToken` is created for each [borrower](https://docs.porter.finance/por
 
 # Outstanding Design Decisions 
 ## Broker pattern vs token pattern
-We have the option of having the broker contract act as a middleperson and handle the main functionality of the protocol (broker pattern) or we can implement this functionality on each of the different tokens themselves (token pattern)
+We have the option of having the broker contract act as an intermediary that handles the main functionality of our protocol (broker pattern) or we can implement this functionality on each of the different tokens themselves (token pattern)
 
 Do we have one broker contract that holds all the collateral, handles convertability, handles repayment, handles bond redemption for each of the bonds? Or should we implement that logic on the bond itself and limit the functionality of the broker to just deploying the bond tokens?
 
