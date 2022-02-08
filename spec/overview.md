@@ -1,24 +1,24 @@
 # Contracts Overview
 
 ## Main contracts
-### [Broker](./bondAuction.md)
+### [Broker](./broker.md)
 The main entry point into the Porter Protocol. Most interactions with Porter will happen via the Broker, including:
 * Depositing collateral
 * Creating `BondTokens`
-* Handling converabiltiy
+* Handling convertibility
 * Handling repayment
 * Allowing bond redemption
 * Initiating bond auction
 
 ### Collateral 
-Borrowes are able to depsoit any ERC20 token as collateral. Only a single collateral type is supported per bond.
+Borrowers are able to deposit any ERC20 token as collateral. Only a single collateral type is supported per bond.
 
 ### Creating bond tokens
 A new ERC20 bondtoken is deployed that represents the debt owed by the borrower
 
-### Converability 
+### Convertibility 
 If convertability in enabled for the bond, 
-Bondholders will have an option to redeem their bond tokens for the underlying collateral at a pre-defined ratio. 
+Bondholders will have an option to redeem their bond tokens for the underlying collateral at a predefined ratio. 
 For example - when the bond is created the ratio may be 1 bond : .5. This gives the lenders equity upside where they can redeem their bonds for the underlying token if the collateral token goes up in price. 
 
 ### Repayment
@@ -26,9 +26,9 @@ This gives the ability for a borrower to repay their debt. Repaying unlocks thei
 
 ### Bond Redemption
 #### if repaid 
-Bonds can be redeemed for a pro-rata share of the repayment amount. 
+Bonds can be redeemed for a pro rata share of the repayment amount. 
 #### if defaulted
-Bonds can be redemmed for a pro-rata share of the collateral + repayment amount. 
+Bonds can be redeemed for a pro rata share of the collateral + repayment amount. 
 
 Bondholder tokens are not burnt on default - instead they are set to a `defaulted` state and are used to represent the debt still owed to the lenders.
 
@@ -38,7 +38,7 @@ Borrowers have the option to use an auction to sell their bonds. The borrower se
 
 ### [BondTokens](./bondToken.md)
 
-`BondTokens` represent [zero coupon bonds](https://docs.porter.finance/portal/intro-to-bonds/zero-coupon-bonds) that can be purchased by [lenders](https://docs.porter.finance/portal/protocol/lenders). They implement the standard EIP-20/ERC20 token methods as well as Porter speciic methods including:
+`BondTokens` represent [zero coupon bonds](https://docs.porter.finance/portal/intro-to-bonds/zero-coupon-bonds) that can be purchased by [lenders](https://docs.porter.finance/portal/protocol/lenders). They implement the standard EIP-20/ERC20 token methods as well as Porter specific methods including:
 * `setBondStanding()`
 
 
@@ -64,8 +64,8 @@ https://github.com/compound-finance/compound-protocol/blob/master/contracts/CTok
 
 ## Collateral types
 * Do we want to whitelist collateral addresses? Or all DAOs to use anything as collateral? I think anything. 
-* Should DAOs be able to deposit multiple collateral types per bond? @jordanmeyer (this may complicate convertability)
+* Should DAOs be able to deposit multiple collateral types per bond? @jordanmeyer (this may complicate Convertibility)
 
 
-## No Orcales
+## No Oracles
 We are designing the protocol in a way that we can avoid price oracles
