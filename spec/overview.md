@@ -11,18 +11,18 @@ The main entry point into the Porter Protocol. Most interactions with Porter wil
 * Initiating bond auction
 
 ### Collateral 
-Borrowers are able to deposit any ERC20 token as collateral. Only a single collateral type is supported per bond.
+Borrowers are able to deposit any ERC20 token as collateral. Only a single collateral type is supported per bond. Collateral is associated with a single bond.
 
 ### Creating bond tokens
-A new ERC20 bondtoken is deployed that represents the debt owed by the borrower
+A new ERC20 `BondToken` is deployed per-issuance which represents the debt owed by the borrower.
 
 ### Convertibility 
 If convertability in enabled for the bond, 
 Bondholders will have an option to redeem their bond tokens for the underlying collateral at a predefined ratio. 
-For example - when the bond is created the ratio may be 1 bond : .5. This gives the lenders equity upside where they can redeem their bonds for the underlying token if the collateral token goes up in price. 
+For example - when the bond is created the ratio may be 1 bond : .5. This gives the lenders equity upside where they can redeem their bonds for the underlying token if the collateral token goes up in price. Convertibility cannot be changed once set and after repayment, the bond can no longer be redeemed for the underlying collateral.
 
 ### Repayment
-This gives the ability for a borrower to repay their debt. Repaying unlocks their collateral and sets the bond state to `paid` 
+This gives the ability for a borrower to repay their debt. Repaying unlocks their collateral and sets the bond state to `paid`.
 
 ### Bond Redemption
 #### if repaid 
@@ -48,7 +48,7 @@ A new `BondToken` is created for each [borrower](https://docs.porter.finance/por
 
 # Outstanding Design Decisions 
 ## Broker pattern vs token pattern
-We have the option of having the broker contract act as a middleman and handle the main functionality of the protocol (broker pattern) or we can implement this functionality on each of the different tokens themselves (token pattern)
+We have the option of having the broker contract act as a middleperson and handle the main functionality of the protocol (broker pattern) or we can implement this functionality on each of the different tokens themselves (token pattern)
 
 Do we have one broker contract that holds all the collateral, handles convertability, handles repayment, handles bond redemption for each of the bonds? Or should we implement that logic on the bond itself and limit the functionality of the broker to just deploying the bond tokens?
 
