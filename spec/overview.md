@@ -10,6 +10,32 @@ The main entry point into the Porter Protocol. Most interactions with Porter wil
 * Allowing bond redemption
 * Initiating bond auction
 
+### Collateral 
+Borrowes are able to depsoit any ERC20 token as collateral. Only a single collateral type is supported per bond.
+
+### Creating bond tokens
+A new ERC20 bondtoken is deployed that represents the debt owed by the borrower
+
+### Converability 
+If convertability in enabled for the bond, 
+Bondholders will have an option to redeem their bond tokens for the underlying collateral at a pre-defined ratio. 
+For example - when the bond is created the ratio may be 1 bond : .5. This gives the lenders equity upside where they can redeem their bonds for the underlying token if the collateral token goes up in price. 
+
+### Repayment
+This gives the ability for a borrower to repay their debt. Repaying unlocks their collateral and sets the bond state to `paid` 
+
+### Bond Redemption
+#### if repaid 
+Bonds can be redeemed for a pro-rata share of the repayment amount. 
+#### if defaulted
+Bonds can be redemmed for a pro-rata share of the collateral + repayment amount. 
+
+Bondholder tokens are not burnt on default - instead they are set to a `defaulted` state and are used to represent the debt still owed to the lenders.
+
+### Auction 
+Borrowers have the option to use an auction to sell their bonds. The borrower sets the parameters of the auction then a gnosis auction is created.
+
+
 ### [BondTokens](./bondToken.md)
 
 `BondTokens` represent [zero coupon bonds](https://docs.porter.finance/portal/intro-to-bonds/zero-coupon-bonds) that can be purchased by [lenders](https://docs.porter.finance/portal/protocol/lenders). They implement the standard EIP-20/ERC20 token methods as well as Porter speciic methods including:
@@ -34,6 +60,12 @@ https://github.com/compound-finance/compound-protocol/blob/master/contracts/CTok
 
 ## Allow multiple ways of selling bonds
 * Bonds should be decoupled from gnosis auction. Gnosis auction is just a mechanism for selling the bonds. They should be designed in a way where they could be sold directly to lenders - or through other means. 
+
+
+## Collateral types
+* Do we want to whitelist collateral addresses? Or all DAOs to use anything as collateral? I think anything. 
+* Should DAOs be able to deposit multiple collateral types per bond? @jordanmeyer (this may complicate convertability)
+
 
 ## No Orcales
 We are designing the protocol in a way that we can avoid price oracles
