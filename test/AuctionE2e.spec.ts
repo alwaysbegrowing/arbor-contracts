@@ -21,7 +21,9 @@ import type {
   Broker,
   BiddingToken,
 } from "../typechain";
-const EasyAuctionJson = require("../contracts/abi/EasyAuction.json");
+
+// import type { EasyAuction } from "../contracts/external/EasyAuction";
+const EasyAuctionJson = require("../contracts/external/EasyAuction.json");
 
 const GNOSIS_AUCTION_ADDRESS = {
   mainnet: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
@@ -41,7 +43,6 @@ describe("Auction", async () => {
   let collateralData: CollateralData;
 
   beforeEach(async () => {
-    // reset the chain if not forking
     await network.provider.request({
       method: "hardhat_reset",
       params: [
