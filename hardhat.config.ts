@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       mining: {
-        auto: false,
+        auto: true,
       },
       forking: {
         url: process.env.MAINNET_RPC_URL || "",
