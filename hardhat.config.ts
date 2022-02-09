@@ -39,12 +39,12 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       mining: {
-        auto: false,
+        auto: true,
       },
-      forking: {
-        url: process.env.MAINNET_RPC_URL || "",
-        blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || 14135757,
-      },
+      // forking: {
+      //   url: process.env.MAINNET_RPC_URL || "",
+      //   blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || 14135757,
+      // },
     },
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
