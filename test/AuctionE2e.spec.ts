@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber, Contract } from "ethers";
 
 import { ethers, network } from "hardhat";
 import "@nomiclabs/hardhat-ethers";
@@ -16,12 +16,12 @@ import {
 } from "./utilities";
 import { expect } from "chai";
 import type {
-  PorterBond as PorterBond,
-  CollateralToken as CollateralToken,
-  Broker as Broker,
-  EasyAuction as GnosisAuction,
-  BiddingToken as BiddingToken,
+  PorterBond,
+  CollateralToken,
+  Broker,
+  BiddingToken,
 } from "../typechain";
+const EasyAuctionJson = require("../contracts/abi/EasyAuction.json");
 
 const GNOSIS_AUCTION_ADDRESS = {
   mainnet: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
@@ -34,7 +34,7 @@ describe("Auction", async () => {
   // addresses of the bidders
   let bidders: SignerWithAddress[];
   let broker: Broker;
-  let gnosisAuction: GnosisAuction;
+  let gnosisAuction: Contract;
   let biddingToken: BiddingToken;
   let collateralToken: CollateralToken;
   let porterBond: PorterBond;
@@ -42,10 +42,6 @@ describe("Auction", async () => {
 
   beforeEach(async () => {
     // reset the chain if not forking
-    await network.provider.request({
-      method: "hardhat_reset",
-      params: [],
-    });
     collateralData = {
       collateralAddress: ethers.constants.AddressZero,
       collateralAmount: ethers.utils.parseEther("100"),
@@ -78,9 +74,10 @@ describe("Auction", async () => {
       ethers.utils.parseEther("100")
     )) as PorterBond;
 
-    const GnosisAuction = await ethers.getContractFactory("EasyAuction");
-    gnosisAuction = (await GnosisAuction.deploy()) as GnosisAuction;
-    // gnosisAuction = gnosisAuction.attach(GNOSIS_AUCTION_ADDRESS.mainnet);
+    gnosisAuction = await ethers.getContractAt(
+      EasyAuctionJson.abi,
+      GNOSIS_AUCTION_ADDRESS.mainnet
+    );
 
     const Broker = await ethers.getContractFactory("Broker");
     broker = (await Broker.deploy(gnosisAuction.address)) as Broker;

@@ -2,7 +2,7 @@ import { BigNumber, Contract, ContractTransaction, Event } from "ethers";
 import { ethers } from "hardhat";
 import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BiddingToken, EasyAuction as GnosisAuction } from "../typechain";
+import { BiddingToken } from "../typechain";
 
 export interface Price {
   priceNumerator: BigNumber;
@@ -109,7 +109,7 @@ export const queueStartElement =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 export async function placeOrders(
-  gnosisAuction: GnosisAuction,
+  gnosisAuction: Contract,
   sellOrders: Order[],
   auctionId: BigNumber,
   bidders: SignerWithAddress[]
@@ -129,7 +129,7 @@ export async function placeOrders(
 }
 
 export const createTokensAndMintAndApprove = async (
-  gnosisAuction: GnosisAuction,
+  gnosisAuction: Contract,
   biddingToken: BiddingToken,
   owner: SignerWithAddress,
   bidders: SignerWithAddress[]
@@ -151,7 +151,7 @@ export async function increaseTime(duration: number): Promise<void> {
 }
 
 export const closeAuction = async (
-  gnosisAuction: GnosisAuction,
+  gnosisAuction: Contract,
   auctionId: BigNumber
 ): Promise<void> => {
   const timeRemaining = (
