@@ -1,9 +1,9 @@
 import * as dotenv from "dotenv";
 
 import { HardhatUserConfig, task } from "hardhat/config";
-import "@nomiclabs/hardhat-etherscan";
-import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-waffle";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 
@@ -56,9 +56,6 @@ const config: HardhatUserConfig = {
     enabled: process.env.GAS_REPORTER_ENABLED !== undefined,
     currency: "USD",
     coinmarketcap: process.env.GAS_REPORTER_COINMARKETCAP_API_KEY || "",
-  },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
   },
 };
 

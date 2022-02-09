@@ -5,6 +5,14 @@ module.exports = {
     mocha: true,
     node: true,
   },
+  globals: {
+    artifacts: false,
+    contract: false,
+    assert: false,
+    web3: false,
+    usePlugin: false,
+    extendEnvironment: false,
+  },
   plugins: ["@typescript-eslint"],
   extends: [
     "standard",
