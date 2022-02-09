@@ -45,4 +45,4 @@ Our protocol avoids using any pricing oracles to reduce the effect of price mani
 
 Upon a default - bondholders are able to redeem their bond tokens for a pro-rata share of the collateral & repayment amount.
 
-Bondholders will also recieve a defaulted bond token that represents the unpaid debt that the issuer owes the bondholder. 
+Bondholders will also receive a defaulted bond token that represents the unpaid debt that the issuer owes the bondholder. 
