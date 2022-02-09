@@ -61,11 +61,8 @@ https://github.com/compound-finance/compound-protocol/blob/master/contracts/CTok
 ## Allow multiple ways of selling bonds
 * Bonds should be decoupled from gnosis auction. Gnosis auction is just a mechanism for selling the bonds. They should be designed in a way where they could be sold directly to lenders - or through other means. 
 
-
-## Collateral types
-* Do we want to whitelist collateral addresses? Or all DAOs to use anything as collateral? I think anything. 
-* Should DAOs be able to deposit multiple collateral types per bond? @jordanmeyer (this may complicate Convertibility)
-
-
 ## No Oracles
 We are designing the protocol in a way that we can avoid price oracles
+
+### Alternatives considered 
+* Supporting multiple collateral types & allow-listing collateral tokens (https://github.com/porter-finance/v1-core/issues/28)
