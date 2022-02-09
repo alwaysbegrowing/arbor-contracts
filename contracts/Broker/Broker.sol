@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.9;
 pragma experimental ABIEncoderV2;
 
 // --- Import statements ---
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 //import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./PorterBond.sol";
@@ -163,7 +163,7 @@ contract Broker is
             bondData.maturityDate
         );
         require(
-            now >= bondData.maturityDate,
+            block.timestamp >= bondData.maturityDate,
             "redeemCollateralFromAuction/invalid"
         );
         // Set collateral to zero here to prevent double redemption
