@@ -42,6 +42,17 @@ describe("Auction", async () => {
 
   beforeEach(async () => {
     // reset the chain if not forking
+    await network.provider.request({
+      method: "hardhat_reset",
+      params: [
+        {
+          forking: {
+            jsonRpcUrl: process.env.MAINNET_RPC_URL,
+            blockNumber: Number(process.env.FORK_BLOCK_NUMBER),
+          },
+        },
+      ],
+    });
     collateralData = {
       collateralAddress: ethers.constants.AddressZero,
       collateralAmount: ethers.utils.parseEther("100"),

@@ -42,8 +42,8 @@ const config: HardhatUserConfig = {
         auto: false,
       },
       forking: {
-        url: process.env.ALCHEMY_API_URL || "",
-        blockNumber: 14135757,
+        url: process.env.MAINNET_RPC_URL || "",
+        blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || 14135757,
       },
     },
     ropsten: {
