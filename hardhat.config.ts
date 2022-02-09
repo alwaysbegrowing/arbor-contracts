@@ -23,8 +23,29 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.4",
+  solidity: {
+    compilers: [
+      {
+        version: "0.5.5",
+      },
+      {
+        version: "0.6.12",
+      },
+      {
+        version: "0.8.9",
+      },
+    ],
+  },
   networks: {
+    hardhat: {
+      mining: {
+        auto: true,
+      },
+      // forking: {
+      //   url: process.env.MAINNET_RPC_URL || "",
+      //   blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || 14135757,
+      // },
+    },
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
       accounts:
@@ -32,8 +53,9 @@ const config: HardhatUserConfig = {
     },
   },
   gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
+    enabled: process.env.GAS_REPORTER_ENABLED !== undefined,
     currency: "USD",
+    coinmarketcap: process.env.GAS_REPORTER_COINMARKETCAP_API_KEY || "",
   },
 };
 
