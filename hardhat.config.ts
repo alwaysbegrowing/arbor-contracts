@@ -32,7 +32,7 @@ const config: HardhatUserConfig = {
         version: "0.6.12",
       },
       {
-        version: "0.8.4",
+        version: "0.8.9",
       },
     ],
   },
@@ -41,10 +41,10 @@ const config: HardhatUserConfig = {
       mining: {
         auto: false,
       },
-      // forking: {
-      //   url: process.env.ALCHEMY_API_URL || "",
-      //   blockNumber: 14135757,
-      // },
+      forking: {
+        url: process.env.ALCHEMY_API_URL || "",
+        blockNumber: 14135757,
+      },
     },
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
