@@ -1,3 +1,50 @@
+
+# Collateral
+Borrower would have to allow our contract to withdrawl the collateral by calling `approve` on the ERC20 contract that they want to use. (We give this capability through our UI)
+`deposit` Method is called to deposit collateral for a specific bond. Only a single token type is supported per bond. 
+Parameters
+```
+address bond
+address collateral
+uint256 amount
+```
+
+The borrower should be able to withdrawl their collateral under the following conditions:
+* Bond is not convertable and the principle + interest amount has been repaid. (Make sure flash loans are possible)
+* Bond is covertable, principle + interest repaid, currentDate > maturity date
+
+The borrower should not be able to withdrawl their collateral under the following conditions:
+* Bond is convertable and the current date < maturityDate 
+  
+In the case of a default - there needs to be a way for bondholders to get a pro rata share of this collateral. This will probably be done via a `redeem` method - the same one bondholders would use on a non-defaulted bond to get their share of the `repayment` amount. 
+
+# Repayment
+To repay - will the borrower have had to call `approve` on the token they are repaying in?
+`repay` method - (onlyBondOwner?) This allows the borrower to repay part of their debt, or the full amount. This method will update the `paidAmount` state variable, and unlock their collateral if the above collateral conditions are met. 
+```
+address bond
+uint256 amount
+```
+
+# Convertibility 
+When the bond is created - a convertablity ratio from bonds:collateral token is set. If convertability is enabled - bondholders will have the option of converting their bonds at that predefined ratio at any time. 
+Does bondholder have to approve our contract to withdraw and conver the bonds? 
+`convert` - this withdraws the given amount of bondtokens, burns them, updates the current amount of collateral, looks at the convertibility ratio, and sends the collateral token to the caller. 
+```
+address bond
+uint256 amount
+```
+
+# Redemption
+Depending on the current conditions - bondtokens can either be redeemed for a pro-rata share of the repayment amount, or for the underlying collateral. 
+`redeem` - this looks at how many bondtokens they have, the current state of the bond, then decides what to do. If the bond was repaid - the users pro rate share of their (bond tokens sent / total bond tokens) * repayment amount is calculated. Then the users bonds are burned and they are sent their share of the repayment amount. 
+
+If the bond was defaulted - this calculates their pro rata share then sends them their share of the collateral + any repaid instead. Their bonds are also not burned in this case - and can be used as proof of the debt owed this them in a follow up lawsuit etc. 
+```
+address bond
+uint256 amount
+``` 
+
 # Auction
 The auction contract adapts the [EasyAuction](https://github.com/gnosis/ido-contracts#easyauction) contract from Gnosis. This contract sets up, accepts bids, and pays out using a [batch auction mechanism](https://github.com/gnosis/ido-contracts#the-batch-auction-mechanism). The auction contract tracks all auctions (current, and past) via an `auctionId` and stores all relevant auction data within a `auctionData` mapping. 
 
