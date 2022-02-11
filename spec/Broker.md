@@ -21,7 +21,7 @@ For convertible bonds, at minimum, the amount of collateral required is the tota
 In the case of a default - there needs to be a way for bondholders to get a pro rata share of this collateral. This will probably be done via a `redeem` method - the same one bondholders would use on a non-defaulted bond to get their share of the `repayment` amount. 
 
 # Repayment
-To repay - will the borrower have had to call `approve` on the token they are repaying in?
+To repay -  the borrower have to call `approve` on the token they are repaying in
 `repay` method - (onlyBondOwner?) This allows the borrower to repay part of their debt, or the full amount. This method will update the `paidAmount` state variable, and unlock their collateral if the above collateral conditions are met. 
 ```
 address bond
@@ -30,7 +30,7 @@ uint256 amount
 
 # Convertibility 
 When the bond is created - a convertablity ratio from bonds:collateral token is set. If convertability is enabled - bondholders will have the option of converting their bonds at that predefined ratio at any time before bond maturity.
-Does bondholder have to approve our contract to withdraw and convert the bonds? 
+The bondholder has to approve our contract to withdraw and convert the bonds? (Maybe not if we use ERC777 or a newer ERC20 standard?) 
 `convert` - this withdraws the given amount of bondtokens, burns them, updates the current amount of collateral, looks at the convertibility ratio, and sends the collateral token to the caller. 
 ```
 address bond
