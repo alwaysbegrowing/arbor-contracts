@@ -172,3 +172,11 @@ export function encodeOrder(order: Order): string {
     order.sellAmount.toHexString().slice(2).padStart(24, "0")
   );
 }
+
+export async function getEventArgumentsFromTransaction(
+  tx: ContractTransaction,
+  eventName: string
+): Promise<any> {
+  const receipt = await tx.wait();
+  return receipt?.events?.find((e: Event) => e.event === eventName)?.args;
+}
