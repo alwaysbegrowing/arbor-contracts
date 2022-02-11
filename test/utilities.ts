@@ -62,6 +62,7 @@ export const addDaysToNow = (days: number = 0) => {
     Math.floor(new Date().getTime() / 1000) + days * 24 * 60 * 60
   );
 };
+
 export const createAuctionWithDefaults = async (
   signer: SignerWithAddress,
   biddingToken: Contract,
@@ -75,12 +76,42 @@ export const createAuctionWithDefaults = async (
     _auctionedSellAmount: ethers.utils.parseEther("100"),
     _minBuyAmount: ethers.utils.parseEther("1"),
     minimumBiddingAmountPerOrder: ethers.utils.parseEther(".01"),
-    minFundingThreshold: ethers.utils.parseEther("1"),
+    minFundingThreshold: ethers.utils.parseEther("30"),
     isAtomicClosureAllowed: false,
     accessManagerContract: ethers.constants.AddressZero,
     accessManagerContractData: ethers.utils.arrayify("0x00"),
   };
-  console.log("auctionData", auctionData);
+  const bondData: BondData = {
+    bondContract: ethers.constants.AddressZero,
+    maturityDate: addDaysToNow(3),
+    maturityValue: BigNumber.from(1),
+  };
+
+  // act
+  const tx = await broker
+    .connect(signer)
+    .createAuction(auctionData, bondData, collateralData);
+
+  await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
+
+  const receipt = await tx.wait();
+  const { auctionId, porterBondAddress } = receipt.events.find(
+    (e: Event) => e.event === "AuctionCreated"
+  )?.args;
+
+  return {
+    auctionId,
+    porterBondAddress,
+  };
+};
+
+export const createAuction = async (
+  auctionData: AuctionData,
+  signer: SignerWithAddress,
+  biddingToken: Contract,
+  collateralData: CollateralData,
+  broker: Contract
+) => {
   const bondData: BondData = {
     bondContract: ethers.constants.AddressZero,
     maturityDate: addDaysToNow(3),
@@ -116,8 +147,9 @@ export async function placeOrders(
 ): Promise<void> {
   for (let i = 0; i < sellOrders.length; i++) {
     const sellOrder = sellOrders[i];
+    console.log("e2e/placeOrders", sellOrder);
     await gnosisAuction
-      .connect(bidders[sellOrder.userId.toNumber() - 2])
+      .connect(bidders[0])
       .placeSellOrders(
         auctionId,
         [sellOrder.buyAmount],
