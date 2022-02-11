@@ -16,7 +16,7 @@ import {
 } from "./utilities";
 import type { CollateralToken, Broker, BiddingToken } from "../typechain";
 
-const EasyAuctionJson = require("../contracts/external/EasyAuction.json");
+const EasyAuctionJSON = require("../contracts/external/EasyAuction.json");
 
 const GNOSIS_AUCTION_ADDRESS = {
   mainnet: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
@@ -73,7 +73,7 @@ describe("Auction", async () => {
 
     // The tokens minted here do not matter. The Porter Auction will mint the porterBond
     gnosisAuction = await ethers.getContractAt(
-      EasyAuctionJson.abi,
+      EasyAuctionJSON.abi,
       GNOSIS_AUCTION_ADDRESS.mainnet
     );
 
