@@ -29,7 +29,7 @@ uint256 amount
 ```
 
 # Convertibility 
-When the bond is created - a convertablity ratio from bonds:collateral token is set. If convertability is enabled - bondholders will have the option of converting their bonds at that predefined ratio at any time. 
+When the bond is created - a convertablity ratio from bonds:collateral token is set. If convertability is enabled - bondholders will have the option of converting their bonds at that predefined ratio at any time before bond maturity.
 Does bondholder have to approve our contract to withdraw and convert the bonds? 
 `convert` - this withdraws the given amount of bondtokens, burns them, updates the current amount of collateral, looks at the convertibility ratio, and sends the collateral token to the caller. 
 ```
