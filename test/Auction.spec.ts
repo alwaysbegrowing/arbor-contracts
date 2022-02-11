@@ -1,8 +1,8 @@
 import { BigNumber, Contract } from "ethers";
 
 import { ethers, network } from "hardhat";
-import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { expect } from "chai";
 import {
   addDaysToNow,
   AuctionData,
@@ -14,10 +14,8 @@ import {
   getEventArgumentsFromTransaction,
   placeOrders,
 } from "./utilities";
-import { expect } from "chai";
 import type { CollateralToken, Broker, BiddingToken } from "../typechain";
 
-// import type { EasyAuction } from "../contracts/external/EasyAuction";
 const EasyAuctionJson = require("../contracts/external/EasyAuction.json");
 
 const GNOSIS_AUCTION_ADDRESS = {
@@ -38,12 +36,6 @@ describe("Auction", async () => {
   let auctionId: number;
   let initialUserId: number;
 
-/*
-
-_minBuyAmounts[i].mul(buyAmountOfInitialAuctionOrder) <
-  sellAmountOfInitialAuctionOrder.mul(_sellAmounts[i]),
-
-  */
   beforeEach(async () => {
     await network.provider.request({
       method: "hardhat_reset",
@@ -77,7 +69,6 @@ _minBuyAmounts[i].mul(buyAmountOfInitialAuctionOrder) <
       "CT",
       collateralData.collateralAmount
     )) as CollateralToken;
-    // set collateral address
     collateralData.collateralAddress = collateralToken.address;
 
     // The tokens minted here do not matter. The Porter Auction will mint the porterBond
@@ -88,27 +79,7 @@ _minBuyAmounts[i].mul(buyAmountOfInitialAuctionOrder) <
 
     const Broker = await ethers.getContractFactory("Broker");
     broker = (await Broker.deploy(gnosisAuction.address)) as Broker;
-    // ----------------------------------------------------
-    //                                                    |
-    // console.log("e2e/debug info"); //                  |
-    //                                                    |
-    // ----------------------------------------------------
 
-    // console.log({
-    //   porter: owner.address,
-    //   auctioneer: auctioneerSigner.address,
-    //   [`bidders(${bidders.length})`]: bidders.map((b) => b.address),
-    //   collateralTokenAddress: collateralToken.address,
-    //   biddingTokenAddress: biddingToken.address,
-    //   brokerAddress: broker.address,
-    //   gnosisAuctionAddress: GNOSIS_AUCTION_ADDRESS.mainnet,
-    // });
-
-    // ----------------------------------------------------
-    //                                                    |
-    // console.log("e2e/set up collateral"); //           |
-    //                                                    |
-    // ----------------------------------------------------
     // from auctioneerSigner, approve the value of collateral to the broker contract
     await collateralToken
       .connect(auctioneerSigner)
@@ -160,28 +131,8 @@ _minBuyAmounts[i].mul(buyAmountOfInitialAuctionOrder) <
       "NewUser"
     ));
   });
-  xit("places orders case 1", async () => {
-    const sellOrders = [
-      {
-        sellAmount: ethers.utils.parseEther("50"),
-        buyAmount: ethers.utils.parseEther("1"),
-        userId: BigNumber.from(initialUserId),
-      },
-    ];
-    await placeOrders(
-      gnosisAuction,
-      sellOrders,
-      BigNumber.from(auctionId),
-      bidders
-    );
-    await closeAuction(gnosisAuction, BigNumber.from(auctionId));
-    await gnosisAuction.settleAuction(auctionId);
-    console.log(await gnosisAuction.auctionData(auctionId));
-    const clearingOrder = (await gnosisAuction.auctionData(auctionId))
-      .clearingPriceOrder;
-    expect(clearingOrder).to.be.eq(encodeOrder(sellOrders[0]));
-  });
-  it("places orders case 2", async () => {
+
+  it("places orders", async () => {
     const sellOrders = [
       {
         sellAmount: ethers.utils.parseEther("50"),
