@@ -1,5 +1,21 @@
-//SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity ^0.8.9;
+/*SPDX-License-Identifier: AGPL-3.0-or-later
+┌────────────┐ ┌────────────┐ ┌────────────┐  ┌────────────┐ ┌────────────┐ ┌────────────┐ 
+│            │ │            │ │            │  │            │ │            │ │            │ 
+│            │ │            │ │            │  │            │ │            │ │            │ 
+│            │ │            │ │            │  │            │ │            │ │            │ 
+│            │ │            │ │            │  │            │ │            │ │            │ 
+│            │ │            │ │            │  │            │ │            │ │            │ 
+├──────┬─────┘ │            │ ├────┬────┬──┴┐ └───┬────┬───┘ ├────┬───────┘ ├────┬────┬──┴┐
+│      │       │            │ │    │    │   │     │    │     │    │         │    │    │   │
+│      │       │            │ │    │    │   │     │    │     │    ├───────┐ │    │    │   │
+│      │       │            │ │    │    │   │     │    │     │    │       │ │    │    │   │
+│      │       │            │ │    │    │   │     │    │     │    ├───────┘ │    │    │   │
+│      │       │            │ │    │    │   │     │    │     │    │         │    │    │   │
+│      │       │            │ │    │    │   │     │    │     │    ├───────┐ │    │    │   │
+│      │       │            │ │    │    │   │     │    │     │    │       │ │    │    │   │
+└──────┘       └────────────┘ └────┘    └───┘     └────┘     └────┴───────┘ └────┘    └───┘
+ */
+pragma solidity 0.8.9;
 pragma experimental ABIEncoderV2;
 
 // --- Import statements ---
@@ -88,7 +104,7 @@ contract Broker is Ownable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
   // --- Functions ---
-  constructor(address gnosisAuctionAddress) public {
+  constructor(address gnosisAuctionAddress) {
     console.log(
       "Auction constructor\n\tauction address: %s",
       gnosisAuctionAddress
@@ -155,13 +171,13 @@ contract Broker is Ownable, ReentrancyGuard {
     );
     require(
       block.timestamp >= bondData.maturityDate,
-      "redeemCollateralFromAuction/invalid"
+      "redeemCollateralFromAuction/date"
     );
     // Set collateral to zero here to prevent double redemption
     collateralInAuction[auctionId][collateralAddress] = 0;
     require(
       collateralToken.transfer(msg.sender, collateralAmount) == true,
-      "redeemCollateralFromAuction/transfer"
+      "redeemCollateralFromAuction/xfer"
     );
 
     emit CollateralRedeemed(
@@ -192,12 +208,12 @@ contract Broker is Ownable, ReentrancyGuard {
     require(
       collateralInContract[msg.sender][collateralData.collateralAddress] >=
         collateralData.collateralAmount,
-      "createAuction/not-enough-collateral"
+      "createAuction/insuff-collateral"
     );
     require(
       bondData.maturityDate >= block.timestamp &&
         bondData.maturityDate >= auctionData.auctionEndDate,
-      "createAuction/invalid-maturity-date"
+      "createAuction/maturity-date"
     );
 
     // Remove collateral from contract mapping before creating the auction

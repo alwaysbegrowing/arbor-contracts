@@ -28,7 +28,7 @@ const EasyAuctionJson = require("../contracts/external/EasyAuction.json");
 const GNOSIS_AUCTION_ADDRESS = {
   mainnet: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
 };
-describe("Auction", async () => {
+xdescribe("Auction", async () => {
   // default deployer address of contracts
   let owner: SignerWithAddress;
   // address of the example DAO which configures and runs the auction
@@ -207,20 +207,16 @@ describe("Auction", async () => {
       await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
 
       // create sell orders for all bidders addresses
-      const nrTests = bidders.length;
-      for (let i = 0; i < nrTests; i++) {
-        const sellOrder = [
-          {
-            sellAmount: ethers.utils
-              .parseEther("10")
-              .div(BigNumber.from(nrTests - 2)),
-            buyAmount: ethers.utils.parseEther("1"),
-            userId: BigNumber.from(i + 2),
-          },
-        ];
-        // add all transactions
-        await placeOrders(gnosisAuction, sellOrder, auctionId, bidders);
-      }
+      const userId = (
+        await (await gnosisAuction.getUserId(bidders[0].address)).wait()
+      ).events[0]?.args?.userId;
+      const sellOrder = {
+        sellAmount: ethers.utils.parseEther("50"),
+        buyAmount: ethers.utils.parseEther("1"),
+        userId: BigNumber.from(userId),
+      };
+
+      await placeOrders(gnosisAuction, [sellOrder], auctionId, bidders);
       await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
 
       // ----------------------------------------------------
@@ -262,6 +258,9 @@ describe("Auction", async () => {
       //                                                    |
       // ----------------------------------------------------
 
+      console.log({ auctionId }, await gnosisAuction.auctionData(auctionId));
+      console.log(await (await ethers.provider.getBlock("latest")).timestamp);
+
       // TODO: not sure what to expect here, probably something with getting the settlement amount
       // and checking that each bidder has the correct amount of tokens for now
       // confirm that there is a change in porterBonds
@@ -271,20 +270,11 @@ describe("Auction", async () => {
         await porterBond.attach(porterBondAddress).balanceOf(bidders[0].address)
       ).to.be.eq(0);
 
-      for (let i = 0; i < nrTests; i++) {
-        const sellOrder = {
-          sellAmount: ethers.utils
-            .parseEther("10")
-            .div(BigNumber.from(nrTests - 2)),
-          buyAmount: ethers.utils.parseEther("1"),
-          userId: BigNumber.from(i + 2),
-        };
-        const claimTx = await gnosisAuction.claimFromParticipantOrder(
-          auctionId,
-          [encodeOrder(sellOrder)]
-        );
-        expect(claimTx).to.emit(gnosisAuction, "ClaimedFromOrder");
-      }
+      console.log("e2e/claimOrder", sellOrder);
+      const claimTx = await gnosisAuction.claimFromParticipantOrder(auctionId, [
+        encodeOrder(sellOrder),
+      ]);
+      expect(claimTx).to.emit(gnosisAuction, "ClaimedFromOrder");
 
       await mineBlock(); // ⛏⛏⛏ Mining... ⛏⛏⛏
 
