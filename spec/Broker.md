@@ -9,12 +9,14 @@ address collateral
 uint256 amount
 ```
 
-The borrower should be able to withdraw their collateral under the following conditions:
-* Bond is not convertable and the principle + interest amount has been repaid. (Make sure flash loans are possible)
-* Bond is convertable, principle + interest repaid, currentDate > maturity date
+For non-convertible bonds, a borrower should:
+* Be able to withdraw their collateral if the principle + interest amount has been repaid. (Make sure flash loans are possible).
+* Not be able to withdraw collateral if the principle + interest has not been repaid.
 
-The borrower should not be able to withdraw their collateral under the following conditions:
-* Bond is convertable and the current date < maturityDate 
+For convertible bonds, at minimum, the amount of collateral required is the total amount of bonds multiplied by the convertibility ratio. See [Convertibility](#Convertibility). A borrower may include collateral in addition to this amount. A borrower should
+* Be able to withdraw the portion, if one exists, of the collateral that is not being used to cover the convertibility of the bond if the principle + interest has been repaid and the current date < maturityDate.
+* Be able to withdraw the full amount of collateral if the principle + interest has been repaid and the current date > maturityDate
+* Not be able to withdraw collateral if the principle + interest has not been repaid.
   
 In the case of a default - there needs to be a way for bondholders to get a pro rata share of this collateral. This will probably be done via a `redeem` method - the same one bondholders would use on a non-defaulted bond to get their share of the `repayment` amount. 
 
