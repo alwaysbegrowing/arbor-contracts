@@ -72,10 +72,12 @@ describe("Auction", async () => {
     collateralData.collateralAddress = collateralToken.address;
 
     // The tokens minted here do not matter. The Porter Auction will mint the porterBond
-    gnosisAuction = await ethers.getContractAt(
+    const GnosisAuction = await ethers.getContractFactory(
       EasyAuctionJSON.abi,
-      GNOSIS_AUCTION_ADDRESS.mainnet
+      EasyAuctionJSON.bytecode,
+      owner
     );
+    gnosisAuction = GnosisAuction.attach(GNOSIS_AUCTION_ADDRESS.mainnet);
 
     const Broker = await ethers.getContractFactory("Broker");
     broker = (await Broker.deploy(gnosisAuction.address)) as Broker;

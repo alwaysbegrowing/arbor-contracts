@@ -1,4 +1,5 @@
 import { BigNumber, Contract, ContractTransaction, Event } from "ethers";
+import { use } from "chai";
 import { ethers } from "hardhat";
 import "@nomiclabs/hardhat-ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -211,4 +212,23 @@ export async function getEventArgumentsFromTransaction(
 ): Promise<any> {
   const receipt = await tx.wait();
   return receipt?.events?.find((e: Event) => e.event === eventName)?.args;
+}
+
+declare global {
+  export namespace Chai {
+    // eslint-disable-next-line no-unused-vars
+    interface Assertion {
+      revertedWithArgs(errorName: string, ...args: any): Promise<void>;
+    }
+  }
+}
+export async function useCustomErrorMatcher() {
+  use(function (chai) {
+    chai.Assertion.addMethod("revertedWithArgs", function (errorName, ...args) {
+      const expected = `${errorName}(${args
+        .map((arg) => JSON.stringify(arg))
+        .join(", ")})`;
+      new chai.Assertion(this._obj).to.be.revertedWith(expected);
+    });
+  });
 }
