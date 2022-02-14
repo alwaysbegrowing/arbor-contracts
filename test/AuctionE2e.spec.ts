@@ -28,7 +28,7 @@ const EasyAuctionJson = require("../contracts/external/EasyAuction.json");
 const GNOSIS_AUCTION_ADDRESS = {
   mainnet: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
 };
-xdescribe("Auction", async () => {
+describe("Auction", async () => {
   // default deployer address of contracts
   let owner: SignerWithAddress;
   // address of the example DAO which configures and runs the auction

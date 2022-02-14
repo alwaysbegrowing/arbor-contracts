@@ -100,6 +100,30 @@ contract Broker is Ownable, ReentrancyGuard {
     uint256 collateralAmount
   );
 
+  // --- Errors ---
+  error InadequateCollateralBalance(
+    address collateralAddress,
+    uint256 collateralAmount
+  );
+
+  error MaturityDateNotReached(uint256 blockTimestamp, uint256 maturityDate);
+
+  error TransferCollateralFailed();
+
+  error InsufficientCollateralInContract(
+    address collateralAddress,
+    uint256 collateralAmount
+  );
+
+  error InvalidMaturityDate(uint256 maturityDate, uint256 auctionEndDate);
+
+  error AuctioningTokenTransferFail(
+    address auctioningTokenAddress,
+    uint256 auctionedSellAmount
+  );
+
+  error NonZeroAuctionFee();
+
   // --- Modifiers ---
   using SafeERC20 for IERC20;
 
@@ -118,15 +142,14 @@ contract Broker is Ownable, ReentrancyGuard {
   /// @param collateralData is a struct containing the address of the collateral and the value of the collateral
   function depositCollateral(CollateralData memory collateralData) external {
     IERC20 collateralToken = CollateralToken(collateralData.collateralAddress);
-    console.log(
-      "Broker/depositCollateral\n\taddress: %s\n\tamount: %s",
-      collateralData.collateralAddress,
-      collateralData.collateralAmount
-    );
-    require(
-      collateralToken.balanceOf(msg.sender) >= collateralData.collateralAmount,
-      "depositCollateral/inadequate"
-    );
+    if (
+      collateralToken.balanceOf(msg.sender) < collateralData.collateralAmount
+    ) {
+      revert InadequateCollateralBalance(
+        collateralData.collateralAddress,
+        collateralData.collateralAmount
+      );
+    }
     collateralToken.safeTransferFrom(
       msg.sender,
       address(this),
@@ -158,27 +181,18 @@ contract Broker is Ownable, ReentrancyGuard {
     uint256 collateralAmount = collateralInAuction[auctionId][
       collateralAddress
     ];
-    console.log(
-      "Broker/redeemCollateralFromAuction\n\tauctionId: %s\n\taddress: %s\n\tamount: %s",
-      auctionId,
-      collateralAddress,
-      collateralAmount
-    );
+
     BondData memory bondData = auctionToBondData[auctionId];
-    console.log(
-      "Broker/redeemCollateralFromAuction\n\tmaturitDate: %s",
-      bondData.maturityDate
-    );
-    require(
-      block.timestamp >= bondData.maturityDate,
-      "redeemCollateralFromAuction/date"
-    );
+
+    if (block.timestamp < bondData.maturityDate) {
+      revert MaturityDateNotReached(block.timestamp, bondData.maturityDate);
+    }
+
     // Set collateral to zero here to prevent double redemption
     collateralInAuction[auctionId][collateralAddress] = 0;
-    require(
-      collateralToken.transfer(msg.sender, collateralAmount) == true,
-      "redeemCollateralFromAuction/xfer"
-    );
+    if (!collateralToken.transfer(msg.sender, collateralAmount)) {
+      revert TransferCollateralFailed();
+    }
 
     emit CollateralRedeemed(
       msg.sender,
@@ -201,20 +215,29 @@ contract Broker is Ownable, ReentrancyGuard {
     BondData memory bondData,
     CollateralData memory collateralData
   ) external returns (uint256 auctionId) {
-    console.log("Broker/createAuction");
     // only create auction if there is no fee (will need to redeploy contract in this case)
     // NOTE: To be more flexible, a possibly non-zero argument can be passed and checked against the auction fee
-    require(gnosisAuction.feeNumerator() == 0, "createAuction/non-zero-fee");
-    require(
-      collateralInContract[msg.sender][collateralData.collateralAddress] >=
-        collateralData.collateralAmount,
-      "createAuction/insuff-collateral"
-    );
-    require(
-      bondData.maturityDate >= block.timestamp &&
-        bondData.maturityDate >= auctionData.auctionEndDate,
-      "createAuction/maturity-date"
-    );
+    if (gnosisAuction.feeNumerator() > 0) {
+      revert NonZeroAuctionFee();
+    }
+    if (
+      collateralInContract[msg.sender][collateralData.collateralAddress] <
+      collateralData.collateralAmount
+    ) {
+      revert InsufficientCollateralInContract(
+        collateralData.collateralAddress,
+        collateralData.collateralAmount
+      );
+    }
+    if (
+      bondData.maturityDate < block.timestamp ||
+      bondData.maturityDate < auctionData.auctionEndDate
+    ) {
+      revert InvalidMaturityDate(
+        bondData.maturityDate,
+        auctionData.auctionEndDate
+      );
+    }
 
     // Remove collateral from contract mapping before creating the auction
     collateralInContract[msg.sender][
@@ -230,13 +253,17 @@ contract Broker is Ownable, ReentrancyGuard {
     );
 
     // Approve the auction to transfer all the tokens
-    require(
-      auctioningToken.approve(
+    if (
+      !auctioningToken.approve(
         address(gnosisAuction),
         auctionData._auctionedSellAmount
-      ) == true,
-      "initiateAuction/approve-failed"
-    );
+      )
+    ) {
+      revert AuctioningTokenTransferFail(
+        address(auctioningToken),
+        auctionData._auctionedSellAmount
+      );
+    }
 
     auctionId = initiateAuction(auctionData, auctioningToken);
 
