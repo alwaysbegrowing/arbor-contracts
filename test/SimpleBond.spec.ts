@@ -1,14 +1,14 @@
 import { expect } from "chai";
+import { BondFactoryClone as BondFactoryCloneType } from "../typechain";
 import { SimpleBond as SimpleBondType } from "../typechain";
+import { getEventArgumentsFromTransaction } from "./utilities";
 
 // https://ethereum-waffle.readthedocs.io/en/latest/fixtures.html
 // import from waffle since we are using hardhat: https://hardhat.org/plugins/nomiclabs-hardhat-waffle.html#environment-extensions
 const { ethers, waffle } = require("hardhat");
-const { loadFixture, deployContract } = waffle;
+const { loadFixture } = waffle;
 
-const SimpleBond = require("../artifacts/contracts/SimpleBond.sol/SimpleBond.json");
-
-describe("SimpleBond", async () => {
+describe("BondFactoryClone", async () => {
   // will need updating from the contract if the enum changes
   const BondStanding = {
     GOOD: 0,
@@ -32,34 +32,53 @@ describe("SimpleBond", async () => {
   const name = "My Token";
   const symbol = "MTKN";
   let bond: SimpleBondType;
-  let initialAccount: any;
+  let ownerAddress: string;
 
   // no args because of gh issue:
   // https://github.com/nomiclabs/hardhat/issues/849#issuecomment-860576796
   async function fixture() {
-    const [wallet, other] = await ethers.getSigners();
-    bond = await deployContract(wallet, SimpleBond, [
+    const BondFactoryClone = await ethers.getContractFactory(
+      "BondFactoryClone"
+    );
+    const factory = (await BondFactoryClone.deploy()) as BondFactoryCloneType;
+    const [fixtureOwner, other] = await ethers.getSigners();
+
+    const tx1 = await factory.createBond(
       name,
       symbol,
       totalBondSupply,
       maturityDate,
-    ]);
-    return { bond, wallet, other };
+      fixtureOwner.address
+    );
+
+    const [newBondAddress] = await getEventArgumentsFromTransaction(
+      tx1,
+      "BondCreated"
+    );
+
+    const fixtureBond = await ethers.getContractAt(
+      "SimpleBond",
+      newBondAddress,
+      fixtureOwner
+    );
+
+    // Handing out some shares, should be done on the Auction level
+    await fixtureBond.transfer(other.address, bondShares);
+
+    return { fixtureBond, fixtureOwner, other };
   }
 
   beforeEach(async () => {
-    const { wallet, other } = await loadFixture(fixture);
+    const { fixtureOwner, fixtureBond, other } = await loadFixture(fixture);
+    ownerAddress = fixtureOwner.address;
+    payToAddress = other.address;
     payToAccount = other;
-    initialAccount = await wallet.getAddress();
-    payToAddress = await other.getAddress();
-
-    // Handing out some shares, should be done on the Auction level
-    await bond.transfer(payToAddress, bondShares);
+    bond = fixtureBond;
   });
 
   describe("basic contract function", async () => {
     it("should have total supply less bond issuance in owner account", async function () {
-      expect(await bond.balanceOf(initialAccount)).to.be.equal(
+      expect(await bond.balanceOf(ownerAddress)).to.be.equal(
         totalBondSupply - bondShares
       );
 
@@ -67,7 +86,7 @@ describe("SimpleBond", async () => {
     });
 
     it("should be owner", async function () {
-      expect(await bond.owner()).to.be.equal(initialAccount);
+      expect(await bond.owner()).to.be.equal(ownerAddress);
     });
 
     it("should return total value for an account", async function () {

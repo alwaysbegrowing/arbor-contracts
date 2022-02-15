@@ -1,9 +1,18 @@
-pragma solidity ^0.8.0;
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+// SPDX-License-Identifier: AGPL
+pragma solidity 0.8.9;
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract SimpleBond is ERC20Burnable, Ownable, ReentrancyGuard {
+contract SimpleBond is
+  Initializable,
+  ERC20Upgradeable,
+  ERC20BurnableUpgradeable,
+  OwnableUpgradeable,
+  ReentrancyGuard
+{
+  /// @notice this would go into default if maturityDate passes and the loan contract has not been paid back
   /// @notice to be set from the auction
   enum BondStanding {
     // the auction completed
@@ -23,22 +32,26 @@ contract SimpleBond is ERC20Burnable, Ownable, ReentrancyGuard {
 
   /// @notice this date is when the DAO must have repaid its debt
   /// @notice when bondholders can redeem their bonds
-  uint256 public immutable maturityDate;
+  uint256 public maturityDate;
 
   /// @notice holds address to bond standing
   BondStanding public currentBondStanding;
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() initializer {}
 
   /// @dev New bond contract will be deployed before each auction
   /// @dev The Auction contract will be the owner
   /// @param _name Name of the bond.
   /// @param _symbol Bond ticket symbol
   /// @param _totalBondSupply Total number of bonds being issued - this is determined by auction config
-  constructor(
+  function initialize(
     string memory _name,
     string memory _symbol,
     uint256 _totalBondSupply,
-    uint256 _maturityDate
-  ) ERC20(_name, _symbol) {
+    uint256 _maturityDate,
+    address _owner
+  ) public initializer {
     require(_totalBondSupply > 0, "zeroMintAmount");
 
     // this timestamp is a date in 2020, which basically is here to confirm
@@ -47,8 +60,14 @@ contract SimpleBond is ERC20Burnable, Ownable, ReentrancyGuard {
 
     // This mints bonds based on the config given in the auction contract and
     // sends them to the auction contract
-    _mint(msg.sender, _totalBondSupply);
+    __ERC20_init(_name, _symbol);
+    __ERC20Burnable_init();
+    __Ownable_init();
+
+    _mint(_owner, _totalBondSupply);
+
     maturityDate = _maturityDate;
+    _transferOwnership(_owner);
     currentBondStanding = BondStanding.GOOD;
   }
 

@@ -14,11 +14,10 @@ async function main() {
 
   console.log("Account balance:", await ethers.utils.formatEther(weiAmount));
 
-  const Token = await ethers.getContractFactory("SimpleBond");
-  // TODO: this is broken and needs fixed
-  const token = await Token.deploy();
+  const BondFactoryClone = await ethers.getContractFactory("BondFactoryClone");
+  const factory = await BondFactoryClone.deploy();
 
-  console.log("Token address:", token.address);
+  console.log("Token address:", factory.address);
 }
 
 main()

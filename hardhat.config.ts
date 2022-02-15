@@ -53,9 +53,8 @@ const config: HardhatUserConfig = {
     },
   },
   gasReporter: {
-    enabled: process.env.GAS_REPORTER_ENABLED !== undefined,
-    currency: "USD",
-    coinmarketcap: process.env.GAS_REPORTER_COINMARKETCAP_API_KEY || "",
+    currency: "CHF",
+    gasPrice: 21,
   },
 };
 
