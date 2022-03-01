@@ -5,6 +5,7 @@ import { CollateralData } from "../utilities";
 const EasyAuctionJSON = require("../../contracts/external/EasyAuction.json");
 const GNOSIS_AUCTION_ADDRESS = {
   mainnet: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
+  rinkeby: "0xc5992c0e0a3267c7f75493d0f717201e26be35f7",
 };
 
 export async function auctionFixture() {

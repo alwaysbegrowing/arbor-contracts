@@ -4,7 +4,10 @@ import { HardhatUserConfig, task } from "hardhat/config";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-gas-reporter";
+import "@nomiclabs/hardhat-ethers";
 import "solidity-coverage";
+import "hardhat-deploy";
+import "@nomiclabs/hardhat-etherscan";
 
 dotenv.config();
 
@@ -29,7 +32,23 @@ const config: HardhatUserConfig = {
       },
     ],
   },
+  etherscan: {
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_API_KEY,
+      rinkeby: process.env.ETHERSCAN_API_KEY,
+    },
+  },
+  namedAccounts: {
+    deployer: {
+      4: process.env.RINKEBY_DEPLOYER_ADDRESS || "",
+    },
+  },
   networks: {
+    rinkeby: {
+      url: process.env.RINKEBY_RPC_URL,
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
     hardhat: {
       mining: {
         auto: true,
