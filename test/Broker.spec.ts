@@ -1,81 +1,118 @@
-import { BigNumber, Contract } from "ethers";
-
-import { ethers, network } from "hardhat";
+import { type Contract, BigNumber } from "ethers";
+import { ethers, waffle } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { CollateralData, useCustomErrorMatcher } from "./utilities";
-import type { CollateralToken, Broker } from "../typechain";
+import {
+  addDaysToNow,
+  AuctionData,
+  createAuction,
+  getBondContract,
+  useCustomErrorMatcher,
+} from "./utilities";
+import type { Broker, SimpleBond } from "../typechain";
+import { borrowingTokenFixture, brokerFixture } from "./shared/fixtures";
+const { loadFixture } = waffle;
 
-const EasyAuctionJSON = require("../contracts/external/EasyAuction.json");
-
-const GNOSIS_AUCTION_ADDRESS = {
-  mainnet: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101",
-};
 useCustomErrorMatcher();
 describe("Broker", async () => {
-  let owner: SignerWithAddress;
-  let auctioneerSigner: SignerWithAddress;
-  let collateralToken: CollateralToken;
+  // address of the example DAO which configures and runs the auction
+  let issuerSigner: SignerWithAddress;
+  let eveSigner: SignerWithAddress;
   let broker: Broker;
   let gnosisAuction: Contract;
-  let collateralData: CollateralData;
+  let bond: SimpleBond;
+
+  const maxBondSupply = 12500;
+
+  // 3 years from now, in seconds
+  const maturityDate = Math.round(
+    new Date(new Date().setFullYear(new Date().getFullYear() + 3)).getTime() /
+      1000
+  );
+
+  async function fixture() {
+    const { broker, collateralData, gnosisAuction, collateralToken } =
+      await brokerFixture();
+    const { borrowingToken } = await borrowingTokenFixture();
+    const bond = await getBondContract(
+      broker.createBond(
+        issuerSigner.address,
+        maturityDate,
+        maxBondSupply,
+        collateralData.collateralAddress,
+        BigNumber.from(150),
+        borrowingToken.address,
+        false,
+        BigNumber.from(50)
+      )
+    );
+
+    // todo: this flow is weird
+    // first we approve the bond to transfer collateral from the issuer
+    await collateralToken
+      .connect(issuerSigner)
+      .approve(bond.address, collateralData.collateralAmount);
+    // then we transfer the collateral into the bond
+    await bond
+      .connect(issuerSigner)
+      .collateralize(collateralData.collateralAmount);
+    // after the collateral is in the bond, we can mint tokens to the issuer
+    await bond.connect(issuerSigner).mint(maxBondSupply);
+    // then we approve the broker to transfer tokens to the auction...
+    await bond.connect(issuerSigner).transfer(broker.address, maxBondSupply);
+
+    return { bond, broker, collateralData, collateralToken, gnosisAuction };
+  }
 
   beforeEach(async () => {
-    [owner, auctioneerSigner] = await ethers.getSigners();
-    await network.provider.request({
-      method: "hardhat_reset",
-      params: [
-        {
-          forking: {
-            jsonRpcUrl: process.env.MAINNET_RPC_URL,
-            blockNumber: Number(process.env.FORK_BLOCK_NUMBER),
-          },
-        },
-      ],
-    });
-
-    collateralData = {
-      collateralAddress: ethers.constants.AddressZero,
-      collateralAmount: ethers.utils.parseEther("100"),
-    };
-    // Mint 100 ether of tokens of collateral for auctioneerSigner
-    const CollateralToken = await ethers.getContractFactory("CollateralToken");
-    collateralToken = (await CollateralToken.connect(auctioneerSigner).deploy(
-      "Collateral Token",
-      "CT",
-      collateralData.collateralAmount
-    )) as CollateralToken;
-    collateralData.collateralAddress = collateralToken.address;
-
-    // The tokens minted here do not matter. The Porter Auction will mint the porterBond
-    const GnosisAuction = await ethers.getContractFactory(
-      EasyAuctionJSON.abi,
-      EasyAuctionJSON.bytecode,
-      owner
-    );
-    gnosisAuction = GnosisAuction.attach(GNOSIS_AUCTION_ADDRESS.mainnet);
-
-    const Broker = await ethers.getContractFactory("Broker");
-    broker = (await Broker.deploy(gnosisAuction.address)) as Broker;
+    [, issuerSigner, eveSigner] = await ethers.getSigners();
+    ({ bond, broker, gnosisAuction } = await loadFixture(fixture));
   });
 
-  it("reverts if not enough collateral is supplied", async () => {
-    // check revert
-    await expect(broker.depositCollateral(collateralData)).to.be.reverted;
+  it("starts an auction", async () => {
+    const auctionData: AuctionData = {
+      _biddingToken: bond.address,
+      orderCancellationEndDate: addDaysToNow(1),
+      auctionEndDate: addDaysToNow(2),
+      _auctionedSellAmount: BigNumber.from(maxBondSupply),
+      _minBuyAmount: ethers.utils.parseEther("1"),
+      minimumBiddingAmountPerOrder: ethers.utils.parseEther(".01"),
+      minFundingThreshold: ethers.utils.parseEther("30"),
+      isAtomicClosureAllowed: false,
+      accessManagerContract: ethers.constants.AddressZero,
+      accessManagerContractData: ethers.utils.arrayify("0x00"),
+    };
 
-    // check revert with specific error name
-    await expect(broker.depositCollateral(collateralData)).to.be.revertedWith(
-      "InadequateCollateralBalance"
+    const currentAuction = parseInt(await gnosisAuction.auctionCounter());
+    const { auctionId } = await createAuction(
+      broker,
+      issuerSigner,
+      auctionData,
+      bond.address
     );
+    expect(auctionId).to.be.equal(currentAuction + 1);
+  });
 
-    // check revert with specific arguments
+  it("bars unauthorized auctioneer", async () => {
+    const auctionData: AuctionData = {
+      _biddingToken: bond.address,
+      orderCancellationEndDate: addDaysToNow(1),
+      auctionEndDate: addDaysToNow(2),
+      _auctionedSellAmount: BigNumber.from(maxBondSupply),
+      _minBuyAmount: ethers.utils.parseEther("1"),
+      minimumBiddingAmountPerOrder: ethers.utils.parseEther(".01"),
+      minFundingThreshold: ethers.utils.parseEther("30"),
+      isAtomicClosureAllowed: false,
+      accessManagerContract: ethers.constants.AddressZero,
+      accessManagerContractData: ethers.utils.arrayify("0x00"),
+    };
+
     await expect(
-      broker.depositCollateral(collateralData)
-    ).to.be.revertedWithArgs(
-      "InadequateCollateralBalance",
-      collateralData.collateralAddress,
-      // TODO: need a better way to check numbers that overflow js limits (can't use toNumber here because of)
-      parseInt(collateralData.collateralAmount.toString())
-    );
+      createAuction(broker, eveSigner, auctionData, bond.address)
+    ).to.be.revertedWith("UnauthorizedInteractionWithBond");
+  });
+
+  it("creates a bond through the deployed clone factory", async () => {
+    expect(bond.address).to.not.be.eq(null);
   });
 });

@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 
 import { HardhatUserConfig, task } from "hardhat/config";
 import "@typechain/hardhat";
-import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
@@ -26,12 +25,6 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.5.5",
-      },
-      {
-        version: "0.6.12",
-      },
-      {
         version: "0.8.9",
       },
     ],
@@ -41,10 +34,10 @@ const config: HardhatUserConfig = {
       mining: {
         auto: true,
       },
-      // forking: {
-      //   url: process.env.MAINNET_RPC_URL || "",
-      //   blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || 14135757,
-      // },
+      forking: {
+        url: process.env.MAINNET_RPC_URL || "",
+        blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || 14135757,
+      },
     },
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
@@ -53,8 +46,8 @@ const config: HardhatUserConfig = {
     },
   },
   gasReporter: {
-    currency: "CHF",
-    gasPrice: 21,
+    currency: "USD",
+    coinmarketcap: process.env.GAS_REPORTER_COINMARKETCAP_API_KEY,
   },
 };
 
