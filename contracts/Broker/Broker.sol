@@ -1,4 +1,4 @@
-/*SPDX-License-Identifier: AGPL-3.0-or-later
+/*SPDX-License-Identifier: AGPL
 ┌────────────┐ ┌────────────┐ ┌────────────┐  ┌────────────┐ ┌────────────┐ ┌────────────┐ 
 │            │ │            │ │            │  │            │ │            │ │            │ 
 │            │ │            │ │            │  │            │ │            │ │            │ 
@@ -25,7 +25,6 @@ import "./TestERC20.sol";
 import "../SimpleBond.sol";
 import "./interfaces/IGnosisAuction.sol";
 import "./interfaces/IBondFactoryClone.sol";
-import "hardhat/console.sol";
 
 /// @title Broker - A contract for bond issuance and management
 /// @dev This uses an immutable reference to the deployed Gnosis Auction

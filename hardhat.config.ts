@@ -8,6 +8,7 @@ import "@nomiclabs/hardhat-ethers";
 import "solidity-coverage";
 import "hardhat-deploy";
 import "@nomiclabs/hardhat-etherscan";
+import "@tenderly/hardhat-tenderly";
 
 dotenv.config();
 
@@ -31,6 +32,10 @@ const config: HardhatUserConfig = {
         version: "0.8.9",
       },
     ],
+  },
+  tenderly: {
+    project: process.env.TENDERLY_PROJECT || "",
+    username: process.env.TENDERLY_USERNAME || "",
   },
   etherscan: {
     apiKey: {

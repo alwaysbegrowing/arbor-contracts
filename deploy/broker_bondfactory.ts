@@ -5,7 +5,7 @@ const GNOSIS_AUCTION_ADDRESS = {
   rinkeby: "0xc5992c0e0a3267c7f75493d0f717201e26be35f7",
 };
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts } = hre;
+  const { deployments, getNamedAccounts, tenderly } = hre;
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
@@ -16,12 +16,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   const auctionAddress = GNOSIS_AUCTION_ADDRESS.rinkeby;
   const factoryAddress = factory.address;
-  await deploy("Broker", {
+  const broker = await deploy("Broker", {
     from: deployer,
     args: [auctionAddress, factoryAddress],
     log: true,
     autoMine: true,
   });
+
+  // "push" to the porter project or "verify" to a public etherscan-like interface
+  await tenderly.push([
+    {
+      name: "BondFactoryClone",
+      address: factory.address,
+    },
+    { name: "Broker", address: broker.address },
+  ]);
 };
 
 export default func;
