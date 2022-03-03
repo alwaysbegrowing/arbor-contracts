@@ -82,6 +82,7 @@ AuctionConfig {
 ```
 BondConfig {
   uint256 maturityDate
+  bool isConvertible
 }
 ```
 ```

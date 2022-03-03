@@ -11,8 +11,4 @@ contract TestERC20 is ERC20 {
   ) ERC20(name, symbol) {
     _mint(msg.sender, _mintAmount);
   }
-
-  function decimals() public pure override returns (uint8) {
-    return 18;
-  }
 }

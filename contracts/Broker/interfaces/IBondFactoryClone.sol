@@ -12,6 +12,7 @@ interface IBondFactoryClone {
     address _collateralAddress,
     uint256 _collateralizationRatio,
     address _borrowingAddress,
+    bool _isConvertible,
     uint256 _convertibilityRatio
   ) external returns (address);
 }

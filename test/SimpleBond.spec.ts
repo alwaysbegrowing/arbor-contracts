@@ -63,7 +63,8 @@ describe("SimpleBond", async () => {
         collateralToken.address,
         BigNumber.from(BondConfig.collateralizationRatio),
         borrowingToken.address,
-        BigNumber.from(0)
+        false,
+        BigNumber.from(BondConfig.convertibilityRatio)
       )
     );
 
@@ -76,6 +77,7 @@ describe("SimpleBond", async () => {
         collateralToken.address,
         BigNumber.from(BondConfig.collateralizationRatio),
         borrowingToken.address,
+        true,
         BigNumber.from(BondConfig.convertibilityRatio)
       )
     );
@@ -125,8 +127,11 @@ describe("SimpleBond", async () => {
       expect(await bond.collateralizationRatio()).to.be.equal(
         BondConfig.collateralizationRatio
       );
-      expect(await bond.convertibilityRatio()).to.be.equal(0);
+      expect(await bond.isConvertible()).to.be.equal(false);
 
+      expect(await bond.convertibilityRatio()).to.be.equal(
+        BondConfig.convertibilityRatio
+      );
       expect(await bond.borrowingAddress()).to.be.equal(borrowingToken.address);
       expect(await bond.issuer()).to.be.equal(issuer.address);
       expect(await bond.maxBondSupply()).to.be.equal(BondConfig.maxBondSupply);

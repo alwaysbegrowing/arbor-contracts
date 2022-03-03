@@ -2,7 +2,6 @@ import { BigNumber, Contract, ContractTransaction, Event } from "ethers";
 import { use } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { SimpleBond } from "../typechain";
 
 export interface Price {
   priceNumerator: BigNumber;
@@ -205,9 +204,7 @@ export async function getEventArgumentsFromTransaction(
   return {};
 }
 
-export const getBondContract = async (
-  tx: Promise<any>
-): Promise<SimpleBond> => {
+export const getBondContract = async (tx: Promise<any>) => {
   const [owner] = await ethers.getSigners();
   const [newBondAddress] = await getEventArgumentsFromTransaction(
     await tx,
