@@ -14,7 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
     autoMine: true,
   });
-  const auctionAddress = GNOSIS_AUCTION_ADDRESS.rinkeby;
+  const auctionAddress = GNOSIS_AUCTION_ADDRESS.mainnet;
   const factoryAddress = factory.address;
   const broker = await deploy("Broker", {
     from: deployer,

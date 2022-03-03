@@ -70,7 +70,6 @@ contract Broker is Ownable, ReentrancyGuard {
     address _collateralAddress,
     uint256 _collateralizationRatio,
     address _borrowingAddress,
-    bool _isConvertible,
     uint256 _convertibilityRatio
   ) external {
     address bond = IBondFactoryClone(bondFactoryAddress).createBond(
@@ -81,7 +80,6 @@ contract Broker is Ownable, ReentrancyGuard {
       _collateralAddress,
       _collateralizationRatio,
       _borrowingAddress,
-      _isConvertible,
       _convertibilityRatio
     );
 
@@ -126,7 +124,9 @@ contract Broker is Ownable, ReentrancyGuard {
       );
     }
 
-    // Approve the auction to transfer all the tokens
+    // Accept bond tokens that are to be auctioned from the issuer
+    bond.transferFrom(msg.sender, address(this), auctionData._auctionedSellAmount);
+    // Approve those tokens to be sold on auction
     bond.approve(gnosisAuctionAddress, auctionData._auctionedSellAmount);
 
     auctionId = initiateAuction(auctionData, bondAddress);

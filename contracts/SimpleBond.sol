@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title SimpleBond
 /// @notice A custom ERC20 token that can be used to issue bonds.
@@ -16,6 +17,8 @@ contract SimpleBond is
   OwnableUpgradeable,
   ReentrancyGuard
 {
+  using SafeERC20 for IERC20;
+
   /// @notice this would go into default if maturityDate passes and the loan contract has not been paid back
   /// @notice to be set from the auction
   enum BondStanding {
@@ -150,7 +153,6 @@ contract SimpleBond is
   address public collateralAddress;
   uint256 public collateralizationRatio;
   address public borrowingAddress;
-  bool public isConvertible;
   uint256 public convertibilityRatio;
   uint256 public totalCollateral;
   BondStanding public currentBondStanding;
@@ -179,8 +181,7 @@ contract SimpleBond is
     uint256 _maxBondSupply,
     address _collateralAddress,
     uint256 _collateralizationRatio,
-    address _borrowingAddress,
-    bool _isConvertible,
+    address _borrowingAddress,  
     uint256 _convertibilityRatio
   ) public initializer {
     // this timestamp is a date in 2020, which basically is here to confirm
@@ -189,8 +190,6 @@ contract SimpleBond is
       revert InvalidMaturityDate();
     }
 
-    // This mints bonds based on the config given in the auction contract and
-    // sends them to the auction contract,
     __ERC20_init("SimpleBond", "LUG");
     __ERC20Burnable_init();
     __Ownable_init();
@@ -198,7 +197,6 @@ contract SimpleBond is
     maturityDate = _maturityDate;
     collateralAddress = _collateralAddress;
     collateralizationRatio = _collateralizationRatio;
-    isConvertible = _isConvertible;
     convertibilityRatio = _convertibilityRatio;
     borrowingAddress = _borrowingAddress;
     issuer = _issuer;
@@ -207,23 +205,23 @@ contract SimpleBond is
     _transferOwnership(_owner);
   }
 
-  // /// @notice To be set after the auction ends
-  // function setBondStanding(BondStanding newStanding) external onlyOwner {
-  //   emit BondStandingChange(currentBondStanding, newStanding);
-
-  //   currentBondStanding = newStanding;
-  // }
-
   /// @notice Deposit collateral into bond contract
   /// @param amount the amount of collateral to deposit
   function collateralize(uint256 amount) external nonReentrant notPastMaturity {
+    IERC20 collateralToken = IERC20(collateralAddress);
     // After a successul transfer, set collateral in bond contract
     if (amount == 0) {
       revert ZeroCollateralizationAmount();
     }
-    !IERC20(collateralAddress).transferFrom(msg.sender, address(this), amount);
-    totalCollateral += amount;
-    emit CollateralDeposited(msg.sender, amount);
+    uint256 balanceBefore = collateralToken.balanceOf(address(this));
+    collateralToken.safeTransferFrom(msg.sender, address(this), amount);
+    uint256 balanceAfter = collateralToken.balanceOf(address(this));
+    if (balanceAfter <= balanceBefore) {
+      revert ZeroCollateralizationAmount();
+    }
+    uint256 balanceChange = balanceAfter - balanceBefore;
+    totalCollateral += balanceChange;
+    emit CollateralDeposited(msg.sender, balanceChange);
   }
 
   /// @notice Withdraw collateral from bond contract
@@ -232,7 +230,7 @@ contract SimpleBond is
   function uncollateralize() public nonReentrant onlyIssuer {
     // start with max collateral required to cover the amount of bonds
     uint256 totalRequiredCollateral = totalSupply() * collateralizationRatio;
-    if (_isRepaid && isConvertible) {
+    if (_isRepaid && convertibilityRatio > 0) {
       totalRequiredCollateral = totalSupply() * convertibilityRatio;
     } else if (_isRepaid) {
       totalRequiredCollateral = 0;
@@ -284,7 +282,7 @@ contract SimpleBond is
     notPastMaturity
     nonReentrant
   {
-    if (!isConvertible) {
+    if (convertibilityRatio == 0) {
       revert NotConvertible();
     }
     uint256 amountOfBondsConverted = amountOfBondsToConvert;

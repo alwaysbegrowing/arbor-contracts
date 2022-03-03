@@ -45,6 +45,8 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: {
+      default: 0,
+      1: 0,
       4: process.env.RINKEBY_DEPLOYER_ADDRESS || "",
     },
   },

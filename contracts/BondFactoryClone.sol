@@ -19,7 +19,6 @@ contract BondFactoryClone {
     address _collateralAddress,
     uint256 _collateralizationRatio,
     address _borrowingAddress,
-    bool _isConvertible,
     uint256 _convertibilityRatio
   ) external returns (address clone) {
     clone = Clones.clone(tokenImplementation);
@@ -31,7 +30,6 @@ contract BondFactoryClone {
       _collateralAddress,
       _collateralizationRatio,
       _borrowingAddress,
-      _isConvertible,
       _convertibilityRatio
     );
     emit BondCreated(clone);

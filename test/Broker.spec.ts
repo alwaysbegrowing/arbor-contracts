@@ -42,7 +42,6 @@ describe("Broker", async () => {
         collateralData.collateralAddress,
         BigNumber.from(150),
         borrowingToken.address,
-        false,
         BigNumber.from(50)
       )
     );
@@ -59,7 +58,7 @@ describe("Broker", async () => {
     // after the collateral is in the bond, we can mint tokens to the issuer
     await bond.connect(issuerSigner).mint(maxBondSupply);
     // then we approve the broker to transfer tokens to the auction...
-    await bond.connect(issuerSigner).transfer(broker.address, maxBondSupply);
+    await bond.connect(issuerSigner).approve(broker.address, maxBondSupply);
 
     return { bond, broker, collateralData, collateralToken, gnosisAuction };
   }
@@ -82,7 +81,6 @@ describe("Broker", async () => {
       accessManagerContract: ethers.constants.AddressZero,
       accessManagerContractData: ethers.utils.arrayify("0x00"),
     };
-
     const currentAuction = parseInt(await gnosisAuction.auctionCounter());
     const { auctionId } = await createAuction(
       broker,
