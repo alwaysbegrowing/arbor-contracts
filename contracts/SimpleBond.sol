@@ -73,7 +73,6 @@ contract SimpleBond is
     );
 
     // modifiers
-    error OnlyIssuerOfBondMayCallThisFunction();
     error BondPastMaturity();
     error BondNotYetMatured();
     error BondNotYetRepaid();
@@ -105,13 +104,6 @@ contract SimpleBond is
 
     // Sweep
     error SweepDisallowedForToken();
-
-    modifier onlyIssuer() {
-        if (issuer != msg.sender) {
-            revert OnlyIssuerOfBondMayCallThisFunction();
-        }
-        _;
-    }
 
     modifier pastMaturity() {
         if (block.timestamp < maturityDate) {
@@ -148,7 +140,6 @@ contract SimpleBond is
         _;
     }
 
-    address public issuer;
     /// @notice this date is when the DAO must have repaid its debt
     /// @notice when bondholders can redeem their bonds
     uint256 public maturityDate;
@@ -184,7 +175,6 @@ contract SimpleBond is
         string memory _name,
         string memory _symbol,
         address _owner,
-        address _issuer,
         uint256 _maturityDate,
         uint256 _maxBondSupply,
         address _collateralAddress,
@@ -211,7 +201,6 @@ contract SimpleBond is
         isConvertible = _isConvertible;
         convertibilityRatio = _convertibilityRatio;
         borrowingAddress = _borrowingAddress;
-        issuer = _issuer;
         maxBondSupply = _maxBondSupply;
 
         _transferOwnership(_owner);
@@ -247,7 +236,7 @@ contract SimpleBond is
     /// @notice Withdraw collateral from bond contract
     /// @notice After a bond has matured AND the issuer has returned the principal, the issuer can redeem the collateral.
     /// @notice The amount of collateral available to be withdrawn depends on the collateralization ratio
-    function uncollateralize() public nonReentrant onlyIssuer {
+    function uncollateralize() public nonReentrant onlyOwner {
         // start with max collateral required to cover the amount of bonds
         uint256 totalRequiredCollateral = totalSupply() *
             collateralizationRatio;
@@ -270,7 +259,7 @@ contract SimpleBond is
     }
 
     /// @dev nonReentrant needed as double minting would be possible otherwise
-    function mint(uint256 tokensToMint) external onlyIssuer nonReentrant {
+    function mint(uint256 tokensToMint) external onlyOwner nonReentrant {
         uint256 outstandingBonds = totalSupply() - balanceOf(msg.sender);
         if (outstandingBonds > 0) {
             revert NoMintAfterIssuance();
