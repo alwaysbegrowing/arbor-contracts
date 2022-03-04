@@ -36,6 +36,8 @@ describe("Broker", async () => {
     const { borrowingToken } = await borrowingTokenFixture();
     const bond = await getBondContract(
       broker.createBond(
+        "SimpleBond",
+        "LUG",
         issuerSigner.address,
         maturityDate,
         maxBondSupply,

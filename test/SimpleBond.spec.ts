@@ -56,6 +56,8 @@ describe("SimpleBond", async () => {
 
     const bond = await getBondContract(
       factory.createBond(
+        "SimpleBond",
+        "LUG",
         owner.address,
         issuer.address,
         BondConfig.maturityDate,
@@ -70,6 +72,8 @@ describe("SimpleBond", async () => {
 
     const convertibleBond = await getBondContract(
       factory.createBond(
+        "SimpleBond",
+        "LUG",
         owner.address,
         issuer.address,
         BondConfig.maturityDate,

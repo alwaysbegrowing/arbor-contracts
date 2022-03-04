@@ -181,6 +181,8 @@ contract SimpleBond is
     /// @dev The Auction contract will be the owner
     /// @param _maxBondSupply Total number of bonds being issued - this is determined by auction config
     function initialize(
+        string memory _name,
+        string memory _symbol,
         address _owner,
         address _issuer,
         uint256 _maturityDate,
@@ -199,7 +201,7 @@ contract SimpleBond is
 
         // This mints bonds based on the config given in the auction contract and
         // sends them to the auction contract,
-        __ERC20_init("SimpleBond", "LUG");
+        __ERC20_init(_name, _symbol);
         __ERC20Burnable_init();
         __Ownable_init();
 

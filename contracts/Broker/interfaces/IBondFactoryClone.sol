@@ -5,6 +5,8 @@ interface IBondFactoryClone {
     event BondCreated(address newBond);
 
     function createBond(
+        string memory _name,
+        string memory _symbol,
         address _owner,
         address _issuer,
         uint256 _maturityDate,
