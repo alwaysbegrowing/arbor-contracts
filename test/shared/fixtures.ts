@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { BondFactoryClone, Broker, TestERC20 } from "../../typechain";
+import { BondFactoryClone, TestERC20 } from "../../typechain";
 import { CollateralData } from "../utilities";
 
 const EasyAuctionJSON = require("../../contracts/external/EasyAuction.json");
@@ -14,18 +14,6 @@ export async function auctionFixture() {
     GNOSIS_AUCTION_ADDRESS.mainnet
   );
   return { gnosisAuction };
-}
-export async function brokerFixture() {
-  const { factory } = await bondFactoryFixture();
-  const { collateralData, collateralToken } = await collateralTokenFixture();
-  const { gnosisAuction } = await auctionFixture();
-  const Broker = await ethers.getContractFactory("Broker");
-  const broker = (await Broker.deploy(
-    gnosisAuction.address,
-    factory.address
-  )) as Broker;
-
-  return { factory, broker, collateralData, collateralToken, gnosisAuction };
 }
 
 export async function bondFactoryFixture() {

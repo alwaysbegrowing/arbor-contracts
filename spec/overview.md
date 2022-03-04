@@ -2,14 +2,7 @@
 
 # Main contracts
 
-## Broker
-
-- `createBond()`
-- `initateBondAuction()`
-
-### Create Bond
-
-A new `Bond` contract is created via the `BondFactory` with a passed in configuration.
+## Gnosis Auction (external)
 
 ### Bond Auction
 

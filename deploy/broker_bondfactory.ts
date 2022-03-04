@@ -14,14 +14,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
     autoMine: true,
   });
-  const auctionAddress = GNOSIS_AUCTION_ADDRESS.rinkeby;
-  const factoryAddress = factory.address;
-  const broker = await deploy("Broker", {
-    from: deployer,
-    args: [auctionAddress, factoryAddress],
-    log: true,
-    autoMine: true,
-  });
 
   // "push" to the porter project or "verify" to a public etherscan-like interface
   await tenderly.push([
@@ -29,7 +21,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       name: "BondFactoryClone",
       address: factory.address,
     },
-    { name: "Broker", address: broker.address },
   ]);
 };
 
