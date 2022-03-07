@@ -23,8 +23,6 @@ export async function bondFactoryFixture() {
 }
 
 export async function collateralTokenFixture() {
-  const [owner] = await ethers.getSigners();
-
   const collateralData: CollateralData = {
     collateralAddress: ethers.constants.AddressZero,
     collateralAmount: ethers.utils.parseEther("1"),
@@ -44,7 +42,6 @@ export async function collateralTokenFixture() {
 }
 
 export async function borrowingTokenFixture() {
-  const [owner] = await ethers.getSigners();
 
   const BorrowingToken = await ethers.getContractFactory("TestERC20");
   const borrowingToken = (await BorrowingToken.deploy(
