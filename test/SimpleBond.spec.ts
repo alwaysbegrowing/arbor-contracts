@@ -22,12 +22,11 @@ const BondStanding = {
   REDEEMED: 3,
 };
 
-const ISSUER_ROLE = utils.id("ISSUER_ROLE");
 
 // 3 years from now, in seconds
 const maturityDate = Math.round(
   new Date(new Date().setFullYear(new Date().getFullYear() + 3)).getTime() /
-    1000
+  1000
 );
 const BondConfig: {
   targetBondSupply: BigNumber;
@@ -72,6 +71,8 @@ describe("SimpleBond", async () => {
   // https://github.com/nomiclabs/hardhat/issues/849#issuecomment-860576796
   async function fixture() {
     const { factory } = await bondFactoryFixture();
+    const ISSUER_ROLE = await factory.ISSUER_ROLE();
+
     await factory.grantRole(ISSUER_ROLE, owner.address);
 
     const { nativeToken, attackingToken, mockUSDCToken, borrowingToken } =
