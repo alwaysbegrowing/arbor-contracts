@@ -53,12 +53,10 @@ contract BondFactoryClone is AccessControl {
     /// @param _symbol Ticker symbol for the bond
     /// @param _owner Owner of the bond
     /// @param _maturityDate Timestamp of when the bond matures
-    /// @param _maxBondSupply Maximum number of bonds taht can be issued
-    /// @param _collateralAddress Address of the collateral to use for the bond
-    /// @param _collateralizationRatio Ratio of bond:token to be used
+    /// @param _collateralAddresses Addresses of the collateral to use for the bond
+    /// @param _collateralizationRatios Ratios of bond:token to be used
     /// @param _borrowingAddress Address of the token being borrowed by the issuer of the bond
-    /// @param _isConvertible If the bond is convertible
-    /// @param _convertibilityRatio Ratio of bond:token that the bond can be converted into
+    /// @param _convertibilityRatios Ratios of bond:token that the bond can be converted into
     /// @dev this uses a clone to save on deployment costs https://github.com/porter-finance/v1-core/issues/15
     /// This adds a slight overhead everytime users interact with the bonds - but saves 10x the gas during deployment
     function createBond(
@@ -66,12 +64,10 @@ contract BondFactoryClone is AccessControl {
         string memory _symbol,
         address _owner,
         uint256 _maturityDate,
-        uint256 _maxBondSupply,
-        address _collateralAddress,
-        uint256 _collateralizationRatio,
         address _borrowingAddress,
-        bool _isConvertible,
-        uint256 _convertibilityRatio
+        address[] memory _collateralAddresses,
+        uint256[] memory _collateralizationRatios,
+        uint256[] memory _convertibilityRatios
     ) external onlyIssuer returns (address clone) {
         clone = Clones.clone(tokenImplementation);
         SimpleBond(clone).initialize(
@@ -79,12 +75,10 @@ contract BondFactoryClone is AccessControl {
             _symbol,
             _owner,
             _maturityDate,
-            _maxBondSupply,
-            _collateralAddress,
-            _collateralizationRatio,
             _borrowingAddress,
-            _isConvertible,
-            _convertibilityRatio
+            _collateralAddresses,
+            _collateralizationRatios,
+            _convertibilityRatios
         );
         emit BondCreated(clone);
     }

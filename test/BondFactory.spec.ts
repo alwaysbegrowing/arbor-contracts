@@ -1,4 +1,4 @@
-import { BigNumber, utils } from "ethers";
+import { BigNumber, BigNumberish, utils } from "ethers";
 import { expect } from "chai";
 import { BondFactoryClone } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -8,26 +8,33 @@ const { ethers } = require("hardhat");
 
 const maturityDate = Math.round(
   new Date(new Date().setFullYear(new Date().getFullYear() + 3)).getTime() /
-  1000
+    1000
 );
-
-const BondConfig = {
-  maxBondSupply: 2000000,
-  collateralizationRatio: 200,
-  convertibilityRatio: 50,
-  maturityDate,
-};
 
 const TEST_ADDRESSES: [string, string] = [
   "0x1000000000000000000000000000000000000000",
   "0x2000000000000000000000000000000000000000",
 ];
 
+const BondConfig: {
+  targetBondSupply: BigNumber;
+  collateralAddresses: string[];
+  collateralRatios: BigNumber[];
+  convertibilityRatios: BigNumber[];
+  maturityDate: BigNumberish;
+} = {
+  targetBondSupply: utils.parseUnits("50000000", 18), // 50 million bonds
+  collateralAddresses: [""],
+  collateralRatios: [BigNumber.from(0)],
+  convertibilityRatios: [BigNumber.from(0)],
+  maturityDate,
+};
+
 describe("BondFactory", async () => {
   let factory: BondFactoryClone;
   let owner: SignerWithAddress;
   let user: SignerWithAddress;
-  let ISSUER_ROLE: any
+  let ISSUER_ROLE: any;
 
   beforeEach(async () => {
     [owner, user] = await ethers.getSigners();
@@ -36,17 +43,24 @@ describe("BondFactory", async () => {
   });
 
   async function createBond(factory: BondFactoryClone) {
+    BondConfig.collateralAddresses = [TEST_ADDRESSES[0], TEST_ADDRESSES[1]];
+    BondConfig.collateralRatios = [
+      utils.parseUnits("0.5", 18),
+      utils.parseUnits("0.25", 18),
+    ];
+    BondConfig.convertibilityRatios = [
+      utils.parseUnits("0.5", 18),
+      utils.parseUnits("0.25", 18),
+    ];
     return factory.createBond(
       "SimpleBond",
       "LUG",
       owner.address,
       BondConfig.maturityDate,
-      BondConfig.maxBondSupply,
       TEST_ADDRESSES[0],
-      BigNumber.from(BondConfig.collateralizationRatio),
-      TEST_ADDRESSES[1],
-      false,
-      BigNumber.from(BondConfig.convertibilityRatio)
+      BondConfig.collateralAddresses,
+      BondConfig.collateralRatios,
+      BondConfig.convertibilityRatios
     );
   }
 

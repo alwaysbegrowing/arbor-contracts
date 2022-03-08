@@ -141,7 +141,22 @@ export async function getEventArgumentsFromTransaction(
   return {};
 }
 
-export const getBondContract = async (tx: Promise<any>) => {
+export async function getEventArgumentsFromLoop(
+  tx: ContractTransaction,
+  eventName: string
+): Promise<any> {
+  const receipt = await tx.wait();
+  const args = receipt?.events
+    ?.filter((e: Event) => e.event === eventName)
+    ?.map((e: Event) => e.args);
+  if (args) return args;
+  console.error(`No event with name ${eventName} found in transaction`);
+  return {};
+}
+
+export const getBondContract = async (
+  tx: Promise<any>
+): Promise<SimpleBond> => {
   const [owner] = await ethers.getSigners();
   const [newBondAddress] = await getEventArgumentsFromTransaction(
     await tx,

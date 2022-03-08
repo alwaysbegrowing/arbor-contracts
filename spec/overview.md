@@ -32,7 +32,7 @@ A new `Bond` contract is created for each [borrower](https://docs.porter.finance
 `BondTokens` support the following functionality:
 
 - Creation and minting new `BondTokens` via `initialize()` and `mint()`
-- Depositing/withdrawing collateral via `collateralize()` and `uncollateralize()`
+- Depositing/withdrawing collateral via `depositCollateral()` and `withdrawCollateral()`
 - Handling convertibility via a configured ratio and the ability for lenders to convert their `BondTokens` using `convert()`
 - Handling repayment for the issuer via `repay()`
 - Allowing bond redemption for the bond holders via `redeem()`
@@ -91,8 +91,8 @@ ABG now has a few options.
 
 - `initateBondAuction` Initiate a Gnosis auction
 - sell tokens on the market
-- add collateral `collateralize` and `mint` more bonds up to the collateralization ratio
-- `uncollateralize` to burn bonds and withdraw collateral up to the collateralization ratio
+- add collateral `depositCollateral` and `mint` more bonds up to the collateralization ratio
+- `withdrawCollateral` to burn bonds and withdraw collateral up to the collateralization ratio
 
 ## Withdrawing collateral
 
