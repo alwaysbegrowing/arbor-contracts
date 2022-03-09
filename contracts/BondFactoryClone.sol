@@ -34,7 +34,7 @@ contract BondFactoryClone is AccessControl {
         // this grants the user deploying this contract the DEFAULT_ADMIN_ROLE
         // which gives them the ability to call grantRole to grant access to
         // the ISSUER_ROLE
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /// @notice Turns the allow list on or off

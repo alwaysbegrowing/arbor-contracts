@@ -2,7 +2,9 @@
 pragma solidity 0.8.9;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -13,6 +15,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 contract SimpleBond is
     Initializable,
     ERC20Upgradeable,
+    AccessControlUpgradeable,
     ERC20BurnableUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuard
@@ -190,6 +193,8 @@ contract SimpleBond is
     bool internal _isRepaid;
     bool internal _isIssued;
 
+    bytes32 public constant WITHDRAW_ROLE = keccak256("WITHDRAW_ROLE");
+
     mapping(address => uint256) public totalCollateral;
 
     function state() public view returns (BondStanding newStanding) {
@@ -235,6 +240,8 @@ contract SimpleBond is
         convertibilityRatios = _convertibilityRatios;
 
         _transferOwnership(_owner);
+        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
+        _grantRole(WITHDRAW_ROLE, _owner);
     }
 
     /// @notice Deposit collateral into bond contract
@@ -280,7 +287,7 @@ contract SimpleBond is
     function withdrawCollateral(
         address[] memory _collateralAddresses,
         uint256[] memory _amounts
-    ) public nonReentrant onlyOwner {
+    ) public nonReentrant onlyRole(WITHDRAW_ROLE) {
         for (uint256 j = 0; j < _collateralAddresses.length; j++) {
             for (uint256 k = 0; k < collateralAddresses.length; k++) {
                 if (_collateralAddresses[j] == collateralAddresses[k]) {
