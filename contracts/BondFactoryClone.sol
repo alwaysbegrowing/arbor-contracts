@@ -34,7 +34,7 @@ contract BondFactoryClone is AccessControl {
         // this grants the user deploying this contract the DEFAULT_ADMIN_ROLE
         // which gives them the ability to call grantRole to grant access to
         // the ISSUER_ROLE
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /// @notice Turns the allow list on or off
@@ -53,9 +53,9 @@ contract BondFactoryClone is AccessControl {
     /// @param _symbol Ticker symbol for the bond
     /// @param _owner Owner of the bond
     /// @param _maturityDate Timestamp of when the bond matures
-    /// @param _collateralAddresses Addresses of the collateral to use for the bond
-    /// @param _collateralizationRatios Ratios of bond:token to be used
-    /// @param _borrowingAddress Address of the token being borrowed by the issuer of the bond
+    /// @param _collateralTokens Addresses of the collateral to use for the bond
+    /// @param _backingRatios Ratios of bond:token to be used
+    /// @param _borrowingToken Address of the token being borrowed by the issuer of the bond
     /// @param _convertibilityRatios Ratios of bond:token that the bond can be converted into
     /// @dev this uses a clone to save on deployment costs https://github.com/porter-finance/v1-core/issues/15
     /// This adds a slight overhead everytime users interact with the bonds - but saves 10x the gas during deployment
@@ -64,9 +64,9 @@ contract BondFactoryClone is AccessControl {
         string memory _symbol,
         address _owner,
         uint256 _maturityDate,
-        address _borrowingAddress,
-        address[] memory _collateralAddresses,
-        uint256[] memory _collateralizationRatios,
+        address _borrowingToken,
+        address[] memory _collateralTokens,
+        uint256[] memory _backingRatios,
         uint256[] memory _convertibilityRatios
     ) external onlyIssuer returns (address clone) {
         clone = Clones.clone(tokenImplementation);
@@ -75,9 +75,9 @@ contract BondFactoryClone is AccessControl {
             _symbol,
             _owner,
             _maturityDate,
-            _borrowingAddress,
-            _collateralAddresses,
-            _collateralizationRatios,
+            _borrowingToken,
+            _collateralTokens,
+            _backingRatios,
             _convertibilityRatios
         );
         emit BondCreated(clone);

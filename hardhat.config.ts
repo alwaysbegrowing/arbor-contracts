@@ -1,14 +1,14 @@
 import * as dotenv from "dotenv";
 
 import { HardhatUserConfig, task } from "hardhat/config";
-import "@typechain/hardhat";
-import "@nomiclabs/hardhat-waffle";
-import "hardhat-gas-reporter";
-import "@nomiclabs/hardhat-ethers";
-import "solidity-coverage";
-import "hardhat-deploy";
-import "@nomiclabs/hardhat-etherscan";
-import "@tenderly/hardhat-tenderly";
+import "@typechain/hardhat"; // used to create types found in ./typechain
+import "@nomiclabs/hardhat-waffle"; // integrates waffle into the hre
+import "hardhat-gas-reporter"; // outputs gas usage by contract and method call when testing
+import "@nomiclabs/hardhat-ethers"; // integrates ethers into the hre
+import "solidity-coverage"; // adds 'coverage' task
+import "hardhat-deploy"; // runs scripts in the ./deploy folder
+import "@nomiclabs/hardhat-etherscan"; // adds 'verify' task
+import "@tenderly/hardhat-tenderly"; // integrates tenderly into the hre. adds push/verify to tenderly
 
 dotenv.config();
 
