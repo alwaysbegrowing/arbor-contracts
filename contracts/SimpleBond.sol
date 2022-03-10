@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL
 pragma solidity 0.8.9;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
@@ -18,7 +17,6 @@ contract SimpleBond is
     ERC20Upgradeable,
     AccessControlUpgradeable,
     ERC20BurnableUpgradeable,
-    OwnableUpgradeable,
     ReentrancyGuard
 {
     using SafeERC20 for IERC20;
@@ -263,7 +261,6 @@ contract SimpleBond is
 
         __ERC20_init(_name, _symbol);
         __ERC20Burnable_init();
-        __Ownable_init();
 
         maturityDate = _maturityDate;
         borrowingToken = _borrowingToken;
@@ -271,7 +268,6 @@ contract SimpleBond is
         backingRatios = _backingRatios;
         convertibilityRatios = _convertibilityRatios;
 
-        _transferOwnership(_owner);
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
         _grantRole(WITHDRAW_ROLE, _owner);
     }
@@ -363,7 +359,12 @@ contract SimpleBond is
 
     /// @notice mints the maximum amount of tokens restricted by the collateral(s)
     /// @dev nonReentrant needed as double minting would be possible otherwise
-    function mint() external onlyOwner nonReentrant notPastMaturity {
+    function mint()
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        nonReentrant
+        notPastMaturity
+    {
         if (_isIssued) {
             revert NoMintAfterIssuance();
         }
@@ -534,7 +535,11 @@ contract SimpleBond is
     /// @notice sends tokens to the issuer that were sent to this contract
     /// @dev collateral, borrowing, and the bond itself cannot be swept
     /// @param token send the entire token balance of this address to the owner
-    function sweep(IERC20 token) external nonReentrant {
+    function sweep(IERC20 token)
+        external
+        nonReentrant
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         if (
             address(token) == borrowingToken || address(token) == address(this)
         ) {
@@ -545,7 +550,7 @@ contract SimpleBond is
                 revert SweepDisallowedForToken();
             }
         }
-        token.transfer(owner(), token.balanceOf(address(this)));
+        token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 
     /// @notice this function returns the balance of this contract before and after a transfer into it

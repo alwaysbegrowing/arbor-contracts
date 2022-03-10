@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, utils } from "ethers";
+import { BigNumber, BigNumberish, utils, BytesLike } from "ethers";
 import { expect } from "chai";
 import {
   TestERC20,
@@ -67,7 +67,7 @@ describe("SimpleBond", async () => {
   let mockUSDCToken: TestERC20;
   let borrowingToken: TestERC20;
   let factory: BondFactoryClone;
-  let withdrawRole: string;
+  let withdrawRole: BytesLike;
 
   // no args because of gh issue:
   // https://github.com/nomiclabs/hardhat/issues/849#issuecomment-860576796
@@ -204,8 +204,18 @@ describe("SimpleBond", async () => {
       expect(await bond.balanceOf(bondHolder.address)).to.be.equal(0);
     });
 
-    it("should be owner", async function () {
-      expect(await bond.owner()).to.be.equal(owner.address);
+    it("issuer has default admin role", async function () {
+      expect(await bond.hasRole(await bond.DEFAULT_ADMIN_ROLE(), owner.address))
+        .to.be.true;
+    });
+
+    it("default admin role is role admin for withdraw role", async function () {
+      expect(
+        await bond.hasRole(
+          await bond.getRoleAdmin(withdrawRole),
+          owner.address
+        )
+      ).to.be.true;
     });
 
     it("should return total value for an account", async function () {
@@ -225,7 +235,6 @@ describe("SimpleBond", async () => {
       expect(await bond.convertibilityRatios(0)).to.be.equal(0);
 
       expect(await bond.borrowingToken()).to.be.equal(borrowingToken.address);
-      expect(await bond.owner()).to.be.equal(owner.address);
     });
 
     it("should have predefined ERC20 attributes", async () => {
