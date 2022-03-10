@@ -1,46 +1,63 @@
-# Advanced Sample Hardhat Project
+[![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/157589962-34664111-72cb-40c9-81cf-86253cb671c4.png)](https://porter.finance/#gh-dark-mode-only)
+[![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/157590019-ef886a73-bda8-489f-888d-a98faecf9c61.png)](https://porter.finance/#gh-light-mode-only)
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+<table align="center">
+ <td><a href="https://porter.finance">app</a></td>
+ <td><a href="https://docs.porter.finance">docs</a></td>
+ <td><a href="https://discord.gg/porter">discord</a></td>
+ <td><a href="https://blog.porter.finance">blog</a></td>
+ <td><a href="https://twitter.com/porterfinance_">twitter</a></td>
+</table>
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+# V1 
 
-Try running some of the following tasks:
+Smart Contracts powering the Porter protocol. 
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
+## Development
+
+For local development there are environment variables necessary to enable some hardhat plugins. 
+### Deployment
+
+Using hardhat-deploy all of the scripts in the `./deploy` folder are run.
+
+Deploying to rinkeby
+```
+npx hardhat deploy --network rinkeby
+```
+Deploying privately on Tenderly requires a log in to the tenderly-cli and ensure the `tenderly.push` command is used in the deploy scripts.
+```
+npx hardhat deploy
+```
+### Verification
+Verify deployed contracts with `hardhat-etherscan`.
+```
+npx hardhat verify <address>
+```
+Verify contract with Tenderly also requires a log in to the tenderly-cli and ensure the `tenderly.verify` command is used in the deploy scripts.
+```
+npx hardhat deploy
+```
+### Testing
+Running the test suite
+```
 npx hardhat test
+```
+Fork testing requires first running the mainnet-fork
+```
 npx hardhat node
+```
+and making the target for testing the local node
+```
+npx hardhat test --network localhost
+```
+
+### Other useful commands
+```shell
 npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
+npx hardhat compile # create contract artifacts
+npx hardhat clean # removes artifacts and maybe other things
+npx hardhat coverage # runs the contract coverage report
 npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md,ts}' --check
 npx prettier '**/*.{json,sol,md,ts}' --write
-npx solhint 'contracts/**/*.sol'
 npx solhint 'contracts/**/*.sol' --fix
 ```
-
-# Etherscan verification
-
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
-
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
-
-```shell
-hardhat run --network ropsten scripts/sample-script.ts
-```
-
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
-
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
-```
-
-# Performance optimizations
-
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
