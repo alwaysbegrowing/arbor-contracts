@@ -81,21 +81,12 @@ contract SimpleBond is
         uint256 amountOfCollateralReceived
     );
 
-    // todo: combine the two redeem events - defaulted or not
     /// @notice emitted when a bond is redeemed
     event Redeem(
         address indexed receiver,
-        address indexed borrowingToken,
+        address indexed token,
         uint256 amountOfBondsRedeemed,
         uint256 amountOfTokensReceived
-    );
-
-    /// @notice emitted when a bond is redeemed by a borrower
-    event RedeemDefaulted(
-        address indexed receiver,
-        address indexed collateralToken,
-        uint256 amountOfBondsRedeemed,
-        uint256 amountOfCollateralReceived
     );
 
     // modifiers
@@ -107,6 +98,10 @@ contract SimpleBond is
 
     // Initialization
     error InvalidMaturityDate();
+    error MaxCollateralTokens();
+    error LengthMismatch();
+    error BackingRatioLessThanConvertibilityRatio();
+    error CollateralTokensUnsorted();
 
     // Minting
     error InusfficientCollateralToCoverTokenSupply();
@@ -176,6 +171,9 @@ contract SimpleBond is
         _;
     }
 
+    uint256 internal constant ONE = 1e18;
+    uint256 internal constant MAX_COLLATERAL_TOKENS = 20;
+
     /// @notice A date in the future set at bond creation at which the bond will mature.
     /// @notice Before this date, a bond token can be converted if convertible, but cannot be redeemed.
     /// @notice After this date, a bond token can be redeemed for the borrowing asset.
@@ -185,10 +183,10 @@ contract SimpleBond is
     address public borrowingToken;
 
     /// @notice this flag is set after the issuer has paid back the full amount of borrowing token needed to cover the outstanding bonds
-    bool internal _isRepaid; // todo: can this be calculated on the fly?
+    bool internal _isRepaid;
 
     /// @notice this flag is set upon mint to disallow subsequent minting
-    bool internal _isIssued; // todo: can this be calculated on the fly?
+    bool internal _isIssued;
 
     /// @notice the addresses of the ERC20 tokens backing the bond which can be converted into before maturity or, in the case of a default, redeemable for at maturity
     address[] public collateralTokens;
@@ -204,11 +202,9 @@ contract SimpleBond is
     /// @notice the role ID for withdrawCollateral
     bytes32 public constant WITHDRAW_ROLE = keccak256("WITHDRAW_ROLE");
 
-    // todo: figure out if we need this
     /// @notice this mapping keeps track of the total collateral per address that is in this contract. this amount is used when determining the portion of collateral to return to the bond holders in event of a default
     mapping(address => uint256) public totalCollateral;
 
-    // todo: figure out why we need this
     function state() external view returns (BondStanding newStanding) {
         if (block.timestamp < maturityDate && !_isRepaid && totalSupply() > 0) {
             newStanding = BondStanding.GOOD;
@@ -241,8 +237,23 @@ contract SimpleBond is
         uint256[] memory _backingRatios,
         uint256[] memory _convertibilityRatios
     ) external initializer {
-        // todo: check validity of arrays - same length, non-zero, max length - backing ratio >= convertibility ratio
-        // todo: enforce sorting of collateral tokens alphabetically by address by looping through and confirming it's bigger than the previous one, revert otherwise
+        if (_collateralTokens.length > MAX_COLLATERAL_TOKENS) {
+            revert MaxCollateralTokens();
+        }
+        if (
+            _collateralTokens.length != _backingRatios.length ||
+            _collateralTokens.length != _convertibilityRatios.length
+        ) {
+            revert LengthMismatch();
+        }
+        for (uint256 i = 0; i < _collateralTokens.length; i++) {
+            if (_backingRatios[i] < _convertibilityRatios[i]) {
+                revert BackingRatioLessThanConvertibilityRatio();
+            }
+            if (i != 0 && _collateralTokens[i - 1] >= _collateralTokens[i]) {
+                revert CollateralTokensUnsorted();
+            }
+        }
         if (
             _maturityDate <= block.timestamp ||
             _maturityDate > block.timestamp + 3650 days
@@ -265,102 +276,88 @@ contract SimpleBond is
         _grantRole(WITHDRAW_ROLE, _owner);
     }
 
-    // todo: remove collateralTokens and iterate over only the existing addresses
     /// @notice Deposit collateral into bond contract
-    /// @param _collateralTokens the array of addresses used to deposit
     /// @param amounts the array of collateral per address to deposit
-    function depositCollateral(
-        address[] memory _collateralTokens,
-        uint256[] memory amounts
-    ) external nonReentrant notPastMaturity {
-        for (uint256 j = 0; j < _collateralTokens.length; j++) {
-            for (uint256 k = 0; k < collateralTokens.length; k++) {
-                if (_collateralTokens[j] == collateralTokens[k]) {
-                    address collateralToken = collateralTokens[j];
-                    uint256 amount = amounts[j];
+    function depositCollateral(uint256[] memory amounts)
+        external
+        nonReentrant
+        notPastMaturity
+    {
+        for (uint256 i = 0; i < collateralTokens.length; i++) {
+            address collateralToken = collateralTokens[i];
+            uint256 amount = amounts[i];
 
-                    if (amount == 0) {
-                        revert ZeroAmount();
-                    }
-                    // reentrancy possibility: the totalCollateral is updated after the transfer
-                    uint256 collateralDeposited = safeTransferIn(
-                        IERC20(collateralToken),
-                        _msgSender(),
-                        amount
-                    );
-
-                    totalCollateral[collateralToken] += collateralDeposited;
-                    emit CollateralDeposited(
-                        _msgSender(),
-                        collateralToken,
-                        collateralDeposited
-                    );
-                }
+            if (amount == 0) {
+                // don't revert here in case 0 collateral is deposited
+                continue;
             }
+
+            // reentrancy possibility: the totalCollateral is updated after the transfer
+            uint256 collateralDeposited = safeTransferIn(
+                IERC20(collateralToken),
+                _msgSender(),
+                amount
+            );
+
+            totalCollateral[collateralToken] += collateralDeposited;
+            emit CollateralDeposited(
+                _msgSender(),
+                collateralToken,
+                collateralDeposited
+            );
         }
     }
 
-    // todo: refactor to an amount of bonds to burn and withdraw collateral automatically based off of the amount the issuer would receive for the bonds
-    // todo: refactor the passed in list of collateral tokens
     /// @notice Withdraw collateral from bond contract
     /// @notice The amount of collateral available to be withdrawn depends on the backing ratio(s)
-    /// @param _collateralTokens the tokens to withdraw
-    /// @param _amounts the amounts of each token to withdraw
-    function withdrawCollateral(
-        address[] memory _collateralTokens,
-        uint256[] memory _amounts
-    ) external nonReentrant onlyRole(WITHDRAW_ROLE) {
-        for (uint256 j = 0; j < _collateralTokens.length; j++) {
-            for (uint256 k = 0; k < collateralTokens.length; k++) {
-                if (_collateralTokens[j] == collateralTokens[k]) {
-                    address collateralToken = collateralTokens[k];
-                    uint256 backingRatio = backingRatios[k];
-                    uint256 convertibilityRatio = convertibilityRatios[k];
-                    uint256 tokensNeededToCoverbackingRatio = totalSupply() *
-                        backingRatio;
-                    uint256 tokensNeededToCoverConvertibilityRatio = totalSupply() *
-                            convertibilityRatio;
+    /// @param bondsToBurn the number of bonds to burn in return for collateral
+    function withdrawCollateral(uint256 bondsToBurn)
+        external
+        nonReentrant
+        onlyRole(WITHDRAW_ROLE)
+    {
+        if (bondsToBurn > 0) {
+            burn(bondsToBurn);
+        }
+        for (uint256 i = 0; i < collateralTokens.length; i++) {
+            address collateralToken = collateralTokens[i];
+            uint256 backingRatio = backingRatios[i];
+            uint256 convertibilityRatio = convertibilityRatios[i];
 
-                    // To calculate the required collateral, start with the worst case - 
-                    // both the backing and convertibility ratios need to be covered
-                    uint256 totalRequiredCollateral = tokensNeededToCoverbackingRatio +
-                            tokensNeededToCoverConvertibilityRatio;
-                    if (
-                        _isRepaid && tokensNeededToCoverConvertibilityRatio > 0
-                    ) {
-                      // Here the bond is repaid which means we can take collateral up
-                      // until we reach the amount necessary to cover the convertibility
-                        totalRequiredCollateral = tokensNeededToCoverConvertibilityRatio;
-                    } else if (_isRepaid) {
-                      // Here the bond is repaid and not convertible
-                        totalRequiredCollateral = 0;
-                    }
-                    uint256 balanceBefore = IERC20(collateralToken).balanceOf(
-                        address(this)
-                    );
-                    if (totalRequiredCollateral >= balanceBefore) {
-                        revert CollateralInContractInsufficientToCoverWithdraw();
-                    }
-                    uint256 withdrawableCollateral = balanceBefore -
-                        totalRequiredCollateral;
-                    if (_amounts[j] > withdrawableCollateral) {
-                        revert CollateralInContractInsufficientToCoverWithdraw();
-                    }
-                    // reentrancy possibility: the issuer could try to transfer more collateral than is available - at the point of execution
-                    // the amount of transferred funds is _amounts[j] which is taken directly from the function arguments.
-                    // After re-entering into this function when at the time below is called, the balanceBefore
-                    IERC20(collateralToken).safeTransfer(
-                        _msgSender(),
-                        _amounts[j]
-                    );
-                    totalCollateral[collateralToken] -= _amounts[j];
-                    emit CollateralWithdrawn(
-                        _msgSender(),
-                        collateralToken,
-                        _amounts[j]
-                    );
-                }
+            uint256 tokensToCover = totalSupply() -
+                IERC20(borrowingToken).balanceOf(address(this));
+            uint256 tokensNeededToCoverBackingRatio = _isRepaid
+                ? 0
+                : tokensToCover * backingRatio;
+            uint256 tokensNeededToCoverConvertibilityRatio = _isRepaid
+                ? 0
+                : tokensToCover * convertibilityRatio;
+
+            uint256 totalRequiredCollateral = tokensNeededToCoverBackingRatio +
+                tokensNeededToCoverConvertibilityRatio;
+
+            uint256 balanceBefore = IERC20(collateralToken).balanceOf(
+                address(this)
+            );
+            if (totalRequiredCollateral >= balanceBefore) {
+                revert CollateralInContractInsufficientToCoverWithdraw();
             }
+            uint256 collateralToWithdraw = balanceBefore -
+                totalRequiredCollateral;
+
+            // reentrancy possibility: the issuer could try to transfer more collateral than is available - at the point of execution
+            // the amount of transferred funds is amount which is taken directly from the function arguments.
+            // After re-entering into this function when at the time below is called, the balanceBefore
+            IERC20(collateralToken).safeTransfer(
+                _msgSender(),
+                collateralToWithdraw
+            );
+            totalCollateral[collateralToken] -= collateralToWithdraw;
+            emit CollateralWithdrawn(
+                _msgSender(),
+                collateralToken,
+                collateralToWithdraw
+            );
         }
     }
 
@@ -387,8 +384,8 @@ contract SimpleBond is
             // totalBondSupply = collateralDeposited * backingRatio / 1e18
             // collateralDeposited * 1e18 / backingRatio = targetBondSupply * backingRatio / 1e18
             // since the convertibility ratio is less than or equal to the backing ratio, calculate with the backing ratio
-            // todo: change ether to constant value
-            tokensCanMint = (collateralDeposited * 1 ether) / backingRatio;
+
+            tokensCanMint = (collateralDeposited * ONE) / backingRatio;
 
             // First collateral sets the minimum mint amount after each loop,
             // tokensToMint can decrease if there is not enough collateral of another type
@@ -424,7 +421,7 @@ contract SimpleBond is
             uint256 convertibilityRatio = convertibilityRatios[i];
             if (convertibilityRatio > 0) {
                 uint256 collateralToSend = (amountOfBondsToConvert *
-                    convertibilityRatio) / 1 ether;
+                    convertibilityRatio) / ONE;
                 // external call reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
                 IERC20(collateralToken).safeTransfer(
                     _msgSender(),
@@ -461,7 +458,6 @@ contract SimpleBond is
             _msgSender(),
             amount >= outstandingAmount ? outstandingAmount : amount
         );
-
         if (amountRepaid >= outstandingAmount) {
             _isRepaid = true;
             emit RepaymentInFull(_msgSender(), amountRepaid);
@@ -472,13 +468,7 @@ contract SimpleBond is
 
     /// @notice this function burns bonds in return for the token borrowed against the bond
     /// @param bondShares the amount of bonds to redeem and burn
-    function redeem(uint256 bondShares)
-        external
-        nonReentrant
-        pastMaturity
-        repaid
-    {
-        // todo: make more like erc4626 solmate preview redeem to separate calculation logic
+    function redeem(uint256 bondShares) external nonReentrant pastMaturity {
         if (bondShares == 0) {
             revert ZeroAmount();
         }
@@ -486,40 +476,52 @@ contract SimpleBond is
         burn(bondShares);
 
         // external call reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
-        // todo: what if bondShares != borrowing token decimals?
+        if (_isRepaid) {
+            unsafeRedeemRepaid(bondShares);
+        } else {
+            unsafeRedeemDefaulted(bondShares);
+        }
+    }
+
+    function unsafeRedeemRepaid(uint256 bondShares) private {
         IERC20(borrowingToken).safeTransfer(_msgSender(), bondShares);
         emit Redeem(_msgSender(), borrowingToken, bondShares, bondShares);
     }
 
     /// @notice this function returns an amount of collateral proportional to the bonds burnt
     /// @param bondShares the amount of bonds to burn into collateral
-    function redeemDefaulted(uint256 bondShares)
-        external
-        nonReentrant
-        pastMaturity
-        defaulted
-    {
-        if (bondShares == 0) {
-            revert ZeroAmount();
+    function unsafeRedeemDefaulted(uint256 bondShares) private {
+        uint256 borrowingTokenBalance = IERC20(borrowingToken).balanceOf(
+            address(this)
+        );
+        if (borrowingTokenBalance > 0) {
+            uint256 borrowingTokensToReceive = (bondShares *
+                borrowingTokenBalance) / totalSupply();
+            IERC20(borrowingToken).safeTransfer(
+                _msgSender(),
+                borrowingTokensToReceive
+            );
+            emit Redeem(
+                _msgSender(),
+                borrowingToken,
+                bondShares,
+                borrowingTokensToReceive
+            );
         }
-        burn(bondShares);
 
         // iterate over all collateral tokens and withdraw a proportional amount
-        // todo: also give out possible partial borrowing token repaid
-        // bondShares / total bond supply * total borrowing supply?
         for (uint256 i = 0; i < collateralTokens.length; i++) {
             address collateralToken = collateralTokens[i];
             uint256 backingRatio = backingRatios[i];
             if (backingRatio > 0) {
-                uint256 collateralToReceive = (bondShares * backingRatio) /
-                    1 ether;
+                uint256 collateralToReceive = (bondShares * backingRatio) / ONE;
                 // external call reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
                 IERC20(collateralToken).safeTransfer(
                     _msgSender(),
                     collateralToReceive
                 );
                 totalCollateral[collateralToken] -= collateralToReceive;
-                emit RedeemDefaulted(
+                emit Redeem(
                     _msgSender(),
                     collateralToken,
                     bondShares,
