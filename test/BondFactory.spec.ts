@@ -1,8 +1,9 @@
-import { BigNumber, BigNumberish, utils } from "ethers";
+import { BigNumber, utils } from "ethers";
 import { expect } from "chai";
 import { BondFactoryClone } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { bondFactoryFixture } from "./shared/fixtures";
+import { BondConfigType } from "./interfaces";
 
 const { ethers } = require("hardhat");
 
@@ -16,17 +17,11 @@ const TEST_ADDRESSES: [string, string] = [
   "0x2000000000000000000000000000000000000000",
 ];
 
-const BondConfig: {
-  targetBondSupply: BigNumber;
-  collateralTokens: string[];
-  collateralRatios: BigNumber[];
-  convertibilityRatios: BigNumber[];
-  maturityDate: BigNumberish;
-} = {
+const BondConfig: BondConfigType = {
   targetBondSupply: utils.parseUnits("50000000", 18), // 50 million bonds
-  collateralTokens: [""],
-  collateralRatios: [BigNumber.from(0)],
-  convertibilityRatios: [BigNumber.from(0)],
+  collateralToken: "",
+  collateralRatio: BigNumber.from(0),
+  convertibilityRatio: BigNumber.from(0),
   maturityDate,
 };
 
@@ -43,24 +38,18 @@ describe("BondFactory", async () => {
   });
 
   async function createBond(factory: BondFactoryClone) {
-    BondConfig.collateralTokens = [TEST_ADDRESSES[0], TEST_ADDRESSES[1]];
-    BondConfig.collateralRatios = [
-      utils.parseUnits("0.5", 18),
-      utils.parseUnits("0.25", 18),
-    ];
-    BondConfig.convertibilityRatios = [
-      utils.parseUnits("0.5", 18),
-      utils.parseUnits("0.25", 18),
-    ];
+    BondConfig.collateralToken = TEST_ADDRESSES[0];
+    BondConfig.collateralRatio = utils.parseUnits("0.5", 18);
+    BondConfig.convertibilityRatio = utils.parseUnits("0.5", 18);
     return factory.createBond(
       "SimpleBond",
       "LUG",
       owner.address,
       BondConfig.maturityDate,
       TEST_ADDRESSES[0],
-      BondConfig.collateralTokens,
-      BondConfig.collateralRatios,
-      BondConfig.convertibilityRatios
+      BondConfig.collateralToken,
+      BondConfig.collateralRatio,
+      BondConfig.convertibilityRatio
     );
   }
 

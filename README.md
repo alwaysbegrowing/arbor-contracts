@@ -9,49 +9,66 @@
  <td><a href="https://twitter.com/porterfinance_">twitter</a></td>
 </table>
 
-# V1 
+# V1
 
-Smart Contracts powering the Porter protocol. 
+Smart Contracts powering the Porter protocol.
 
 ## Development
 
-For local development there are environment variables necessary to enable some hardhat plugins. 
+For local development there are environment variables necessary to enable some hardhat plugins.
+
 ### Deployment
 
 Using hardhat-deploy all of the scripts in the `./deploy` folder are run.
 
 Deploying to rinkeby
+
 ```
 npx hardhat deploy --network rinkeby
 ```
+
 Deploying privately on Tenderly requires a log in to the tenderly-cli and ensure the `tenderly.push` command is used in the deploy scripts.
+
 ```
 npx hardhat deploy
 ```
+
 ### Verification
+
 Verify deployed contracts with `hardhat-etherscan`.
+
 ```
 npx hardhat verify <address>
 ```
+
 Verify contract with Tenderly also requires a log in to the tenderly-cli and ensure the `tenderly.verify` command is used in the deploy scripts.
+
 ```
 npx hardhat deploy
 ```
+
 ### Testing
+
 Running the test suite
+
 ```
 npx hardhat test
 ```
+
 Fork testing requires first running the mainnet-fork
+
 ```
 npx hardhat node
 ```
+
 and making the target for testing the local node
+
 ```
 npx hardhat test --network localhost
 ```
 
 ### Other useful commands
+
 ```shell
 npx hardhat help
 npx hardhat compile # create contract artifacts
