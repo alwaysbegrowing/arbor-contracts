@@ -8,7 +8,6 @@ import "@nomiclabs/hardhat-ethers"; // integrates ethers into the hre
 import "solidity-coverage"; // adds 'coverage' task
 import "hardhat-deploy"; // runs scripts in the ./deploy folder
 import "@nomiclabs/hardhat-etherscan"; // adds 'verify' task
-import "@tenderly/hardhat-tenderly"; // integrates tenderly into the hre. adds push/verify to tenderly
 
 dotenv.config();
 
@@ -27,10 +26,6 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 const config: HardhatUserConfig = {
   solidity: "0.8.9",
-  tenderly: {
-    project: process.env.TENDERLY_PROJECT || "",
-    username: process.env.TENDERLY_USERNAME || "",
-  },
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,

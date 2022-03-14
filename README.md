@@ -27,24 +27,12 @@ Deploying to rinkeby
 npx hardhat deploy --network rinkeby
 ```
 
-Deploying privately on Tenderly requires a log in to the tenderly-cli and ensure the `tenderly.push` command is used in the deploy scripts.
-
-```
-npx hardhat deploy
-```
-
 ### Verification
 
 Verify deployed contracts with `hardhat-etherscan`.
 
 ```
 npx hardhat verify <address>
-```
-
-Verify contract with Tenderly also requires a log in to the tenderly-cli and ensure the `tenderly.verify` command is used in the deploy scripts.
-
-```
-npx hardhat deploy
 ```
 
 ### Testing
