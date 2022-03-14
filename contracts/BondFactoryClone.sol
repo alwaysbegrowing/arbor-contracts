@@ -78,7 +78,8 @@ contract BondFactoryClone is AccessControl {
         address _borrowingToken,
         address _collateralToken,
         uint256 _backingRatio,
-        uint256 _convertibilityRatio
+        uint256 _convertibilityRatio,
+        uint256 _maxSupply
     ) external onlyIssuer returns (address clone) {
         clone = Clones.clone(tokenImplementation);
         SimpleBond(clone).initialize(
@@ -89,7 +90,8 @@ contract BondFactoryClone is AccessControl {
             _borrowingToken,
             _collateralToken,
             _backingRatio,
-            _convertibilityRatio
+            _convertibilityRatio,
+            _maxSupply
         );
         emit BondCreated(
             clone,

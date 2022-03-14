@@ -23,6 +23,7 @@ const BondConfig: BondConfigType = {
   collateralRatio: BigNumber.from(0),
   convertibilityRatio: BigNumber.from(0),
   maturityDate,
+  maxSupply: utils.parseUnits("50000000", 18),
 };
 
 describe("BondFactory", async () => {
@@ -49,7 +50,8 @@ describe("BondFactory", async () => {
       TEST_ADDRESSES[0],
       BondConfig.collateralToken,
       BondConfig.collateralRatio,
-      BondConfig.convertibilityRatio
+      BondConfig.convertibilityRatio,
+      BondConfig.maxSupply
     );
   }
 
