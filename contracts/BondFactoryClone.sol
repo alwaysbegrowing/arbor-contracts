@@ -14,7 +14,18 @@ contract BondFactoryClone is AccessControl {
 
     /// @notice Emitted when a new bond is created
     /// @param newBond The address of the newley deployed bond
-    event BondCreated(address newBond);
+    // inherit the rest of the paramters from createBond
+    event BondCreated(
+        address newBond,
+        string name,
+        string symbol,
+        address owner,
+        uint256 maturityDate,
+        address borrowingToken,
+        address collateralToken,
+        uint256 backingRatio,
+        uint256 convertibilityRatio
+    );
 
     /// @notice Emitted when the allow list is toggled on or off
     /// @param isAllowListEnabled the new state of the allow list
@@ -80,6 +91,16 @@ contract BondFactoryClone is AccessControl {
             _backingRatio,
             _convertibilityRatio
         );
-        emit BondCreated(clone);
+        emit BondCreated(
+            clone,
+            _name,
+            _symbol,
+            _owner,
+            _maturityDate,
+            _borrowingToken,
+            _collateralToken,
+            _backingRatio,
+            _convertibilityRatio
+        );
     }
 }

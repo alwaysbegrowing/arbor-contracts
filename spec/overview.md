@@ -19,7 +19,7 @@ This uses [CloneFactory](https://github.com/porter-finance/v1-core/issues/15) fo
     - Address
     - Amount
 
-## BondTokens
+## BondToken
 
 A new `Bond` contract is created for each [borrower](https://docs.porter.finance/portal/protocol/borrowers). They implement the standard EIP-20/ERC20 token methods as well as Porter specific methods. Each `BondToken` represents a [zero coupon bond](https://docs.porter.finance/portal/intro-to-bonds/zero-coupon-bonds) that can be purchased by [lenders](https://docs.porter.finance/portal/protocol/lenders).
 
@@ -33,7 +33,7 @@ A new `Bond` contract is created for each [borrower](https://docs.porter.finance
 
 ### Collateral
 
-Borrowers specify the ERC20 tokens they would like to use as collateral when creating the bond. Multiple distinct ERC20 tokens used as collateral is supported.
+Borrowers specify the ERC20 tokens they would like to use as collateral when creating the bond. Only a single collateral type is supported. 
 
 ### Convert
 
