@@ -8,7 +8,8 @@
     "declaration": true
   },
   "include": [
-    "./hardhat.config.ts, ./scripts",
+    "./hardhat.config.ts",
+    "./scripts",
     "./test",
     "./deploy",
     "./typechain"

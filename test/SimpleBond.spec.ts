@@ -4,7 +4,6 @@ import {
   TestERC20,
   SimpleBond,
   IERC20__factory,
-  ERC20__factory,
   BondFactoryClone,
 } from "../typechain";
 import { getBondContract, getEventArgumentsFromTransaction } from "./utilities";
@@ -27,7 +26,7 @@ const BondStanding = {
 // 3 years from now, in seconds
 const maturityDate = Math.round(
   new Date(new Date().setFullYear(new Date().getFullYear() + 3)).getTime() /
-    1000
+  1000
 );
 
 const BondConfig: BondConfigType = {
@@ -46,7 +45,7 @@ const ConvertibleBondConfig: BondConfigType = {
   maturityDate,
 };
 
-describe("SimpleBond", async () => {
+describe("SimpleBond", () => {
   let bond: SimpleBond;
   let convertibleBond: SimpleBond;
   let owner: SignerWithAddress;
