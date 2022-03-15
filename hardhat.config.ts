@@ -41,7 +41,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     rinkeby: {
-      url: process.env.RINKEBY_RPC_URL,
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -50,14 +50,9 @@ const config: HardhatUserConfig = {
         auto: true,
       },
       forking: {
-        url: process.env.MAINNET_RPC_URL || "",
-        blockNumber: Number(process.env.FORK_BLOCK_NUMBER) || 14135757,
+        url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+        blockNumber: 10333393,
       },
-    },
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },
   gasReporter: {
