@@ -36,7 +36,7 @@ Methods only callable by this role:
 `BondFactory.revokeRole()`
 
 The bond admin is passed in as a parameter to the `createBond` method on `bondFactory`
-The bond admin is able to grant or revoke the `WITHDRAW_ROLE`.
+The bond admin is able to grant or revoke the `WITHDRAW_ROLE` as well as the `MINT_ROLE`.
 
 ## WITHDRAW_ROLE
 
@@ -45,3 +45,11 @@ The bond admin is automatically granted this role upon the creation of the bond.
 Methods only callable by this role:
 `Bond.withdrawCollateral()`
 Only addresses with this role are able to withdraw bond collateral. This role will be used in the future to allow refinancing of loans.
+
+## MINT_ROLE
+
+The bond admin is automatically granted this role upon the creation of the bond. Additional minters can be added by the bond admin.
+
+Methods only callable by this role:
+`Bond.mint()`
+Only addresses with this role are able to deposit collateral to mint bonds. This role will be used in the future to allow refinancing of loans.
