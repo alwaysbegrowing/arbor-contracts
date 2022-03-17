@@ -1,5 +1,9 @@
 {
   "name": "hardhat-project",
+  "scripts": {
+    "rinkeby-integration": "hardhat test ./test/integration-tests/*.spec.ts --network rinkeby",
+    "prepare": "husky install"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
@@ -37,9 +41,6 @@
     "typescript": "^4.5.4"
   },
   "lint-staged": {
-    "*": "npx prettier --write"
-  },
-  "scripts": {
-    "prepare": "husky install"
+    "*.{js,jsx,ts,tsx,sol,md}": "npx prettier --write"
   }
 }
