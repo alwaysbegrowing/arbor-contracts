@@ -52,7 +52,7 @@ export interface BondData {
 }
 
 export interface CollateralData {
-  collateralToken: string;
+  backingToken: string;
   collateralAmount: BigNumber;
   bondAddress: string;
 }

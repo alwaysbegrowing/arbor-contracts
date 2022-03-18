@@ -7,41 +7,46 @@ export async function bondFactoryFixture() {
   return { factory };
 }
 
-export async function tokenFixture() {
-  const BorrowingToken = await ethers.getContractFactory("TestERC20");
-  const borrowingToken = (await BorrowingToken.deploy(
-    "Borrowing Token",
-    "BT",
-    ethers.utils.parseEther("200000000"),
-    18
-  )) as TestERC20;
+export async function tokenFixture(decimals: number[]) {
+  // always make 18 decimal tokens
+  const decimalsToCreate = Array.from(new Set([18].concat(decimals)));
+  const tokens = await Promise.all(
+    decimalsToCreate.map(async (decimals) => {
+      const RepaymentToken = await ethers.getContractFactory("TestERC20");
+      const repaymentToken = (await RepaymentToken.deploy(
+        "Repayment Token",
+        "RT",
+        ethers.constants.MaxUint256,
+        decimals
+      )) as TestERC20;
 
-  const [, , attacker] = await ethers.getSigners();
-  const AttackingToken = await ethers.getContractFactory("TestERC20");
-  const attackingToken = (await AttackingToken.connect(attacker).deploy(
-    "Attack Token",
-    "AT",
-    ethers.utils.parseEther("2000000000"),
-    20
-  )) as TestERC20;
+      const [, , attacker] = await ethers.getSigners();
+      const AttackingToken = await ethers.getContractFactory("TestERC20");
+      const attackingToken = (await AttackingToken.connect(attacker).deploy(
+        "Attack Token",
+        "AT",
+        ethers.constants.MaxUint256,
+        decimals
+      )) as TestERC20;
 
-  const NativeToken = await ethers.getContractFactory("TestERC20");
-  const nativeToken = (await NativeToken.deploy(
-    "Native Token",
-    "NT",
-    ethers.utils.parseEther("2000000000"),
-    18
-  )) as TestERC20;
+      const BackingToken = await ethers.getContractFactory("TestERC20");
+      const backingToken = (await BackingToken.deploy(
+        "Backing Token",
+        "BT",
+        ethers.constants.MaxUint256,
+        decimals
+      )) as TestERC20;
 
-  const MockUSDCToken = await ethers.getContractFactory("TestERC20");
-  const mockUSDCToken = (await MockUSDCToken.deploy(
-    "USDC",
-    "USDC",
-    ethers.utils.parseEther("2000000000"),
-    6
-  )) as TestERC20;
+      return {
+        repaymentToken,
+        attackingToken,
+        backingToken,
+        decimals,
+      };
+    })
+  );
 
-  return { borrowingToken, attackingToken, nativeToken, mockUSDCToken };
+  return { tokens };
 }
 
 export async function convertToCurrencyDecimals(token: ERC20, amount: string) {

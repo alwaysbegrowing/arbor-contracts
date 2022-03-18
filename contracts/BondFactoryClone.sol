@@ -21,8 +21,8 @@ contract BondFactoryClone is AccessControl {
         string symbol,
         address owner,
         uint256 maturityDate,
-        address borrowingToken,
-        address collateralToken,
+        address repaymentToken,
+        address backingToken,
         uint256 backingRatio,
         uint256 convertibilityRatio
     );
@@ -64,9 +64,9 @@ contract BondFactoryClone is AccessControl {
     /// @param _symbol Ticker symbol for the bond
     /// @param _owner Owner of the bond
     /// @param _maturityDate Timestamp of when the bond matures
-    /// @param _collateralToken Address of the collateral to use for the bond
+    /// @param _backingToken Address of the collateral to use for the bond
     /// @param _backingRatio Ratio of bond:token to be used
-    /// @param _borrowingToken Address of the token being borrowed by the issuer of the bond
+    /// @param _repaymentToken Address of the token being repayed at maturity
     /// @param _convertibilityRatio Ratio of bond:token that the bond can be converted into
     /// @dev this uses a clone to save on deployment costs https://github.com/porter-finance/v1-core/issues/15
     /// This adds a slight overhead everytime users interact with the bonds - but saves 10x the gas during deployment
@@ -75,8 +75,8 @@ contract BondFactoryClone is AccessControl {
         string memory _symbol,
         address _owner,
         uint256 _maturityDate,
-        address _borrowingToken,
-        address _collateralToken,
+        address _repaymentToken,
+        address _backingToken,
         uint256 _backingRatio,
         uint256 _convertibilityRatio,
         uint256 _maxSupply
@@ -87,8 +87,8 @@ contract BondFactoryClone is AccessControl {
             _symbol,
             _owner,
             _maturityDate,
-            _borrowingToken,
-            _collateralToken,
+            _repaymentToken,
+            _backingToken,
             _backingRatio,
             _convertibilityRatio,
             _maxSupply
@@ -99,8 +99,8 @@ contract BondFactoryClone is AccessControl {
             _symbol,
             _owner,
             _maturityDate,
-            _borrowingToken,
-            _collateralToken,
+            _repaymentToken,
+            _backingToken,
             _backingRatio,
             _convertibilityRatio
         );

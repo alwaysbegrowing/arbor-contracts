@@ -1,8 +1,8 @@
 import { BigNumber, utils } from "ethers";
 import { expect } from "chai";
-import { BondFactoryClone } from "../typechain";
+import { BondFactoryClone, TestERC20 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { bondFactoryFixture } from "./shared/fixtures";
+import { bondFactoryFixture, tokenFixture } from "./shared/fixtures";
 import { BondConfigType } from "./interfaces";
 
 const { ethers } = require("hardhat");
@@ -12,14 +12,8 @@ const maturityDate = Math.round(
     1000
 );
 
-const TEST_ADDRESSES: [string, string] = [
-  "0x1000000000000000000000000000000000000000",
-  "0x2000000000000000000000000000000000000000",
-];
-
 const BondConfig: BondConfigType = {
   targetBondSupply: utils.parseUnits("50000000", 18), // 50 million bonds
-  collateralToken: "",
   collateralRatio: BigNumber.from(0),
   convertibilityRatio: BigNumber.from(0),
   maturityDate,
@@ -30,16 +24,20 @@ describe("BondFactory", async () => {
   let factory: BondFactoryClone;
   let owner: SignerWithAddress;
   let user: SignerWithAddress;
+  let backingToken: TestERC20;
+  let repaymentToken: TestERC20;
   let ISSUER_ROLE: any;
 
   beforeEach(async () => {
     [owner, user] = await ethers.getSigners();
     ({ factory } = await bondFactoryFixture());
+    ({ backingToken, repaymentToken } = await (
+      await tokenFixture([18])
+    ).tokens[0]);
     ISSUER_ROLE = await factory.ISSUER_ROLE();
   });
 
   async function createBond(factory: BondFactoryClone) {
-    BondConfig.collateralToken = TEST_ADDRESSES[0];
     BondConfig.collateralRatio = utils.parseUnits("0.5", 18);
     BondConfig.convertibilityRatio = utils.parseUnits("0.5", 18);
     return factory.createBond(
@@ -47,8 +45,8 @@ describe("BondFactory", async () => {
       "LUG",
       owner.address,
       BondConfig.maturityDate,
-      TEST_ADDRESSES[0],
-      BondConfig.collateralToken,
+      repaymentToken.address,
+      backingToken.address,
       BondConfig.collateralRatio,
       BondConfig.convertibilityRatio,
       BondConfig.maxSupply
@@ -70,7 +68,7 @@ describe("BondFactory", async () => {
       await expect(factory.setIsAllowListEnabled(false))
         .to.emit(factory, "AllowListEnabled")
         .withArgs(false);
-      expect(await factory.isAllowListEnabled()).to.be.false;
+      expect(await factory.isAllowListEnabled()).to.be.equal(false);
       await expect(createBond(factory.connect(user))).to.emit(
         factory,
         "BondCreated"
@@ -97,12 +95,12 @@ describe("BondFactory", async () => {
         .reverted;
     });
     it("allowList toggle works correctly", async () => {
-      expect(await factory.isAllowListEnabled()).to.be.true;
+      expect(await factory.isAllowListEnabled()).to.be.equal(true);
 
       await expect(factory.setIsAllowListEnabled(false))
         .to.emit(factory, "AllowListEnabled")
         .withArgs(false);
-      expect(await factory.isAllowListEnabled()).to.be.false;
+      expect(await factory.isAllowListEnabled()).to.be.equal(false);
       await expect(createBond(factory.connect(user))).to.emit(
         factory,
         "BondCreated"
@@ -111,7 +109,7 @@ describe("BondFactory", async () => {
       await expect(factory.setIsAllowListEnabled(true))
         .to.emit(factory, "AllowListEnabled")
         .withArgs(true);
-      expect(await factory.isAllowListEnabled()).to.be.true;
+      expect(await factory.isAllowListEnabled()).to.be.equal(true);
     });
   });
 });

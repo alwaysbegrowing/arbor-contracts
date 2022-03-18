@@ -5,13 +5,13 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title SimpleBond
 /// @notice A custom ERC20 token that can be used to issue bonds.
 /// @notice The contract handles issuance, conversion, and redemption of bonds.
-/// @dev External calls to tokens used for collateral and borrowing are used throughout to transfer and check balances
+/// @dev External calls to tokens used for backing and repayment are used throughout to transfer and check balances
 contract SimpleBond is
     Initializable,
     ERC20Upgradeable,
@@ -19,7 +19,7 @@ contract SimpleBond is
     ERC20BurnableUpgradeable,
     ReentrancyGuard
 {
-    using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20Metadata;
 
     /// @notice this would go into default if maturityDate passes and the loan contract has not been paid back
     /// @notice to be set from the auction
@@ -28,7 +28,7 @@ contract SimpleBond is
         GOOD,
         // when maturity date passes and its unpaid
         DEFAULTED,
-        // after bond borrowing token is repaid
+        // after bond repayment token is repaid
         PAID,
         // when something goes wrong and this contract becomes nullified
         NULL
@@ -36,21 +36,21 @@ contract SimpleBond is
 
     /// @notice emitted when a collateral is deposited for a bond
     /// @param collateralDepositor the address of the caller of the deposit
-    /// @param collateralToken the address of the collateral
+    /// @param backingToken the address of the collateral
     /// @param amount the number of the tokens being deposited
     event CollateralDeposited(
         address indexed collateralDepositor,
-        address indexed collateralToken,
+        address indexed backingToken,
         uint256 amount
     );
 
     /// @notice emitted when a bond's issuer withdraws collateral
     /// @param collateralWithdrawer the address withdrawing collateral
-    /// @param collateralToken the address of the ERC20 token
+    /// @param backingToken the address of the ERC20 token
     /// @param amount the number of the tokens withdrawn
     event CollateralWithdrawn(
         address indexed collateralWithdrawer,
-        address indexed collateralToken,
+        address indexed backingToken,
         uint256 amount
     );
 
@@ -69,12 +69,12 @@ contract SimpleBond is
 
     /// @notice emitted when bond tokens are converted by a borrower
     /// @param convertorAddress the address converting their tokens
-    /// @param collateralToken the address of the collateral received
+    /// @param backingToken the address of the collateral received
     /// @param amountOfBondsConverted the number of burnt bonds
     /// @param amountOfCollateralReceived the number of collateral tokens received
     event Converted(
         address indexed convertorAddress,
-        address indexed collateralToken,
+        address indexed backingToken,
         uint256 amountOfBondsConverted,
         uint256 amountOfCollateralReceived
     );
@@ -82,10 +82,10 @@ contract SimpleBond is
     /// @notice emitted when a bond is redeemed
     event Redeem(
         address indexed receiver,
-        address indexed borrowingToken,
-        address indexed collateralToken,
+        address indexed repaymentToken,
+        address indexed backingToken,
         uint256 amountOfBondsRedeemed,
-        uint256 amountOfBorrowTokensReceived,
+        uint256 amountOfRepaymentTokensReceived,
         uint256 amountOfCollateralReceived
     );
 
@@ -133,17 +133,17 @@ contract SimpleBond is
 
     /// @notice A date in the future set at bond creation at which the bond will mature.
     /// @notice Before this date, a bond token can be converted if convertible, but cannot be redeemed.
-    /// @notice After this date, a bond token can be redeemed for the borrowing asset.
+    /// @notice After this date, a bond token can be redeemed for the repayment token.
     uint256 public maturityDate;
 
     /// @notice The address of the ERC20 token this bond will be redeemable for at maturity
-    address public borrowingToken;
+    address public repaymentToken;
 
-    /// @notice this flag is set after the issuer has paid back the full amount of borrowing token needed to cover the outstanding bonds
+    /// @notice this flag is set after the issuer has paid back the full amount of repayment token needed to cover the outstanding bonds
     bool internal isRepaid;
 
     /// @notice the addresses of the ERC20 token backing the bond which can be converted into before maturity or, in the case of a default, redeemable for at maturity
-    address public collateralToken;
+    address public backingToken;
 
     /// @notice the ratio of ERC20 tokens backing the bonds
     uint256 public backingRatio;
@@ -151,6 +151,9 @@ contract SimpleBond is
     /// @notice the ratio of ERC20 tokens the bonds will convert into before maturity
     /// @dev if this ratio is 0, the bond is not convertible.
     uint256 public convertibilityRatio;
+
+    /// @notice The ratio at which the repayment token's decimals deviate from the 18 decimal bond. 1e18 for a 1:1 ratio
+    uint256 public repaymentScalingFactor;
 
     /// @notice the role ID for withdrawCollateral
     bytes32 public constant WITHDRAW_ROLE = keccak256("WITHDRAW_ROLE");
@@ -182,8 +185,8 @@ contract SimpleBond is
     /// @param _symbol passed into the ERC20 token
     /// @param _owner ownership of this contract transferred to this address
     /// @param _maturityDate the timestamp at which the bond will mature
-    /// @param _borrowingToken the ERC20 token address the non-defaulted bond will be redeemable for at maturity
-    /// @param _collateralToken the ERC20 token address for the bond
+    /// @param _repaymentToken the ERC20 token address the non-defaulted bond will be redeemable for at maturity
+    /// @param _backingToken the ERC20 token address for the bond
     /// @param _backingRatio the amount of tokens per bond needed
     /// @param _convertibilityRatio the amount of tokens per bond a convertible bond can be converted for
     function initialize(
@@ -191,8 +194,8 @@ contract SimpleBond is
         string memory _symbol,
         address _owner,
         uint256 _maturityDate,
-        address _borrowingToken,
-        address _collateralToken,
+        address _repaymentToken,
+        address _backingToken,
         uint256 _backingRatio,
         uint256 _convertibilityRatio,
         uint256 _maxSupply
@@ -211,10 +214,11 @@ contract SimpleBond is
         __ERC20Burnable_init();
 
         maturityDate = _maturityDate;
-        borrowingToken = _borrowingToken;
-        collateralToken = _collateralToken;
+        repaymentToken = _repaymentToken;
+        backingToken = _backingToken;
         backingRatio = _backingRatio;
         convertibilityRatio = _convertibilityRatio;
+        repaymentScalingFactor = _computeScalingFactor(repaymentToken);
         maxSupply = _maxSupply;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
@@ -234,13 +238,12 @@ contract SimpleBond is
         totalCollateral -= collateralToSend;
 
         // @audit-ok reentrancy possibility: at the point of this transfer, the caller could attempt to reenter, but the totalCollateral updates beofre reaching this point, and is used in the previewWithdraw method to calculate the amount allowed to transfer out of the contract
-        IERC20(collateralToken).safeTransfer(_msgSender(), collateralToSend);
-
-        emit CollateralWithdrawn(
+        IERC20Metadata(backingToken).safeTransfer(
             _msgSender(),
-            collateralToken,
             collateralToSend
         );
+
+        emit CollateralWithdrawn(_msgSender(), backingToken, collateralToSend);
     }
 
     /// @notice mints the amount of specified bonds by transferring in collateral
@@ -264,7 +267,7 @@ contract SimpleBond is
 
         // @audit-ok reentrancy possibility: totalCollateral is updated after transfer
         uint256 collateralDeposited = safeTransferIn(
-            IERC20(collateralToken),
+            IERC20Metadata(backingToken),
             _msgSender(),
             collateralToDeposit
         );
@@ -273,7 +276,7 @@ contract SimpleBond is
 
         emit CollateralDeposited(
             _msgSender(),
-            collateralToken,
+            backingToken,
             collateralDeposited
         );
 
@@ -294,17 +297,20 @@ contract SimpleBond is
         burn(bonds);
 
         // @audit-ok Reentrancy possibility: the bonds are already burnt - if there weren't enough bonds to burn, an error is thrown
-        IERC20(collateralToken).safeTransfer(_msgSender(), collateralToSend);
+        IERC20Metadata(backingToken).safeTransfer(
+            _msgSender(),
+            collateralToSend
+        );
 
         totalCollateral -= collateralToSend;
 
-        emit Converted(_msgSender(), collateralToken, bonds, collateralToSend);
+        emit Converted(_msgSender(), backingToken, bonds, collateralToSend);
     }
 
-    /// @notice allows the issuer to repay the bond by depositing borrowing token
+    /// @notice allows the issuer to repay the bond by depositing repayment token
     /// @dev emits RepaymentInFull if the full balance has been repaid, RepaymentDeposited otherwise
     /// @dev the lower of outstandingAmount and amount is chosen to prevent overpayment
-    /// @param amount the number of borrowing tokens to repay
+    /// @param amount the number of repayment tokens to repay
     function repay(uint256 amount) external nonReentrant notPastMaturity {
         if (isRepaid) {
             revert RepaymentMet();
@@ -315,13 +321,14 @@ contract SimpleBond is
 
         // @audit-ok Re-entrancy possibility: this is a transfer into the contract - isRepaid is updated after transfer
         uint256 amountRepaid = safeTransferIn(
-            IERC20(borrowingToken),
+            IERC20Metadata(repaymentToken),
             _msgSender(),
             amount
         );
         if (
             // @audit-ok Re-entrancy possibility: isRepaid is updated after balance check
-            IERC20(borrowingToken).balanceOf(address(this)) >= totalSupply()
+            _upscale(IERC20Metadata(repaymentToken).balanceOf(address(this))) >=
+            totalSupply()
         ) {
             isRepaid = true;
             emit RepaymentInFull(_msgSender(), amountRepaid);
@@ -339,50 +346,50 @@ contract SimpleBond is
 
         // calculate amount before burning as the preview function uses totalSupply.
         (
-            uint256 borrowingTokensToSend,
-            uint256 collateralTokensToSend
+            uint256 repaymentTokensToSend,
+            uint256 backingTokensToSend
         ) = previewRedeem(bonds);
 
-        totalCollateral -= collateralTokensToSend;
+        totalCollateral -= backingTokensToSend;
 
         burn(bonds);
 
         // @audit-ok reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
-        if (borrowingTokensToSend > 0) {
-            IERC20(borrowingToken).safeTransfer(
+        if (repaymentTokensToSend > 0) {
+            IERC20Metadata(repaymentToken).safeTransfer(
                 _msgSender(),
-                borrowingTokensToSend
+                repaymentTokensToSend
             );
         }
-        if (collateralTokensToSend > 0) {
+        if (backingTokensToSend > 0) {
             // @audit-ok reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
-            IERC20(collateralToken).safeTransfer(
+            IERC20Metadata(backingToken).safeTransfer(
                 _msgSender(),
-                collateralTokensToSend
+                backingTokensToSend
             );
         }
         emit Redeem(
             _msgSender(),
-            borrowingToken,
-            collateralToken,
+            repaymentToken,
+            backingToken,
             bonds,
-            borrowingTokensToSend,
-            collateralTokensToSend
+            repaymentTokensToSend,
+            backingTokensToSend
         );
     }
 
     /// @notice sends tokens to the issuer that were sent to this contract
-    /// @dev collateral, borrowing, and the bond itself cannot be swept
+    /// @dev collateral, repayment, and the bond itself cannot be swept
     /// @param token send the entire token balance of this address to the owner
-    function sweep(IERC20 token)
+    function sweep(IERC20Metadata token)
         external
         nonReentrant
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         if (
-            address(token) == borrowingToken ||
+            address(token) == repaymentToken ||
             address(token) == address(this) ||
-            address(token) == collateralToken
+            address(token) == backingToken
         ) {
             revert SweepDisallowedForToken();
         }
@@ -396,7 +403,7 @@ contract SimpleBond is
     /// @param from the sender
     /// @param value the total number of tokens being transferred
     function safeTransferIn(
-        IERC20 token,
+        IERC20Metadata token,
         address from,
         uint256 value
     ) private returns (uint256) {
@@ -410,6 +417,37 @@ contract SimpleBond is
         return balanceAfter - balanceBefore;
     }
 
+    /// @dev uses the decimals on the token to return a scale factor for the passed in token
+    function _computeScalingFactor(address token)
+        internal
+        view
+        returns (uint256)
+    {
+        if (address(token) == address(this)) {
+            return ONE;
+        }
+
+        // Tokens that don't implement the `decimals` method are not supported.
+        uint256 tokenDecimals = IERC20Metadata(token).decimals();
+
+        // Tokens with more than 18 decimals are not supported.
+        if (tokenDecimals > 18) {
+            revert TokenOverflow();
+        }
+        uint256 decimalsDifference = 18 - tokenDecimals;
+        return ONE * 10**decimalsDifference;
+    }
+
+    /// @dev this function takes the amount of repaymentTokens and scales to bond tokens
+    function _upscale(uint256 amount) internal view returns (uint256) {
+        return (amount * repaymentScalingFactor) / ONE;
+    }
+
+    /// @dev this function takes the amount of bondTokens and scales to repayment tokens
+    function _downscale(uint256 amount) internal view returns (uint256) {
+        return (amount * ONE) / repaymentScalingFactor;
+    }
+
     function previewMint(uint256 bonds) public view returns (uint256) {
         return (bonds * backingRatio) / ONE;
     }
@@ -419,10 +457,13 @@ contract SimpleBond is
     }
 
     function previewWithdraw() public view returns (uint256) {
-        uint256 tokensRepaid = IERC20(borrowingToken).balanceOf(address(this));
-        uint256 tokensNotCoveredByRepayment = tokensRepaid > totalSupply()
+        uint256 tokensCoveredByRepayment = _upscale(
+            IERC20Metadata(repaymentToken).balanceOf(address(this))
+        );
+        uint256 tokensNotCoveredByRepayment = tokensCoveredByRepayment >
+            totalSupply()
             ? 0
-            : totalSupply() - tokensRepaid;
+            : totalSupply() - tokensCoveredByRepayment;
         // bond is not paid and mature
         // to cover backing ratio = total supply (-bonds burned) * backing ratio
         // to cover convertibility = 0 (bonds cannot be converted)
@@ -464,22 +505,23 @@ contract SimpleBond is
     function previewRedeem(uint256 bonds)
         public
         view
-        returns (uint256 borrowingTokenToSend, uint256 collateralTokenToSend)
+        returns (uint256 repaymentTokensToSend, uint256 backingTokensToSend)
     {
         if (block.timestamp < maturityDate) {
             return (0, 0);
         }
-        if (isRepaid) {
-            return (bonds, 0);
-        } else {
-            uint256 borrowingTokensInContract = IERC20(borrowingToken)
-                .balanceOf(address(this));
 
-            // A defaulted bond is redeemable for its portion of borrowing tokens posibly deposited and the portion of collateral in the contract.
-            return (
-                ((bonds * borrowingTokensInContract) / (totalSupply())),
-                ((bonds * totalCollateral) / (totalSupply()))
-            );
+        uint256 repaymentTokensSahre = (bonds *
+            IERC20Metadata(repaymentToken).balanceOf(address(this))) /
+            totalSupply();
+
+        if (isRepaid) {
+            return (repaymentTokensSahre, 0);
+        } else {
+            uint256 backingTokensShare = (bonds *
+                IERC20Metadata(backingToken).balanceOf(address(this))) /
+                totalSupply();
+            return (repaymentTokensSahre, backingTokensShare);
         }
     }
 }
