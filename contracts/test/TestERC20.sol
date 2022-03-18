@@ -7,11 +7,11 @@ contract TestERC20 is ERC20 {
     uint8 private _decimals = 18;
 
     constructor(
-        string memory name,
-        string memory symbol,
+        string memory _tokenName,
+        string memory _tokenSymbol,
         uint256 _mintAmount,
         uint8 decimals_
-    ) ERC20(name, symbol) {
+    ) ERC20(_tokenName, _tokenSymbol) {
         _mint(msg.sender, _mintAmount);
         _decimals = decimals_;
     }

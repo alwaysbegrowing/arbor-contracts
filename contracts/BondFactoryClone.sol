@@ -60,49 +60,49 @@ contract BondFactoryClone is AccessControl {
     }
 
     /// @notice Creates a bond
-    /// @param _name Name of the bond
-    /// @param _symbol Ticker symbol for the bond
-    /// @param _owner Owner of the bond
-    /// @param _maturityDate Timestamp of when the bond matures
-    /// @param _backingToken Address of the collateral to use for the bond
-    /// @param _backingRatio Ratio of bond:token to be used
-    /// @param _repaymentToken Address of the token being repayed at maturity
-    /// @param _convertibilityRatio Ratio of bond:token that the bond can be converted into
+    /// @param name Name of the bond
+    /// @param symbol Ticker symbol for the bond
+    /// @param owner Owner of the bond
+    /// @param maturityDate Timestamp of when the bond matures
+    /// @param backingToken Address of the collateral to use for the bond
+    /// @param backingRatio Ratio of bond:token to be used
+    /// @param repaymentToken Address of the token being repayed at maturity
+    /// @param convertibilityRatio Ratio of bond:token that the bond can be converted into
     /// @dev this uses a clone to save on deployment costs https://github.com/porter-finance/v1-core/issues/15
     /// This adds a slight overhead everytime users interact with the bonds - but saves 10x the gas during deployment
     function createBond(
-        string memory _name,
-        string memory _symbol,
-        address _owner,
-        uint256 _maturityDate,
-        address _repaymentToken,
-        address _backingToken,
-        uint256 _backingRatio,
-        uint256 _convertibilityRatio,
-        uint256 _maxSupply
+        string memory name,
+        string memory symbol,
+        address owner,
+        uint256 maturityDate,
+        address repaymentToken,
+        address backingToken,
+        uint256 backingRatio,
+        uint256 convertibilityRatio,
+        uint256 maxSupply
     ) external onlyIssuer returns (address clone) {
         clone = Clones.clone(tokenImplementation);
         SimpleBond(clone).initialize(
-            _name,
-            _symbol,
-            _owner,
-            _maturityDate,
-            _repaymentToken,
-            _backingToken,
-            _backingRatio,
-            _convertibilityRatio,
-            _maxSupply
+            name,
+            symbol,
+            owner,
+            maturityDate,
+            repaymentToken,
+            backingToken,
+            backingRatio,
+            convertibilityRatio,
+            maxSupply
         );
         emit BondCreated(
             clone,
-            _name,
-            _symbol,
-            _owner,
-            _maturityDate,
-            _repaymentToken,
-            _backingToken,
-            _backingRatio,
-            _convertibilityRatio
+            name,
+            symbol,
+            owner,
+            maturityDate,
+            repaymentToken,
+            backingToken,
+            backingRatio,
+            convertibilityRatio
         );
     }
 }

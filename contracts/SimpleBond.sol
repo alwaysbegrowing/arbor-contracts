@@ -163,9 +163,6 @@ contract SimpleBond is
     /// @notice the role ID for mint
     bytes32 public constant MINT_ROLE = keccak256("MINT_ROLE");
 
-    /// @notice this mapping keeps track of the total collateral in this contract. this amount is used when determining the portion of collateral to return to the bond holders in event of a default
-    uint256 public totalCollateral;
-
     /// @notice the max amount of bonds able to be minted
     uint256 public maxSupply;
 
@@ -183,18 +180,18 @@ contract SimpleBond is
 
     /// @notice this function is called one time during initial bond creation and sets up the configuration for the bond
     /// @dev New bond contract deployed via clone
-    /// @param _name passed into the ERC20 token
-    /// @param _symbol passed into the ERC20 token
-    /// @param _owner ownership of this contract transferred to this address
+    /// @param bondName passed into the ERC20 token
+    /// @param bondSymbol passed into the ERC20 token
+    /// @param owner ownership of this contract transferred to this address
     /// @param _maturityDate the timestamp at which the bond will mature
     /// @param _repaymentToken the ERC20 token address the non-defaulted bond will be redeemable for at maturity
     /// @param _backingToken the ERC20 token address for the bond
     /// @param _backingRatio the amount of tokens per bond needed
     /// @param _convertibilityRatio the amount of tokens per bond a convertible bond can be converted for
     function initialize(
-        string memory _name,
-        string memory _symbol,
-        address _owner,
+        string memory bondName,
+        string memory bondSymbol,
+        address owner,
         uint256 _maturityDate,
         address _repaymentToken,
         address _backingToken,
@@ -212,7 +209,7 @@ contract SimpleBond is
             revert InvalidMaturityDate();
         }
 
-        __ERC20_init(_name, _symbol);
+        __ERC20_init(bondName, bondSymbol);
         __ERC20Burnable_init();
 
         maturityDate = _maturityDate;
@@ -223,9 +220,9 @@ contract SimpleBond is
         repaymentScalingFactor = _computeScalingFactor(repaymentToken);
         maxSupply = _maxSupply;
 
-        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-        _grantRole(WITHDRAW_ROLE, _owner);
-        _grantRole(MINT_ROLE, _owner);
+        _grantRole(DEFAULT_ADMIN_ROLE, owner);
+        _grantRole(WITHDRAW_ROLE, owner);
+        _grantRole(MINT_ROLE, owner);
     }
 
     /// @notice Withdraw collateral from bond contract
@@ -237,7 +234,6 @@ contract SimpleBond is
     {
         uint256 collateralToSend = previewWithdraw();
 
-        // @audit-ok reentrancy possibility: at the point of this transfer, the caller could attempt to reenter, but the totalCollateral updates beofre reaching this point, and is used in the previewWithdraw method to calculate the amount allowed to transfer out of the contract
         IERC20Metadata(backingToken).safeTransfer(
             _msgSender(),
             collateralToSend
@@ -265,7 +261,10 @@ contract SimpleBond is
             revert ZeroAmount();
         }
 
-        // @audit-ok reentrancy possibility: totalCollateral is updated after transfer
+        _mint(_msgSender(), bonds);
+
+        emit Mint(_msgSender(), bonds);
+
         uint256 collateralDeposited = safeTransferIn(
             IERC20Metadata(backingToken),
             _msgSender(),
@@ -277,10 +276,6 @@ contract SimpleBond is
             backingToken,
             collateralDeposited
         );
-
-        _mint(_msgSender(), bonds);
-
-        emit Mint(_msgSender(), bonds);
     }
 
     /// @notice Bond holder can convert their bond to underlying collateral
@@ -316,6 +311,10 @@ contract SimpleBond is
         }
 
         // @audit-ok Re-entrancy possibility: this is a transfer into the contract - isRepaid is updated after transfer
+        // I'm not sure how we can fix this here. We could check that_upscale(totalRepaymentSupply() + amount) >= totalSupply() but
+        // that would break in the case of a token taking a fee.
+        // maybe we don't care about reentrency for this method? I was trying to think through potential exploits here, and
+        // if reentrency is exploited here what can they do? Just repay over the maximum amount?
         uint256 amountRepaid = safeTransferIn(
             IERC20Metadata(repaymentToken),
             _msgSender(),
@@ -386,7 +385,7 @@ contract SimpleBond is
         ) {
             revert SweepDisallowedForToken();
         }
-        token.transfer(msg.sender, token.balanceOf(address(this)));
+        token.safeTransfer(msg.sender, token.balanceOf(address(this)));
     }
 
     /// @notice this function returns the balance of this contract before and after a transfer into it
@@ -442,21 +441,6 @@ contract SimpleBond is
     /// @dev this function takes the amount of repaymentTokens and scales to bond tokens rounding up
     function _upscale(uint256 amount) internal view returns (uint256) {
         return amount.mulDivUp(repaymentScalingFactor, ONE);
-    }
-
-    /// @dev this function takes the amount of repaymentTokens and scales to bond tokens rounding down
-    function _upscaleDown(uint256 amount) internal view returns (uint256) {
-        return amount.mulDivDown(repaymentScalingFactor, ONE);
-    }
-
-    /// @dev this function takes the amount of bondTokens and scales to repayment tokens rounding up
-    function _downscale(uint256 amount) internal view returns (uint256) {
-        return amount.mulDivUp(ONE, repaymentScalingFactor);
-    }
-
-    /// @dev this function takes the amount of bondTokens and scales to repayment tokens rounding down
-    function _downscaleDown(uint256 amount) internal view returns (uint256) {
-        return amount.mulDivDown(ONE, repaymentScalingFactor);
     }
 
     /// @notice preview the amount of backing token required to mint the number of bond tokens
