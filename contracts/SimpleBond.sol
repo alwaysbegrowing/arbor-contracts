@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
 
 /// @title SimpleBond
 /// @notice A custom ERC20 token that can be used to issue bonds.
@@ -20,6 +21,7 @@ contract SimpleBond is
     ReentrancyGuard
 {
     using SafeERC20 for IERC20Metadata;
+    using FixedPointMathLib for uint256;
 
     /// @notice this would go into default if maturityDate passes and the loan contract has not been paid back
     /// @notice to be set from the auction
@@ -235,8 +237,6 @@ contract SimpleBond is
     {
         uint256 collateralToSend = previewWithdraw();
 
-        totalCollateral -= collateralToSend;
-
         // @audit-ok reentrancy possibility: at the point of this transfer, the caller could attempt to reenter, but the totalCollateral updates beofre reaching this point, and is used in the previewWithdraw method to calculate the amount allowed to transfer out of the contract
         IERC20Metadata(backingToken).safeTransfer(
             _msgSender(),
@@ -272,8 +272,6 @@ contract SimpleBond is
             collateralToDeposit
         );
 
-        totalCollateral += collateralDeposited;
-
         emit CollateralDeposited(
             _msgSender(),
             backingToken,
@@ -302,8 +300,6 @@ contract SimpleBond is
             collateralToSend
         );
 
-        totalCollateral -= collateralToSend;
-
         emit Converted(_msgSender(), backingToken, bonds, collateralToSend);
     }
 
@@ -327,8 +323,7 @@ contract SimpleBond is
         );
         if (
             // @audit-ok Re-entrancy possibility: isRepaid is updated after balance check
-            _upscale(IERC20Metadata(repaymentToken).balanceOf(address(this))) >=
-            totalSupply()
+            _upscale(totalRepaymentSupply()) >= totalSupply()
         ) {
             isRepaid = true;
             emit RepaymentInFull(_msgSender(), amountRepaid);
@@ -340,17 +335,15 @@ contract SimpleBond is
     /// @notice this function burns bonds in return for the token borrowed against the bond
     /// @param bonds the amount of bonds to redeem and burn
     function redeem(uint256 bonds) external nonReentrant pastMaturity {
-        if (bonds == 0) {
-            revert ZeroAmount();
-        }
-
         // calculate amount before burning as the preview function uses totalSupply.
         (
             uint256 repaymentTokensToSend,
             uint256 backingTokensToSend
         ) = previewRedeem(bonds);
 
-        totalCollateral -= backingTokensToSend;
+        if (repaymentTokensToSend == 0 && backingTokensToSend == 0) {
+            revert ZeroAmount();
+        }
 
         burn(bonds);
 
@@ -417,6 +410,14 @@ contract SimpleBond is
         return balanceAfter - balanceBefore;
     }
 
+    function totalRepaymentSupply() public view returns (uint256) {
+        return IERC20Metadata(repaymentToken).balanceOf(address(this));
+    }
+
+    function totalBackingSupply() public view returns (uint256) {
+        return IERC20Metadata(backingToken).balanceOf(address(this));
+    }
+
     /// @dev uses the decimals on the token to return a scale factor for the passed in token
     function _computeScalingFactor(address token)
         internal
@@ -438,50 +439,72 @@ contract SimpleBond is
         return ONE * 10**decimalsDifference;
     }
 
-    /// @dev this function takes the amount of repaymentTokens and scales to bond tokens
+    /// @dev this function takes the amount of repaymentTokens and scales to bond tokens rounding up
     function _upscale(uint256 amount) internal view returns (uint256) {
-        return (amount * repaymentScalingFactor) / ONE;
+        return amount.mulDivUp(repaymentScalingFactor, ONE);
     }
 
-    /// @dev this function takes the amount of bondTokens and scales to repayment tokens
+    /// @dev this function takes the amount of repaymentTokens and scales to bond tokens rounding down
+    function _upscaleDown(uint256 amount) internal view returns (uint256) {
+        return amount.mulDivDown(repaymentScalingFactor, ONE);
+    }
+
+    /// @dev this function takes the amount of bondTokens and scales to repayment tokens rounding up
     function _downscale(uint256 amount) internal view returns (uint256) {
-        return (amount * ONE) / repaymentScalingFactor;
+        return amount.mulDivUp(ONE, repaymentScalingFactor);
     }
 
+    /// @dev this function takes the amount of bondTokens and scales to repayment tokens rounding down
+    function _downscaleDown(uint256 amount) internal view returns (uint256) {
+        return amount.mulDivDown(ONE, repaymentScalingFactor);
+    }
+
+    /// @notice preview the amount of backing token required to mint the number of bond tokens
+    /// @dev this function rounds up the amount of required backing for the number of bonds to mint
+    /// @param bonds the amount of desired bonds to mint
+    /// @return amount of backing required to mint the amount of bonds
     function previewMint(uint256 bonds) public view returns (uint256) {
-        return (bonds * backingRatio) / ONE;
+        return bonds.mulDivUp(backingRatio, ONE);
     }
 
     function previewConvert(uint256 bonds) public view returns (uint256) {
-        return (bonds * convertibilityRatio) / ONE;
+        return bonds.mulDivDown(convertibilityRatio, ONE);
     }
 
+    /// @dev this function calculates the amount of backing tokens that are able to be withdrawn by the issuer. The amount of tokens can increase by bonds being burnt and converted as well as repayment made. Each bond is covered by a certain amount of collateral for backing and conversion. For convertible bonds, the totalSupply of bonds must be covered by the convertibilityRatio. That means even if all of the bonds were covered by repayment, there must still be enough collateral in the contract to cover the outstanding bonds convertibility until the maturity date - at which point all collateral will be able to be withdrawn.
     function previewWithdraw() public view returns (uint256) {
-        uint256 tokensCoveredByRepayment = _upscale(
-            IERC20Metadata(repaymentToken).balanceOf(address(this))
+        uint256 tokensCoveredByRepayment = _upscale(totalRepaymentSupply());
+        uint256 maxCollateralRequiredForBacking;
+        if (tokensCoveredByRepayment > totalSupply()) {
+            maxCollateralRequiredForBacking = 0;
+        } else {
+            maxCollateralRequiredForBacking = (totalSupply() -
+                tokensCoveredByRepayment).mulDivUp(backingRatio, ONE);
+        }
+        uint256 maxCollateralRequiredForConvertibility = totalSupply().mulDivUp(
+            convertibilityRatio,
+            ONE
         );
-        uint256 tokensNotCoveredByRepayment = tokensCoveredByRepayment >
-            totalSupply()
-            ? 0
-            : totalSupply() - tokensCoveredByRepayment;
-        // bond is not paid and mature
-        // to cover backing ratio = total supply (-bonds burned) * backing ratio
-        // to cover convertibility = 0 (bonds cannot be converted)
-        // bond is not paid and not mature:
-        // to cover backing ratio = total supply (-bonds burned) * backing ratio
-        // to cover convertibility = total supply (-bonds burned) * convertibility ratio
-        // bond is paid and not mature
-        // to cover backing ratio = 0 (bonds need not be backed by collateral)
-        // to cover convertibility ratio = total supply (- bonds burned) * collateral ratio
-        // bond is paid and mature
-        // to cover backing ratio = 0
-        // to cover convertibility ratio = 0
-        // All outstanding bonds must be covered by the convertibility ratio
-        uint256 maxCollateralRequiredForConvertibility = (totalSupply() *
-            convertibilityRatio) / ONE;
-        // The outstanding bonds already repaid need not be supported by the "backing" collateral
-        uint256 maxCollateralRequiredForBacking = (tokensNotCoveredByRepayment *
-            backingRatio) / ONE;
+        /* 
+     NOTE: "total uncovered supply" is the tokens that are not covered by the
+     paid back repayment token.
+
+     There are the following scenarios:
+     bond is NOT paid AND NOT mature:
+     to cover backing ratio = total uncovered supply * backing ratio
+     to cover convertibility = total supply * convertibility ratio
+     bond is NOT paid AND mature
+     to cover backing ratio = total uncovered supply * backing ratio
+     to cover convertibility = 0 (bonds cannot be converted)
+     bond IS paid AND NOT mature
+     to cover backing ratio = 0 (bonds need not be backed by collateral)
+     to cover convertibility ratio = total supply * collateral ratio
+     bond IS paid AND mature
+     to cover backing ratio = 0
+     to cover convertibility ratio = 0
+     All outstanding bonds must be covered by the convertibility ratio
+    */
+
         uint256 totalRequiredCollateral;
         if (!isRepaid) {
             totalRequiredCollateral = maxCollateralRequiredForConvertibility >
@@ -495,33 +518,38 @@ contract SimpleBond is
             totalRequiredCollateral = 0;
         }
 
-        if (totalRequiredCollateral >= totalCollateral) {
+        if (totalRequiredCollateral >= totalBackingSupply()) {
             return 0;
         }
 
-        return totalCollateral - totalRequiredCollateral;
+        return totalBackingSupply() - totalRequiredCollateral;
     }
 
     function previewRedeem(uint256 bonds)
         public
         view
-        returns (uint256 repaymentTokensToSend, uint256 backingTokensToSend)
+        returns (uint256, uint256)
     {
         if (block.timestamp < maturityDate) {
+            // Immature bond redeems for nothing
             return (0, 0);
         }
 
-        uint256 repaymentTokensSahre = (bonds *
-            IERC20Metadata(repaymentToken).balanceOf(address(this))) /
-            totalSupply();
-
-        if (isRepaid) {
-            return (repaymentTokensSahre, 0);
-        } else {
-            uint256 backingTokensShare = (bonds *
-                IERC20Metadata(backingToken).balanceOf(address(this))) /
-                totalSupply();
-            return (repaymentTokensSahre, backingTokensShare);
+        uint256 repaidAmount = _upscale(totalRepaymentSupply());
+        if (repaidAmount > totalSupply()) {
+            repaidAmount = totalSupply();
         }
+        uint256 repaymentTokensToSend = bonds.mulDivUp(
+            totalRepaymentSupply(),
+            totalSupply()
+        );
+
+        uint256 nonRepaidAmount = totalSupply() - repaidAmount;
+        uint256 backingTokensToSend = backingRatio.mulDivDown(
+            bonds.mulDivDown(nonRepaidAmount, totalSupply()),
+            ONE
+        );
+
+        return (repaymentTokensToSend, backingTokensToSend);
     }
 }
