@@ -1,9 +1,9 @@
 import { ethers } from "hardhat";
-import { BondFactoryClone, ERC20, TestERC20 } from "../../typechain";
+import { BondFactory, ERC20, TestERC20 } from "../../typechain";
 
 export async function bondFactoryFixture() {
-  const BondFactoryClone = await ethers.getContractFactory("BondFactoryClone");
-  const factory = (await BondFactoryClone.deploy()) as BondFactoryClone;
+  const BondFactory = await ethers.getContractFactory("BondFactory");
+  const factory = (await BondFactory.deploy()) as BondFactory;
   return { factory };
 }
 
@@ -12,9 +12,9 @@ export async function tokenFixture(decimals: number[]) {
   const decimalsToCreate = Array.from(new Set([18].concat(decimals)));
   const tokens = await Promise.all(
     decimalsToCreate.map(async (decimals) => {
-      const RepaymentToken = await ethers.getContractFactory("TestERC20");
-      const repaymentToken = (await RepaymentToken.deploy(
-        "Repayment Token",
+      const PaymentToken = await ethers.getContractFactory("TestERC20");
+      const paymentToken = (await PaymentToken.deploy(
+        "Payment Token",
         "RT",
         ethers.constants.MaxUint256,
         decimals
@@ -29,18 +29,18 @@ export async function tokenFixture(decimals: number[]) {
         decimals
       )) as TestERC20;
 
-      const BackingToken = await ethers.getContractFactory("TestERC20");
-      const backingToken = (await BackingToken.deploy(
-        "Backing Token",
+      const CollateralToken = await ethers.getContractFactory("TestERC20");
+      const collateralToken = (await CollateralToken.deploy(
+        "Collateral Token",
         "BT",
         ethers.constants.MaxUint256,
         decimals
       )) as TestERC20;
 
       return {
-        repaymentToken,
+        paymentToken,
         attackingToken,
-        backingToken,
+        collateralToken,
         decimals,
       };
     })

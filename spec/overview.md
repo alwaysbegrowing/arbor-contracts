@@ -26,9 +26,9 @@ A new `Bond` contract is created for each [borrower](https://docs.porter.finance
 `BondTokens` support the following functionality:
 
 - Creation and minting new `BondTokens` via `initialize()` and `mint()`
-- Depositing/withdrawing collateral via `depositCollateral()` and `withdrawCollateral()`
+- Depositing/withdrawing collateral via `mint()` and `withdrawCollateral()`
 - Handling convertibility via a configured ratio and the ability for lenders to convert their `BondTokens` using `convert()`
-- Handling repayment for the issuer via `repay()`
+- Handling payment for the issuer via `pay()`
 - Allowing bond redemption for the bond holders via `redeem()`
 
 ### Collateral
@@ -41,19 +41,19 @@ If convertability in enabled for the bond,
 Bondholders will have an option to redeem their bond tokens for the underlying collateral at a predefined "convertibility ratio".
 For example - when the bond is created the ratio may be 1 bond token : .5 collateral token. This gives the lenders equity upside because the bond token can be redeemed, at any time before maturity of the bond, for a portion of a collateral token. Convertibility cannot be changed once set and after the bond's maturity, the bond token can no longer be redeemed for the collateral token.
 
-### Repay
+### Pay
 
-This gives the ability for a borrower to repay their debt. Repaying allows the borrower to withdraw any collateral that is not used to back convertible tokens. After the maturity date is met, all collateral can be withdrawn and the bond will be considered to be `PAID`. At this time, lenders lose the ability to convert their bond tokens into the collateral token. Lenders gain the ability to redeem their bond tokens for the borrowing token.
+This gives the ability for a borrower to pay their debt. Paying allows the borrower to withdraw any collateral that is not used to back convertible tokens. After the maturity date is met, all collateral can be withdrawn and the bond will be considered to be `PAID`. At this time, lenders lose the ability to convert their bond tokens into the collateral token. Lenders gain the ability to redeem their bond tokens for the borrowing token.
 
 ### Redeem
 
 #### if repaid
 
-Bonds can be redeemed for a pro rata share of the repayment amount.
+Bonds can be redeemed for a pro rata share of the payment amount.
 
 #### if defaulted
 
-Bonds can be redeemed for a pro rata share of the collateral + repayment amount.
+Bonds can be redeemed for a pro rata share of the collateral + payment amount.
 
 # Design Decisions
 

@@ -1,7 +1,9 @@
 import { BigNumber, ContractTransaction, Event } from "ethers";
 import { use } from "chai";
 import { ethers } from "hardhat";
-import { SimpleBond } from "../typechain";
+import { Bond } from "../typechain";
+import { BondConfigType } from "./interfaces";
+import { ONE } from "./constants";
 
 export const addDaysToNow = (days: number = 0) => {
   return BigNumber.from(
@@ -42,9 +44,7 @@ export async function getEventArgumentsFromLoop(
   return {};
 }
 
-export const getBondContract = async (
-  tx: Promise<any>
-): Promise<SimpleBond> => {
+export const getBondContract = async (tx: Promise<any>): Promise<Bond> => {
   const [owner] = await ethers.getSigners();
 
   const [newBondAddress] = await getEventArgumentsFromTransaction(
@@ -52,11 +52,12 @@ export const getBondContract = async (
     "BondCreated"
   );
 
-  return (await ethers.getContractAt(
-    "SimpleBond",
-    newBondAddress,
-    owner
-  )) as SimpleBond;
+  return (await ethers.getContractAt("Bond", newBondAddress, owner)) as Bond;
+};
+
+export const getTargetCollateral = (bondConfig: BondConfigType): BigNumber => {
+  const { targetBondSupply, collateralRatio } = bondConfig;
+  return targetBondSupply.mul(collateralRatio).div(ONE);
 };
 
 declare global {

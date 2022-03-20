@@ -5,7 +5,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-  await deploy("BondFactoryClone", {
+  await deploy("BondFactory", {
     from: deployer,
     log: true,
     autoMine: true,

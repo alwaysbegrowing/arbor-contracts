@@ -1,4 +1,4 @@
-# Debt Repayment
+# Debt Payment
 
 ## Flash Loans
 
@@ -50,6 +50,6 @@ Cons: Would need to add flash loan logic to our protocol vs leveraging an existi
 
 Our protocol avoids using any pricing oracles to reduce the effect of price manipulation & oracle risk.
 
-Upon a default - bondholders are able to redeem their bond tokens for a pro-rata share of the collateral & repayment amount.
+Upon a default - bondholders are able to redeem their bond tokens for a pro-rata share of the collateral & payment amount.
 
 Bondholders will also receive a defaulted bond token that represents the unpaid debt that the issuer owes the bondholder.

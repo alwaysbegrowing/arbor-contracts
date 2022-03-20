@@ -1,10 +1,10 @@
 import { ethers } from "hardhat";
 import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { TestERC20, BondFactoryClone, SimpleBond } from "../typechain";
+import { TestERC20, BondFactory, Bond } from "../typechain";
 import { getBondContract } from "./utilities";
 
-export const deployNATIVEandREPAY = async (owner: SignerWithAddress) => {
+export const deployNativeAndPayment = async (owner: SignerWithAddress) => {
   const MockErc20Contract = await ethers.getContractFactory("TestERC20");
   console.log("factory");
   const native = (await MockErc20Contract.connect(owner).deploy(
@@ -16,27 +16,27 @@ export const deployNATIVEandREPAY = async (owner: SignerWithAddress) => {
   console.log({ native: native.address });
   await native.deployed();
 
-  const repay = (await MockErc20Contract.connect(owner).deploy(
-    "Repayment Token",
-    "REPAY",
+  const pay = (await MockErc20Contract.connect(owner).deploy(
+    "Payment Token",
+    "PAY",
     ethers.utils.parseUnits("500"),
     18
   )) as TestERC20;
-  await repay.deployed();
-  return await Promise.all([native, repay]);
+  await pay.deployed();
+  return await Promise.all([native, pay]);
 };
 
 export const createBond = async (
   owner: SignerWithAddress,
   nativeToken: TestERC20,
-  repaymentToken: TestERC20,
-  factory: BondFactoryClone
+  paymentToken: TestERC20,
+  factory: BondFactory
 ) => {
   // these could be converted to parameters
   const bondName = "Always be growing";
   const bondSymbol = "LEARN";
   const collateralRatio = ethers.utils.parseUnits(".5", 18);
-  const convertibilityRatio = ethers.utils.parseUnits(".5", 18);
+  const convertibleRatio = ethers.utils.parseUnits(".5", 18);
   const maturityDate = Math.round(
     new Date(new Date().setFullYear(new Date().getFullYear() + 3)).getTime() /
       1000
@@ -57,10 +57,10 @@ export const createBond = async (
         bondSymbol,
         owner.address,
         maturityDate,
-        repaymentToken.address,
+        paymentToken.address,
         nativeToken.address,
         collateralRatio,
-        convertibilityRatio,
+        convertibleRatio,
         maxSupply
       )
   );
@@ -70,7 +70,7 @@ export const createBond = async (
 export const mint = async (
   owner: SignerWithAddress,
   nativeToken: TestERC20,
-  bond: SimpleBond
+  bond: Bond
 ) => {
   const approveTx = await nativeToken
     .connect(owner)
@@ -92,7 +92,7 @@ export const mint = async (
 export const initiateAuction = async (
   auction: Contract,
   owner: SignerWithAddress,
-  bond: SimpleBond,
+  bond: Bond,
   borrowToken: TestERC20
 ) => {
   const auctioningToken = bond.address;
