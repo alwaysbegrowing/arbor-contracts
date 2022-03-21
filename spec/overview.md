@@ -71,7 +71,7 @@ The borrower can call this method to pay `repaymentToken` and unlock their colla
 
 ### `Bond.withdraw()`
 
-After repaying, the borrower can call this method to withdraw any collateral that has been unlocked.
+After repaying, the borrower can call this method to withdraw any collateral that has been unlocked. The borrower can also call `Bond.burn()` to burn any bonds they own and unlock collateral to withdraw at (backingRatio \* burnedBonds)
 
 To get `Bonds` to sell, the borrower needs the call the `Bond.mint()` method to deposit collateral at their configured `backingRatio` in exchange for `Bonds`
 
