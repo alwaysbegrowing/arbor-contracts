@@ -1,29 +1,18 @@
 # Contracts Overview
 
-# Main contracts
-
 ## BondFactory
 
-This uses [CloneFactory](https://github.com/porter-finance/v1-core/issues/15) for significant gas savings.
+The `BondFactory` facilitates the creation of new bonds. For our early v1 only authorized addresses will be able to create `Bonds` through the `BondFactory`
 
-- Creates the bond with the passed in configuration:
-  - Collateral
-    - Address
-    - Amount
-    - Ratio
-  - Convertibility
-    - Ratio
-  - Total Bond Supply
-  - Maturity Date
-  - Borrowing
-    - Address
-    - Amount
+## [Bond](./bond.md)
 
-## BondToken
+A new `Bond` contract is created for each [borrower](https://docs.porter.finance/portal/protocol/borrowers). They implement the standard EIP-20/ERC20 token methods as well as Porter specific methods. Each `Bond` represents a [zero coupon bond](https://docs.porter.finance/portal/intro-to-bonds/zero-coupon-bonds) that can be purchased by [lenders](https://docs.porter.finance/portal/protocol/lenders).
 
-A new `Bond` contract is created for each [borrower](https://docs.porter.finance/portal/protocol/borrowers). They implement the standard EIP-20/ERC20 token methods as well as Porter specific methods. Each `BondToken` represents a [zero coupon bond](https://docs.porter.finance/portal/intro-to-bonds/zero-coupon-bonds) that can be purchased by [lenders](https://docs.porter.finance/portal/protocol/lenders).
+# User Roles
 
-`BondTokens` support the following functionality:
+## Borrowers
+
+Borrowers are on chain entities that want to borrow stablecoins using their native token as collateral with a fixed interest rate and no liquidation risk.
 
 - Creation and minting new `BondTokens` via `initialize()` and `mint()`
 - Depositing/withdrawing collateral via `mint()` and `withdrawCollateral()`
@@ -31,52 +20,77 @@ A new `Bond` contract is created for each [borrower](https://docs.porter.finance
 - Handling payment for the issuer via `pay()`
 - Allowing bond redemption for the bond holders via `redeem()`
 
-### Collateral
+To borrow money, a borrower has to issue a bond and then sell it.
 
-Borrowers specify the ERC20 tokens they would like to use as collateral when creating the bond. Only a single collateral type is supported.
+### Issue Bond
 
-### Convert
+Borrowers decide on multiple paramaters and call the `Factory.createBond` method passing in their address as the owner.
 
-If convertability in enabled for the bond,
-Bondholders will have an option to redeem their bond tokens for the underlying collateral at a predefined "convertibility ratio".
-For example - when the bond is created the ratio may be 1 bond token : .5 collateral token. This gives the lenders equity upside because the bond token can be redeemed, at any time before maturity of the bond, for a portion of a collateral token. Convertibility cannot be changed once set and after the bond's maturity, the bond token can no longer be redeemed for the collateral token.
+```solidity
+    /**
+        @notice Creates a bond
+        @param name Name of the bond
+        @param symbol Ticker symbol for the bond
+        @param owner Owner of the bond
+        @param maturityDate Timestamp of when the bond matures
+        @param collateralToken Address of the collateral to use for the bond
+        @param collateralRatio Ratio of bond: collateral token
+        @param repaymentToken Address of the token being paid
+        @param convertibleRatio Ratio of bond:token that the bond can be converted into
+        @param maxSupply Max amount of tokens able to mint
+        @dev This uses a clone to save on deployment costs https://github.com/porter-finance/v1-core/issues/15 which adds a slight overhead everytime users interact with the bonds - but saves 10x the gas during deployment
+    */
+    function createBond(
+        string memory name,
+        string memory symbol,
+        address owner,
+        uint256 maturityDate,
+        address repaymentToken,
+        address collateralToken,
+        uint256 collateralRatio,
+        uint256 convertibleRatio,
+        uint256 maxSupply
+    )
+```
+
+This method creates a new bond and grants the borrower the `MINT_ROLE` and the `ISSUER_ROLE` on the newly deployed bond.
+
+After a bond is issued, there are a few things the borrower can do.
 
 ### Pay
 
 This gives the ability for a borrower to pay their debt. Paying allows the borrower to withdraw any collateral that is not used to back convertible tokens. After the maturity date is met, all collateral can be withdrawn and the bond will be considered to be `PAID`. At this time, lenders lose the ability to convert their bond tokens into the collateral token. Lenders gain the ability to redeem their bond tokens for the borrowing token.
 
-### Redeem
+### `Bond.mint()`
 
-#### if repaid
+To get `Bonds` to sell, the borrower needs the call the `Bond.mint()` method to deposit collateral at their configured `backingRatio` in exchange for `Bonds`
 
-Bonds can be redeemed for a pro rata share of the payment amount.
+### `Bond.repay()`
 
-#### if defaulted
+The borrower can call this method to pay `repaymentToken` and unlock their collateral. This will typically be done a week before the maturity date of the bond.
 
-Bonds can be redeemed for a pro rata share of the collateral + payment amount.
+### `Bond.withdraw()`
 
-# Design Decisions
+After repaying, the borrower can call this method to withdraw any collateral that has been unlocked.
 
-## No Oracles
+To get `Bonds` to sell, the borrower needs the call the `Bond.mint()` method to deposit collateral at their configured `backingRatio` in exchange for `Bonds`
 
-- We are designing the protocol in a way that we can avoid price oracles
+### Sell Bonds
 
-## Broker pattern vs token pattern
+After calling `Bond.mint()` borrowers can sell thier bonds using [Gnosis Auction](https://github.com/gnosis/ido-contracts)
 
-- https://github.com/porter-finance/v1-core/issues/29
+## Lenders
 
-## Allow multiple ways of selling bonds
+Lenders are able to purchase bonds through Gnosis Auction.
 
-- Bonds should be decoupled from gnosis auction. Gnosis auction is just a mechanism for selling the bonds. They should be designed in a way where they could be sold directly to lenders - or through other means.
+Once purchased, lenders can interact with their bonds by redeeming or converting them.
 
-## Supporting multiple collateral types
+### `Bond.redeem()`
 
-- https://github.com/porter-finance/v1-core/issues/28
+After maturity, bonds holders have the option to call the `.redeem()` method to redeem their bonds. If the bond has been repayed, they burn their bonds in exchange for the rapyment token at a value of 1 bond to 1 repayment token.
 
-## Use clone factory instead of normal factory for creating new BondTokens
+If the bond has not been repaid and is in a defaulted state, bondholders are able to burn their bonds for a pro rata share of the collateralToken.
 
-- https://github.com/porter-finance/v1-core/issues/15
+### `Bond.convert()`
 
-## Upgradability strategy
-
-- https://github.com/porter-finance/v1-core/issues/40
+Bondholders can burn their bonds in exchange for the collateralToken at any time before bond maturity at the predefined `convertRatio`

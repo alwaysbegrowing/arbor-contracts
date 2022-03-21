@@ -12,37 +12,37 @@ const easyAuction = require("../../contracts/external/EasyAuction");
 const { RINKEBY_DEPLOYER_ADDRESS } = process.env;
 const rinkebyFactory = "0x69e892D6c419883BFa5Def1FeB01cdf71129573d";
 const rinkebyGnosis = "0xC5992c0e0A3267C7F75493D0F717201E26BE35f7";
-describe("Integration", () => {
-  if (!RINKEBY_DEPLOYER_ADDRESS)
-    throw new Error("{RINKEBY_DEPLOYER_ADDRESS} env variable is required");
-  it("should create erc20 tokens and bonds", async () => {
-    if (network.name === "hardhat") {
-      await network.provider.request({
-        method: "hardhat_impersonateAccount",
-        params: [RINKEBY_DEPLOYER_ADDRESS],
-      });
-    }
-    const signer = await ethers.getSigner(RINKEBY_DEPLOYER_ADDRESS);
-    const [native, payment] = await deployNativeAndPayment(signer);
-    console.log({ native: native.address, payment: payment.address });
+// describe("Integration", () => {
+//   if (!RINKEBY_DEPLOYER_ADDRESS)
+//     throw new Error("{RINKEBY_DEPLOYER_ADDRESS} env variable is required");
+//   it("should create erc20 tokens and bonds", async () => {
+//     if (network.name === "hardhat") {
+//       await network.provider.request({
+//         method: "hardhat_impersonateAccount",
+//         params: [RINKEBY_DEPLOYER_ADDRESS],
+//       });
+//     }
+//     const signer = await ethers.getSigner(RINKEBY_DEPLOYER_ADDRESS);
+//     const [native, payment] = await deployNativeAndPayment(signer);
+//     console.log({ native: native.address, payment: payment.address });
 
-    const factory = (await ethers.getContractAt(
-      "BondFactory",
-      rinkebyFactory
-    )) as BondFactory;
+//     const factory = (await ethers.getContractAt(
+//       "BondFactory",
+//       rinkebyFactory
+//     )) as BondFactory;
 
-    const bond = (await createBond(signer, native, payment, factory)) as Bond;
+//     const bond = (await createBond(signer, native, payment, factory)) as Bond;
 
-    console.log({ bond: bond.address });
+//     console.log({ bond: bond.address });
 
-    await mint(signer, native, bond);
-    console.log("minted");
+//     await mint(signer, native, bond);
+//     console.log("minted");
 
-    const auction = await ethers.getContractAt(easyAuction.abi, rinkebyGnosis);
+//     const auction = await ethers.getContractAt(easyAuction.abi, rinkebyGnosis);
 
-    await expect(await initiateAuction(auction, signer, bond, payment)).to.emit(
-      auction,
-      "NewAuction"
-    );
-  });
-});
+//     await expect(await initiateAuction(auction, signer, bond, payment)).to.emit(
+//       auction,
+//       "NewAuction"
+//     );
+//   });
+// });
