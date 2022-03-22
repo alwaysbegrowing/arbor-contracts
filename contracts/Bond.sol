@@ -476,9 +476,7 @@ contract Bond is
                 collateralTokensRequired
                 ? convertibleTokensRequired
                 : collateralTokensRequired;
-        } else if (isMature()) {
-            // this seems wrong and using !isMature does not cause tests to fail
-            // # TODO investigate and add tests
+        } else if (!isMature()) {
             totalRequiredCollateral = convertibleTokensRequired;
         } else {
             // @audit-info redundant but explicit
