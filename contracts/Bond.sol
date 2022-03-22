@@ -148,8 +148,8 @@ contract Bond is
 
     /// @notice operation restricted because the bond has matured
     error BondPastMaturity();
-    /// @notice operation restricted because the bond is not yet mature
-    error BondNotYetMatured();
+    /// @notice operation restricted because the bond is not yet matured or paid
+    error BondNotYetMaturedOrPaid();
 
     /// @notice maturity date is not valid
     error InvalidMaturityDate();
@@ -161,6 +161,9 @@ contract Bond is
 
     /// @notice attempted to pay after payment was met
     error PaymentMet();
+
+    /// @notice this bond has been paid so more bonds can not be minted
+    error BondsCanNoLongerBeMinted();
 
     /// @notice attempted to sweep a token used in the contract
     error SweepDisallowedForToken();
@@ -178,9 +181,16 @@ contract Bond is
         _;
     }
 
-    modifier afterMaturity() {
-        if (!isMature()) {
-            revert BondNotYetMatured();
+    modifier afterMaturityOrPaid() {
+        if (!isMature() && !isFullyPaid()) {
+            revert BondNotYetMaturedOrPaid();
+        }
+        _;
+    }
+
+    modifier notFullyPaid() {
+        if (isFullyPaid()) {
+            revert BondsCanNoLongerBeMinted();
         }
         _;
     }
@@ -244,6 +254,7 @@ contract Bond is
         external
         onlyRole(MINT_ROLE)
         beforeMaturity
+        notFullyPaid
         nonReentrant
     {
         if (totalSupply() + bonds > maxSupply) {
@@ -331,19 +342,19 @@ contract Bond is
         // that would break in the case of a token taking a fee.
         // maybe we don't care about reentrency for this method? I was trying to think through potential exploits here, and
         // if reentrency is exploited here what can they do? Just pay over the maximum amount?
-        uint256 amountRepaid = _safeTransferIn(
+        uint256 amountPaid = _safeTransferIn(
             IERC20Metadata(paymentToken),
             _msgSender(),
             amount
         );
-        emit Payment(_msgSender(), amountRepaid);
+        emit Payment(_msgSender(), amountPaid);
     }
 
     /**
         @notice this function burns bonds in return for the token borrowed against the bond
         @param bonds the amount of bonds to redeem and burn
     */
-    function redeem(uint256 bonds) external nonReentrant afterMaturity {
+    function redeem(uint256 bonds) external nonReentrant afterMaturityOrPaid {
         // calculate amount before burning as the preview function uses totalSupply.
         (
             uint256 paymentTokensToSend,
@@ -440,7 +451,7 @@ contract Bond is
         at which point all collateral will be able to be withdrawn.
 
         There are the following scenarios:
-        "total uncovered supply" is the tokens that are not covered by the amount repaid.
+        "total uncovered supply" is the tokens that are not covered by the amount paid.
             bond is NOT paid AND NOT mature:
                 to cover collateralRatio = total uncovered supply * collateralRatio
                 to cover convertibleRatio = total supply * convertibleRatio
@@ -502,18 +513,18 @@ contract Bond is
         view
         returns (uint256, uint256)
     {
-        uint256 repaidAmount = _upscale(totalPaid());
+        uint256 paidAmount = _upscale(totalPaid());
         if (isFullyPaid()) {
-            repaidAmount = totalSupply();
+            paidAmount = totalSupply();
         }
         uint256 paymentTokensToSend = bonds.mulDivUp(
             totalPaid(),
             totalSupply()
         );
 
-        uint256 nonRepaidAmount = totalSupply() - repaidAmount;
+        uint256 nonPaidAmount = totalSupply() - paidAmount;
         uint256 collateralTokensToSend = collateralRatio.mulDivDown(
-            bonds.mulDivDown(nonRepaidAmount, totalSupply()),
+            bonds.mulDivDown(nonPaidAmount, totalSupply()),
             ONE
         );
 
@@ -542,6 +553,9 @@ contract Bond is
         @return whether or not the bond is fully paid
     */
     function isFullyPaid() public view returns (bool) {
+        if (totalSupply() == 0) {
+            return false;
+        }
         return _upscale(totalPaid()) >= totalSupply();
     }
 

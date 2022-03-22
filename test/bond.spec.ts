@@ -210,13 +210,13 @@ describe("Bond", () => {
         bondWithTokens = getBond({ decimals });
         ({ attackingToken, collateralToken, paymentToken } = bondWithTokens);
       });
+
       describe("initialize", async () => {
         describe("non-convertible", async () => {
           beforeEach(async () => {
             bond = bondWithTokens.nonConvertible.bond;
             config = bondWithTokens.nonConvertible.config;
           });
-
           it("should verifiable as bond by Factory.isBond", async () => {
             expect(await factory.isBond(bond.address)).to.be.equal(true);
           });
