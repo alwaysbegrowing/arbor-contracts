@@ -217,6 +217,24 @@ describe("Bond", () => {
             bond = bondWithTokens.nonConvertible.bond;
             config = bondWithTokens.nonConvertible.config;
           });
+          it("should disallow calling initialize again", async () => {
+            await expect(
+              bond.initialize(
+                "Bond",
+                "LUG",
+                owner.address,
+                config.maturityDate,
+                paymentToken.address,
+                collateralToken.address,
+                utils.parseUnits(".25", 18),
+                utils.parseUnits(".5", 18),
+                config.maxSupply
+              )
+            ).to.be.revertedWith(
+              "Initializable: contract is already initialized"
+            );
+          });
+
           it("should verifiable as bond by Factory.isBond", async () => {
             expect(await factory.isBond(bond.address)).to.be.equal(true);
           });
