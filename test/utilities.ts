@@ -1,9 +1,10 @@
-import { BigNumber, ContractTransaction, Event } from "ethers";
-import { use } from "chai";
+import { BigNumber, BigNumberish, ContractTransaction, Event } from "ethers";
+import { use, expect } from "chai";
 import { ethers } from "hardhat";
-import { Bond } from "../typechain";
+import { Bond, TestERC20 } from "../typechain";
 import { BondConfigType } from "./interfaces";
 import { ONE } from "./constants";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 export const addDaysToNow = (days: number = 0) => {
   return BigNumber.from(
@@ -58,6 +59,35 @@ export const getBondContract = async (tx: Promise<any>): Promise<Bond> => {
 export const getTargetCollateral = (bondConfig: BondConfigType): BigNumber => {
   const { targetBondSupply, collateralRatio } = bondConfig;
   return targetBondSupply.mul(collateralRatio).div(ONE);
+};
+
+export const getTargetPayment = (
+  bondConfig: BondConfigType,
+  decimals: BigNumberish
+): BigNumber => {
+  const { targetBondSupply } = bondConfig;
+  return targetBondSupply.mul(ethers.utils.parseUnits("1", decimals)).div(ONE);
+};
+
+/**
+ * This function asserts a change of tokens occurs
+ * @param tx a transaction to be executed
+ * @param token an erc20 token to assert the balance change
+ * @param signer the sender of the token balance transactions
+ * @param address the address to check the balance of
+ * @param delta the change in token expected
+ */
+export const expectTokenDelta = async (
+  tx: Function,
+  token: TestERC20,
+  signer: SignerWithAddress,
+  address: string,
+  delta: BigNumber
+): Promise<void> => {
+  const balanceBefore = await token.connect(signer).balanceOf(address);
+  await (await tx()).wait();
+  const balanceAfter = await token.connect(signer).balanceOf(address);
+  expect(balanceAfter.sub(balanceBefore).abs()).to.be.equal(delta);
 };
 
 declare global {

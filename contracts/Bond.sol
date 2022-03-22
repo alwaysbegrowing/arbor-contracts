@@ -244,14 +244,11 @@ contract Bond is
         if (totalSupply() + bonds > maxSupply) {
             revert BondSupplyExceeded();
         }
-
-        uint256 collateralToDeposit = isMature()
-            ? 0
-            : previewMintBeforeMaturity(bonds);
-
-        if (collateralToDeposit == 0) {
-            revert ZeroAmount();
+        if (isMature()) {
+            revert BondPastMaturity();
         }
+
+        uint256 collateralToDeposit = previewMintBeforeMaturity(bonds);
 
         _mint(_msgSender(), bonds);
 
