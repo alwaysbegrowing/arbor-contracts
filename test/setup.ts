@@ -37,9 +37,9 @@ export const createBond = async (
   const bondSymbol = "LEARN";
   const collateralRatio = ethers.utils.parseUnits(".5", 18);
   const convertibleRatio = ethers.utils.parseUnits(".5", 18);
+  // one day from todayz
   const maturityDate = Math.round(
-    new Date(new Date().setFullYear(new Date().getFullYear() + 3)).getTime() /
-      1000
+    new Date(new Date().setDate(new Date().getDate() + 1)).getTime() / 1000
   );
   const maxSupply = ethers.utils.parseUnits("50000000", 18);
 
@@ -102,7 +102,8 @@ export const initiateAuction = async (
   const auctionEndDate = Math.round(
     new Date(new Date().setDate(new Date().getDate() + 1)).getTime() / 1000
   );
-  const _auctionedSellAmount = await bond.balanceOf(owner.address);
+  const tokenBalance = await bond.balanceOf(owner.address);
+  const _auctionedSellAmount = tokenBalance.div(10);
   const _minBuyAmount = 1000000000000000;
   const minimumBiddingAmountPerOrder = 1000000000000000;
   const minFundingThreshold = 0;
