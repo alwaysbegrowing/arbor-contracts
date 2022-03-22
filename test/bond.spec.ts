@@ -652,13 +652,13 @@ describe("Bond", () => {
             await (await bond.pay(thirdSupply)).wait();
             await (await bond.pay(thirdSupply)).wait();
             await (await bond.pay(thirdSupply)).wait();
-            await expect(bond.pay(2)).to.emit(bond, "PaymentInFull");
+            await expect(bond.pay(2)).to.emit(bond, "Payment");
           });
 
           it("should accept payment", async () => {
             await expect(bond.pay(getTargetPayment(config, decimals))).to.emit(
               bond,
-              "PaymentInFull"
+              "Payment"
             );
           });
 
