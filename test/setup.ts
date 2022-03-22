@@ -37,7 +37,8 @@ export const createBond = async (
   const bondSymbol = "LEARN";
   const collateralRatio = ethers.utils.parseUnits(".5", 18);
   const convertibleRatio = ethers.utils.parseUnits(".5", 18);
-  // one day from todayz
+  // one day from today
+
   const maturityDate = Math.round(
     new Date(new Date().setDate(new Date().getDate() + 1)).getTime() / 1000
   );

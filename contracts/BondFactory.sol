@@ -17,7 +17,19 @@ contract BondFactory is AccessControl {
     /// @notice the role required to issue bonds
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
+    /**
+     @notice Address where the bond implementation contract is stored
+     @dev this is needed since we are using a clone proxy
+    */
     address public immutable tokenImplementation;
+
+    /**
+     @notice Check if a specific address is a porter bond created by this factory
+     @dev this is useful if we need to check if a bond is a porter bond on chain
+     for example, if we want to make a new contract that accepts any porter bonds and exchanges them
+     for new bonds, the exchange contract would need a way to know that the bonds are porter bonds
+    */
+    mapping(address => bool) public isBond;
 
     /// @notice when enabled, issuance is restricted to those with the ISSUER_ROLE
     bool public isAllowListEnabled = true;
@@ -101,6 +113,8 @@ contract BondFactory is AccessControl {
         uint256 maxSupply
     ) external onlyIssuer returns (address clone) {
         clone = Clones.clone(tokenImplementation);
+        isBond[clone] = true;
+
         Bond(clone).initialize(
             name,
             symbol,
@@ -112,6 +126,7 @@ contract BondFactory is AccessControl {
             convertibleRatio,
             maxSupply
         );
+
         emit BondCreated(
             clone,
             name,

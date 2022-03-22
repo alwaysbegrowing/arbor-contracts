@@ -204,6 +204,13 @@ describe("Bond", () => {
         ({ attackingToken, collateralToken, paymentToken } = bondWithTokens);
       });
       describe("initialization", async () => {
+
+
+        it("should verifiable as bond by Factory.isBond", async () => {
+          expect(await factory.isBond(bond.address)).to.be.true;
+        });
+
+
         describe("non-convertible", async () => {
           beforeEach(async () => {
             bond = bondWithTokens.nonConvertible.bond;

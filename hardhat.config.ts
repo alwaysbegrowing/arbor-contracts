@@ -49,10 +49,6 @@ const config: HardhatUserConfig = {
       mining: {
         auto: true,
       },
-      forking: {
-        url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
-        blockNumber: 10366438,
-      },
     },
   },
   gasReporter: {
