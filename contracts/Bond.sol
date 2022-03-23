@@ -30,6 +30,7 @@ contract Bond is
     /**
         @notice A date in the future set at bond creation at which the bond will mature.
             Before this date, a bond token can be converted if convertible, but cannot be redeemed.
+            Before this date, a bond token can be redeemed if the bond has been fully paid
             After this date, a bond token can be redeemed for the payment token, but cannot be converted.
     */
     uint256 public maturityDate;
