@@ -76,6 +76,14 @@ export const getTargetPayment = (
   return targetBondSupply.mul(ethers.utils.parseUnits("1", decimals)).div(ONE);
 };
 
+export const downscaleAmount = (amount: BigNumber, decimals: BigNumberish) => {
+  return amount.mul(ethers.utils.parseUnits("1", decimals)).div(ONE);
+};
+
+export const upscaleAmount = (amount: BigNumber, decimals: BigNumberish) => {
+  return amount.mul(ONE).div(ethers.utils.parseUnits("1", decimals));
+};
+
 /**
  * This function asserts a change of tokens occurs
  * @param tx a transaction to be executed

@@ -568,6 +568,13 @@ contract Bond is
     }
 
     /**
+        @notice the amount of payment tokens required to fully pay the contract
+    */
+    function amountOwed() public view returns (uint256) {
+        return _downscale(totalSupply()) - totalPaid();
+    }
+
+    /**
         @dev returns the balance of this contract before and after a transfer into it
             safeTransferFrom is used to revert on any non-success return from the transfer
             the actual delta of tokens is returned to keep accurate balance in the case where the token has a fee
@@ -621,5 +628,13 @@ contract Bond is
     */
     function _upscale(uint256 amount) internal view returns (uint256) {
         return amount.mulDivUp(_computeScalingFactor(paymentToken), ONE);
+    }
+
+    /**
+        @dev this function takes the amount of bondTokens and scales to payment tokens rounding up
+            this is needed because the paymentToken can have different decimals
+    */
+    function _downscale(uint256 amount) internal view returns (uint256) {
+        return amount.mulDivUp(ONE, _computeScalingFactor(paymentToken));
     }
 }
