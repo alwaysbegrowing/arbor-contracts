@@ -451,47 +451,51 @@ contract Bond is
         at which point all collateral will be able to be withdrawn.
 
         There are the following scenarios:
-        "total uncovered supply" is the tokens that are not covered by the amount paid.
+        "total uncovered supply" is the tokens that are not covered by the amount repaid.
+
+
+            bond IS paid AND mature
+                to cover collateralRatio = 0
+                to cover convertibleRatio = 0
+            bond IS paid AND NOT mature
+                to cover collateralRatio = 0 (bonds need not be backed by collateral)
+                to cover convertibleRatio = total supply * collateral ratio
+
             bond is NOT paid AND NOT mature:
                 to cover collateralRatio = total uncovered supply * collateralRatio
                 to cover convertibleRatio = total supply * convertibleRatio
             bond is NOT paid AND mature
                 to cover collateralRatio = total uncovered supply * collateralRatio
                 to cover convertibleRatio = 0 (bonds cannot be converted)
-            bond IS paid AND NOT mature
-                to cover collateralRatio = 0 (bonds need not be backed by collateral)
-                to cover convertibleRatio = total supply * collateral ratio
-            bond IS paid AND mature
-                to cover collateralRatio = 0
-                to cover convertibleRatio = 0
             All outstanding bonds must be covered by the convertibleRatio
         @return the amount of collateral received
      */
     function previewWithdraw() public view returns (uint256) {
         uint256 tokensCoveredByPayment = _upscale(totalPaid());
         uint256 collateralTokensRequired;
-        if (tokensCoveredByPayment > totalSupply()) {
+        if (tokensCoveredByPayment >= totalSupply()) {
             collateralTokensRequired = 0;
         } else {
             collateralTokensRequired = (totalSupply() - tokensCoveredByPayment)
                 .mulDivUp(collateralRatio, ONE);
         }
+
         uint256 convertibleTokensRequired = totalSupply().mulDivUp(
             convertibleRatio,
             ONE
         );
 
         uint256 totalRequiredCollateral;
-        if (!isFullyPaid()) {
+
+        if (isFullyPaid()) {
+            totalRequiredCollateral = isMature()
+                ? 0
+                : convertibleTokensRequired;
+        } else {
             totalRequiredCollateral = convertibleTokensRequired >
                 collateralTokensRequired
                 ? convertibleTokensRequired
                 : collateralTokensRequired;
-        } else if (!isMature()) {
-            totalRequiredCollateral = convertibleTokensRequired;
-        } else {
-            // @audit-info redundant but explicit
-            totalRequiredCollateral = 0;
         }
 
         if (totalRequiredCollateral >= totalCollateral()) {

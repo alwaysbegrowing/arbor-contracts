@@ -25,13 +25,13 @@ describe("Integration", () => {
             forking: {
               jsonRpcUrl: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
               blockNumber: 10366438,
+              automine: true,
             },
           },
         ],
       });
 
       await network.provider.request({
-
         method: "hardhat_impersonateAccount",
         params: [RINKEBY_DEPLOYER_ADDRESS],
       });
