@@ -1,5 +1,10 @@
 import { ethers } from "hardhat";
-import { BondFactory, ERC20, TestERC20 } from "../../typechain";
+import {
+  BondFactory,
+  ERC20,
+  MaliciousTestERC20,
+  TestERC20,
+} from "../../typechain";
 
 export async function bondFactoryFixture() {
   const BondFactory = await ethers.getContractFactory("BondFactory");
@@ -21,13 +26,15 @@ export async function tokenFixture(decimals: number[]) {
       )) as TestERC20;
 
       const [, , attacker] = await ethers.getSigners();
-      const AttackingToken = await ethers.getContractFactory("TestERC20");
+      const AttackingToken = await ethers.getContractFactory(
+        "MaliciousTestERC20"
+      );
       const attackingToken = (await AttackingToken.connect(attacker).deploy(
         "Attack Token",
         "AT",
         ethers.constants.MaxUint256,
         decimals
-      )) as TestERC20;
+      )) as MaliciousTestERC20;
 
       const CollateralToken = await ethers.getContractFactory("TestERC20");
       const collateralToken = (await CollateralToken.deploy(

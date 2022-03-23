@@ -4,7 +4,7 @@ import { BondFactory, TestERC20 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { bondFactoryFixture, tokenFixture } from "./shared/fixtures";
 import { BondConfigType } from "./interfaces";
-import { FIFTY_MILLION, THREE_YEARS_FROM_NOW } from "./constants";
+import { FIFTY_MILLION, THREE_YEARS_FROM_NOW_IN_SECONDS } from "./constants";
 
 const { ethers } = require("hardhat");
 
@@ -12,7 +12,7 @@ const BondConfig: BondConfigType = {
   targetBondSupply: utils.parseUnits(FIFTY_MILLION, 18), // 50 million bonds
   collateralRatio: BigNumber.from(0),
   convertibleRatio: BigNumber.from(0),
-  maturityDate: THREE_YEARS_FROM_NOW,
+  maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
   maxSupply: utils.parseUnits(FIFTY_MILLION, 18),
 };
 

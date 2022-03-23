@@ -207,21 +207,44 @@ export const burnAndWithdraw = async ({
   expect(await bond.previewWithdraw()).to.equal(collateralToReceive);
 };
 
-export const redeemAtMaturity = async ({
+export const redeem = async ({
+  bond,
+  bondHolder,
+  paymentToken,
+  collateralToken,
+  sharesToRedeem,
+  paymentTokenToSend,
+  collateralTokenToSend,
+}: {
+  bond: Bond;
+  bondHolder: SignerWithAddress;
+  paymentToken: TestERC20;
+  collateralToken: TestERC20;
+  sharesToRedeem: BigNumber;
+  paymentTokenToSend: BigNumber;
+  collateralTokenToSend: BigNumber;
+}) => {
+  await (await bond.connect(bondHolder).redeem(sharesToRedeem)).wait();
+
+  expect(await paymentToken.balanceOf(bondHolder.address)).to.equal(
+    paymentTokenToSend
+  );
+  expect(await collateralToken.balanceOf(bondHolder.address)).to.equal(
+    collateralTokenToSend
+  );
+};
+
+export const previewRedeem = async ({
   bond,
   sharesToRedeem,
   paymentTokenToSend,
   collateralTokenToSend,
-  maturityDate,
 }: {
   bond: Bond;
   sharesToRedeem: BigNumber;
   paymentTokenToSend: BigNumber;
   collateralTokenToSend: BigNumber;
-  maturityDate: BigNumberish;
 }) => {
-  await ethers.provider.send("evm_mine", [maturityDate]);
-
   const [paymentToken, collateralToken] = await bond.previewRedeemAtMaturity(
     sharesToRedeem
   );

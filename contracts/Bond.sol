@@ -278,6 +278,10 @@ contract Bond is
             collateralToken,
             collateralDeposited
         );
+
+        if (collateralToDeposit != collateralDeposited) {
+            revert TokenOverflow();
+        }
     }
 
     /**
@@ -613,10 +617,6 @@ contract Bond is
         view
         returns (uint256)
     {
-        if (address(token) == address(this)) {
-            return ONE;
-        }
-
         uint256 tokenDecimals = IERC20Metadata(token).decimals();
 
         if (tokenDecimals > 18) {

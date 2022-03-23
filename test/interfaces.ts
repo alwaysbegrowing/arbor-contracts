@@ -23,6 +23,10 @@ export type BondWithTokens = {
     bond: Bond;
     config: BondConfigType;
   };
+  malicious: {
+    bond: Bond;
+    config: BondConfigType;
+  };
   attackingToken: TestERC20;
   paymentToken: TestERC20;
   collateralToken: TestERC20;
