@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.9;
 
 import {ERC20BurnableUpgradeable, ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
@@ -526,7 +526,7 @@ contract Bond is
         if (isFullyPaid()) {
             paidAmount = totalSupply();
         }
-        uint256 paymentTokensToSend = bonds.mulDivUp(
+        uint256 paymentTokensToSend = bonds.mulDivDown(
             totalPaid(),
             totalSupply()
         );
@@ -580,7 +580,8 @@ contract Bond is
         @notice the amount of payment tokens required to fully pay the contract
     */
     function amountOwed() public view returns (uint256) {
-        return _downscale(totalSupply()) - totalPaid();
+        uint256 amountUnpaid = totalSupply() - _upscale(totalPaid());
+        return amountUnpaid.mulDivUp(ONE, _computeScalingFactor(paymentToken));
     }
 
     /**
@@ -628,18 +629,11 @@ contract Bond is
     }
 
     /**
-        @dev this function takes the amount of paymentTokens and scales to bond tokens rounding up
-            this is needed because the paymentToken can have different decimals
+        @dev this function takes the amount of paymentTokens and scales to bond
+        tokens. Since the paymentToken may have different decimals than the 
+        bond tokens, scaling to the same base allows calculations between them.
     */
     function _upscale(uint256 amount) internal view returns (uint256) {
         return amount.mulDivUp(_computeScalingFactor(paymentToken), ONE);
-    }
-
-    /**
-        @dev this function takes the amount of bondTokens and scales to payment tokens rounding up
-            this is needed because the paymentToken can have different decimals
-    */
-    function _downscale(uint256 amount) internal view returns (uint256) {
-        return amount.mulDivUp(ONE, _computeScalingFactor(paymentToken));
     }
 }
