@@ -349,7 +349,7 @@ describe("Bond", () => {
                   config.convertibleRatio,
                   config.maxSupply
                 )
-              ).to.be.revertedWith("TokenOverflow");
+              ).to.be.revertedWith("UnexpectedTokenOperation");
             } else {
               throw new Error("Token not found!");
             }
@@ -752,7 +752,7 @@ describe("Bond", () => {
           });
           it("should not mint tokens when no collateral is transferred", async () => {
             await expect(bond.mint(config.targetBondSupply)).to.be.revertedWith(
-              "TokenOverflow"
+              "UnexpectedTokenOperation"
             );
           });
         });

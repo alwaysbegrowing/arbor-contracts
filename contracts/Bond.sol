@@ -171,7 +171,7 @@ contract Bond is
     /// @notice attempted to perform an action that would do nothing
     error ZeroAmount();
     /// @notice unexpected amount returned on external token transfer
-    error TokenOverflow();
+    error UnexpectedTokenOperation();
 
     /// @dev used to confirm the bond has not yet matured
     modifier beforeMaturity() {
@@ -247,7 +247,10 @@ contract Bond is
 
     /**
         @notice mints the amount of specified bonds by transferring in collateral
-        @dev CollateralDeposit + Mint events are both emitted. bonds to mint is bounded by maxSupply
+        @dev Bonds to mint is bounded by maxSupply
+            Mint event is always emitted.
+            CollateralDeposit is emitted unless the bond is uncollateralized and
+            therefore requires no collateral to mint bonds.
         @param bonds the amount of bonds to mint
     */
     function mint(uint256 bonds)
@@ -267,20 +270,18 @@ contract Bond is
 
         emit Mint(_msgSender(), bonds);
 
-        uint256 collateralDeposited = _safeTransferIn(
-            IERC20Metadata(collateralToken),
-            _msgSender(),
-            collateralToDeposit
-        );
+        if (collateralToDeposit > 0) {
+            uint256 collateralDeposited = _safeTransferIn(
+                IERC20Metadata(collateralToken),
+                _msgSender(),
+                collateralToDeposit
+            );
 
-        emit CollateralDeposit(
-            _msgSender(),
-            collateralToken,
-            collateralDeposited
-        );
-
-        if (collateralToDeposit != collateralDeposited) {
-            revert TokenOverflow();
+            emit CollateralDeposit(
+                _msgSender(),
+                collateralToken,
+                collateralDeposited
+            );
         }
     }
 
@@ -599,8 +600,8 @@ contract Bond is
         token.safeTransferFrom(from, address(this), value);
 
         uint256 balanceAfter = token.balanceOf(address(this));
-        if (balanceAfter < balanceBefore) {
-            revert TokenOverflow();
+        if (balanceAfter <= balanceBefore) {
+            revert UnexpectedTokenOperation();
         }
         return balanceAfter - balanceBefore;
     }
@@ -620,7 +621,7 @@ contract Bond is
         uint256 tokenDecimals = IERC20Metadata(token).decimals();
 
         if (tokenDecimals > 18) {
-            revert TokenOverflow();
+            revert UnexpectedTokenOperation();
         }
         uint256 decimalsDifference = 18 - tokenDecimals;
         return ONE * 10**decimalsDifference;
