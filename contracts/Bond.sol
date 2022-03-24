@@ -14,8 +14,9 @@ import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
     @title Bond
     @author Porter Finance
     @notice A custom ERC20 token that can be used to issue bonds.
-    @notice The contract handles issuance, conversion, and redemption of bonds.
+    @notice The contract handles issuance, payment, conversion, and redemption of bonds.
     @dev External calls to tokens used for collateral and payment are used throughout to transfer and check balances
+    there is risk that these tokens are malicious and each one should be carefully inspected before being trusted. 
 */
 contract Bond is
     Initializable,
@@ -35,7 +36,10 @@ contract Bond is
     */
     uint256 public maturityDate;
 
-    /// @notice The address of the ERC20 token this bond will be redeemable for at maturity
+    /**
+        @notice The address of the ERC20 token this bond will be redeemable for at maturity
+            which is paid by the borrower to unlock their collateral
+    */
     address public paymentToken;
 
     /// @notice the address of the ERC20 token used as collateral backing the bond
@@ -44,6 +48,7 @@ contract Bond is
     /**
         @notice the ratio of collateral tokens per bond with
         @dev this amount is expressed as a deviation from 1-to-1 (equal to 1e18)
+            number of collateral tokens backing one bond
     */
     uint256 public collateralRatio;
 
@@ -51,7 +56,8 @@ contract Bond is
         @notice the ratio of ERC20 tokens the bonds will convert into
         @dev this amount is expressed as a deviation from 1-to-1 (equal to 1e18)
              if this ratio is 0, the bond is not convertible.
-             after maturity, the bond is not convertible.
+             after maturity, the bond is not convertible
+        @dev number of tokens one bond converts into
     */
     uint256 public convertibleRatio;
 
@@ -111,7 +117,7 @@ contract Bond is
     );
 
     /**
-        @notice emitted when a bond's issuer withdraws collateral
+        @notice emitted when collateral is withdrawn
         @param from the address withdrawing collateral
         @param token the address of the collateral token
         @param amount the number of the tokens withdrawn
@@ -182,6 +188,7 @@ contract Bond is
         _;
     }
 
+    /// @dev used to confirm that the maturity date has passed or the bond has been repaid
     modifier afterMaturityOrPaid() {
         if (!isMature() && !isFullyPaid()) {
             revert BondNotYetMaturedOrPaid();
@@ -189,6 +196,7 @@ contract Bond is
         _;
     }
 
+    /// @dev used to confirm that the bond has not been fully paid
     modifier notFullyPaid() {
         if (isFullyPaid()) {
             revert BondsCanNoLongerBeMinted();
@@ -205,7 +213,7 @@ contract Bond is
         @param _maturityDate the timestamp at which the bond will mature
         @param _paymentToken the ERC20 token address the bond will be redeemable for at maturity
         @param _collateralToken the ERC20 token address for the bond
-        @param _collateralRatio the amount of tokens per bond needed
+        @param _collateralRatio the amount of tokens per bond needed as collateral
         @param _convertibleRatio the amount of tokens per bond a convertible bond can be converted for
     */
     function initialize(
@@ -287,7 +295,7 @@ contract Bond is
     }
 
     /**
-        @notice Bond holder can convert their bond to underlying collateral
+        @notice Bond holder can convert their bond to underlying collateral at the convertible ratio
             The bond must be convertible and not past maturity
         @param bonds the number of bonds which will be burnt and converted into the collateral at the convertibleRatio
     */
@@ -299,7 +307,7 @@ contract Bond is
 
         burn(bonds);
 
-        // @audit-ok Reentrancy possibility: the bonds are already burnt - if there weren't enough bonds to burn, an error is thrown
+        //  Reentrancy possibility: the bonds are already burnt - if there weren't enough bonds to burn, an error is thrown
         IERC20Metadata(collateralToken).safeTransfer(
             _msgSender(),
             collateralToSend
@@ -310,7 +318,7 @@ contract Bond is
 
     /**
         @notice Withdraw collateral from bond contract
-            the amount of collateral available to be withdrawn depends on the collateralRatio
+            the amount of collateral available to be withdrawn depends on the collateralRatio and the convertibleRatio
     */
     function withdrawCollateral()
         external
@@ -332,7 +340,7 @@ contract Bond is
     }
 
     /**
-        @notice allows the issuer to pay the bond by depositing payment token
+        @notice allows the issuer to pay the bond by transferring payment token
         @dev emits Payment event
         @param amount the number of payment tokens to pay
     */
@@ -373,7 +381,7 @@ contract Bond is
 
         burn(bonds);
 
-        // @audit-ok reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
+        // reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
         if (paymentTokensToSend > 0) {
             IERC20Metadata(paymentToken).safeTransfer(
                 _msgSender(),
@@ -381,7 +389,7 @@ contract Bond is
             );
         }
         if (collateralTokensToSend > 0) {
-            // @audit-ok reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
+            // reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
             IERC20Metadata(collateralToken).safeTransfer(
                 _msgSender(),
                 collateralTokensToSend
@@ -448,17 +456,16 @@ contract Bond is
     /** 
         @notice the amount of collateral that the issuer would be able to 
             withdraw from the contract
-        @dev this function calculates the amount of collateral tokens thatare able to be withdrawn by the issuer.
-        The amount of tokens can increase by bonds being burnt and converted as well as payment made.
-        Each bond is covered by a certain amount of collateral to fulfill collateralRatio and convertibleRatio.
-        For convertible bonds, the totalSupply of bonds must be covered by the convertibleRatio.
-        That means even if all of the bonds were covered by payment, there must still be enough collateral
-        in the contract to cover the outstanding bonds convertible until the maturity date -
-        at which point all collateral will be able to be withdrawn.
+        @dev this function calculates the amount of collateral tokens that are able to be withdrawn by the issuer.
+            The amount of tokens can increase by bonds being burnt and converted as well as payment made.
+            Each bond is covered by a certain amount of collateral to fulfill collateralRatio and convertibleRatio.
+            For convertible bonds, the totalSupply of bonds must be covered by the convertibleRatio.
+            That means even if all of the bonds were covered by payment, there must still be enough collateral
+            in the contract to cover the outstanding bonds convertible until the maturity date -
+            at which point all collateral will be able to be withdrawn.
 
         There are the following scenarios:
         "total uncovered supply" is the tokens that are not covered by the amount repaid.
-
 
             bond IS paid AND mature
                 to cover collateralRatio = 0
