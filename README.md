@@ -1,5 +1,5 @@
-[![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/157589962-34664111-72cb-40c9-81cf-86253cb671c4.png)](https://porter.finance/#gh-dark-mode-only)
-[![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/157590019-ef886a73-bda8-489f-888d-a98faecf9c61.png)](https://porter.finance/#gh-light-mode-only)
+[![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/159949634-988ce327-3261-463f-a1d0-3a3e2d3015dc.png)](https://porter.finance/#gh-dark-mode-only)
+[![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/159949612-a695787d-d1d4-4311-90f6-2142aa334e2d.png)](https://porter.finance/#gh-light-mode-only)
 
 <table align="center">
  <td><a href="https://porter.finance">app</a></td>
