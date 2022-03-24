@@ -207,7 +207,7 @@ export const burnAndWithdraw = async ({
   expect(await bond.previewWithdraw()).to.equal(collateralToReceive);
 };
 
-export const redeem = async ({
+export const redeemAndCheckTokens = async ({
   bond,
   bondHolder,
   paymentToken,
@@ -224,13 +224,16 @@ export const redeem = async ({
   paymentTokenToSend: BigNumber;
   collateralTokenToSend: BigNumber;
 }) => {
-  await (await bond.connect(bondHolder).redeem(sharesToRedeem)).wait();
-
-  expect(await paymentToken.balanceOf(bondHolder.address)).to.equal(
-    paymentTokenToSend
-  );
-  expect(await collateralToken.balanceOf(bondHolder.address)).to.equal(
+  const redeemTransaction = bond.connect(bondHolder).redeem(sharesToRedeem);
+  expect(redeemTransaction).to.changeTokenBalance(
+    collateralTokenToSend,
+    bondHolder,
     collateralTokenToSend
+  );
+  expect(redeemTransaction).to.changeTokenBalance(
+    paymentTokenToSend,
+    bondHolder,
+    paymentTokenToSend
   );
 };
 

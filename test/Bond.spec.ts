@@ -16,7 +16,7 @@ import {
   getTargetConvertibleCollateral,
   upscaleAmount,
   downscaleAmount,
-  redeem,
+  redeemAndCheckTokens,
 } from "./utilities";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { bondFactoryFixture, tokenFixture } from "./shared/fixtures";
@@ -1292,7 +1292,7 @@ describe("Bond", () => {
               paymentTokenToSend: utils.parseUnits("1000", decimals),
               collateralTokenToSend: ZERO,
             });
-            await redeem({
+            await redeemAndCheckTokens({
               bond,
               bondHolder,
               paymentToken,
@@ -1312,17 +1312,7 @@ describe("Bond", () => {
               collateralTokenToSend: ZERO,
             });
 
-            await expect(
-              redeem({
-                bond,
-                bondHolder,
-                paymentToken,
-                collateralToken,
-                sharesToRedeem: ZERO,
-                paymentTokenToSend: ZERO,
-                collateralTokenToSend: ZERO,
-              })
-            ).to.be.revertedWith("ZeroAmount");
+            await expect(bond.redeem(ZERO)).to.be.revertedWith("ZeroAmount");
           });
 
           it("should redeem for zero tokens when bond is not fully paid & not past maturity", async () => {
@@ -1336,17 +1326,9 @@ describe("Bond", () => {
               collateralTokenToSend: ZERO,
             });
 
-            await expect(
-              redeem({
-                bond,
-                bondHolder,
-                paymentToken,
-                collateralToken,
-                sharesToRedeem: ZERO,
-                paymentTokenToSend: ZERO,
-                collateralTokenToSend: ZERO,
-              })
-            ).to.be.revertedWith("BondNotYetMaturedOrPaid");
+            await expect(bond.redeem(ZERO)).to.be.revertedWith(
+              "BondNotYetMaturedOrPaid"
+            );
           });
 
           it("should redeem for payment token when bond is fully paid & past maturity", async () => {
@@ -1359,7 +1341,7 @@ describe("Bond", () => {
               collateralTokenToSend: ZERO,
             });
 
-            await redeem({
+            await redeemAndCheckTokens({
               bond,
               bondHolder,
               paymentToken,
@@ -1382,7 +1364,7 @@ describe("Bond", () => {
                 .div(ONE),
             });
 
-            await redeem({
+            await redeemAndCheckTokens({
               bond,
               bondHolder,
               paymentToken,
@@ -1396,7 +1378,7 @@ describe("Bond", () => {
             });
           });
 
-          it("should redeem zero bonds for zero collateral when bond is not paid & past maturity ", async () => {
+          it("should redeem zero bonds for zero collateral when bond is not paid & past maturity", async () => {
             await ethers.provider.send("evm_mine", [config.maturityDate]);
             await previewRedeem({
               bond,
@@ -1404,17 +1386,7 @@ describe("Bond", () => {
               paymentTokenToSend: ZERO,
               collateralTokenToSend: ZERO,
             });
-            await expect(
-              redeem({
-                bond,
-                bondHolder,
-                paymentToken,
-                collateralToken,
-                sharesToRedeem: ZERO,
-                paymentTokenToSend: ZERO,
-                collateralTokenToSend: ZERO,
-              })
-            ).to.be.revertedWith("ZeroAmount");
+            await expect(bond.redeem(ZERO)).to.be.revertedWith("ZeroAmount");
           });
 
           it("should allow withdraw of collateral & payment token when bond is partially paid & past maturity", async () => {
@@ -1441,7 +1413,7 @@ describe("Bond", () => {
             const portionOfCollateralAmount = totalCollateralTokens
               .mul(utils.parseUnits("4000", 18))
               .div(config.targetBondSupply);
-            await redeem({
+            await redeemAndCheckTokens({
               bond,
               bondHolder,
               paymentToken,
@@ -1471,7 +1443,7 @@ describe("Bond", () => {
             ).to.be.equal(utils.parseUnits("4000", decimals));
           });
 
-          it("should redeem unpaidbond at maturity for collateral token", async () => {
+          it("should redeem unpaid bond at maturity for collateral token", async () => {
             const expectedCollateralToReceive = utils
               .parseUnits("4000", 18)
               .mul(await bond.totalCollateral())
@@ -1537,7 +1509,7 @@ describe("Bond", () => {
               paymentTokenToSend: utils.parseUnits("1000", decimals),
               collateralTokenToSend: ZERO,
             });
-            await redeem({
+            await redeemAndCheckTokens({
               bond,
               bondHolder,
               paymentToken,
@@ -1557,17 +1529,7 @@ describe("Bond", () => {
               collateralTokenToSend: ZERO,
             });
 
-            await expect(
-              redeem({
-                bond,
-                bondHolder,
-                paymentToken,
-                collateralToken,
-                sharesToRedeem: ZERO,
-                paymentTokenToSend: ZERO,
-                collateralTokenToSend: ZERO,
-              })
-            ).to.be.revertedWith("ZeroAmount");
+            await expect(bond.redeem(ZERO)).to.be.revertedWith("ZeroAmount");
           });
 
           it("should redeem for zero tokens when bond is not fully paid & not past maturity", async () => {
@@ -1581,17 +1543,9 @@ describe("Bond", () => {
               collateralTokenToSend: ZERO,
             });
 
-            await expect(
-              redeem({
-                bond,
-                bondHolder,
-                paymentToken,
-                collateralToken,
-                sharesToRedeem: ZERO,
-                paymentTokenToSend: ZERO,
-                collateralTokenToSend: ZERO,
-              })
-            ).to.be.revertedWith("BondNotYetMaturedOrPaid");
+            await expect(bond.redeem(ZERO)).to.be.revertedWith(
+              "BondNotYetMaturedOrPaid"
+            );
           });
 
           it("should redeem for payment token when bond is fully paid & past maturity", async () => {
@@ -1604,7 +1558,7 @@ describe("Bond", () => {
               collateralTokenToSend: ZERO,
             });
 
-            await redeem({
+            await redeemAndCheckTokens({
               bond,
               bondHolder,
               paymentToken,
@@ -1625,15 +1579,7 @@ describe("Bond", () => {
             });
 
             await expect(
-              redeem({
-                bond,
-                bondHolder,
-                paymentToken,
-                collateralToken,
-                sharesToRedeem: utils.parseUnits("1000", 18),
-                paymentTokenToSend: ZERO,
-                collateralTokenToSend: ZERO,
-              })
+              bond.redeem(utils.parseUnits("1000", 18))
             ).to.be.revertedWith("ZeroAmount");
           });
 
@@ -1645,17 +1591,7 @@ describe("Bond", () => {
               paymentTokenToSend: ZERO,
               collateralTokenToSend: ZERO,
             });
-            await expect(
-              redeem({
-                bond,
-                bondHolder,
-                paymentToken,
-                collateralToken,
-                sharesToRedeem: ZERO,
-                paymentTokenToSend: ZERO,
-                collateralTokenToSend: ZERO,
-              })
-            ).to.be.revertedWith("ZeroAmount");
+            await expect(bond.redeem(ZERO)).to.be.revertedWith("ZeroAmount");
           });
 
           it("should allow withdraw of collateral & payment token when bond is partially paid & past maturity", async () => {
@@ -1672,7 +1608,7 @@ describe("Bond", () => {
               .mul(paymentAmount)
               .div(ONE);
 
-            await redeem({
+            await redeemAndCheckTokens({
               bond,
               bondHolder,
               paymentToken,
