@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.9;
 
+import {ERC20CappedUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20CappedUpgradeable.sol";
+
 import {ERC20BurnableUpgradeable, ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -16,13 +17,14 @@ import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
     @notice A custom ERC20 token that can be used to issue bonds.
     @notice The contract handles issuance, payment, conversion, and redemption of bonds.
     @dev External calls to tokens used for collateral and payment are used throughout to transfer and check balances
-    there is risk that these tokens are malicious and each one should be carefully inspected before being trusted. 
+        there is risk that these tokens are malicious and each one should be carefully inspected before being trusted. 
+    @dev does not inherit from ERC20Upgradeable or Initializable since ERC20BurnableUpgradeable and
+        ERC20CappedUpgradeable inherit from them
 */
 contract Bond is
-    Initializable,
-    ERC20Upgradeable,
     AccessControlUpgradeable,
     ERC20BurnableUpgradeable,
+    ERC20CappedUpgradeable,
     ReentrancyGuard
 {
     using SafeERC20 for IERC20Metadata;
@@ -60,12 +62,6 @@ contract Bond is
         @dev number of tokens one bond converts into
     */
     uint256 public convertibleRatio;
-
-    /**
-        @notice the max amount of bonds able to be minted and cannot be changed
-        @dev checked in the `mint` function to limit `totalSupply` exceeding this number
-    */
-    uint256 public maxSupply;
 
     /**
         @notice this role permits the withdraw of collateral from the contract
@@ -155,16 +151,15 @@ contract Bond is
 
     /// @notice operation restricted because the bond has matured
     error BondPastMaturity();
+
     /// @notice operation restricted because the bond is not yet matured or paid
     error BondNotYetMaturedOrPaid();
 
     /// @notice maturity date is not valid
     error InvalidMaturityDate();
+
     /// @notice collateralRatio must be greater than convertibleRatio
     error CollateralRatioLessThanConvertibleRatio();
-
-    /// @notice attempted to mint bonds that would exceeded maxSupply
-    error BondSupplyExceeded();
 
     /// @notice attempted to pay after payment was met
     error PaymentMet();
@@ -177,6 +172,7 @@ contract Bond is
 
     /// @notice attempted to perform an action that would do nothing
     error ZeroAmount();
+
     /// @notice unexpected amount returned on external token transfer
     error UnexpectedTokenOperation();
 
@@ -207,6 +203,7 @@ contract Bond is
     /**
         @notice this function is called one time during initial bond creation and sets up the configuration for the bond
         @dev New bond contract deployed via clone
+        @dev Not calling __AccessControl_init or __ERC20Burnable_init here because they currently generate an empty function 
         @param bondName passed into the ERC20 token
         @param bondSymbol passed into the ERC20 token
         @param owner ownership of this contract transferred to this address
@@ -225,7 +222,7 @@ contract Bond is
         address _collateralToken,
         uint256 _collateralRatio,
         uint256 _convertibleRatio,
-        uint256 _maxSupply
+        uint256 maxSupply
     ) external initializer {
         if (_collateralRatio < _convertibleRatio) {
             revert CollateralRatioLessThanConvertibleRatio();
@@ -238,15 +235,13 @@ contract Bond is
         }
 
         __ERC20_init(bondName, bondSymbol);
-        __ERC20Burnable_init();
+        __ERC20Capped_init(maxSupply);
 
         maturityDate = _maturityDate;
         paymentToken = _paymentToken;
         collateralToken = _collateralToken;
         collateralRatio = _collateralRatio;
         convertibleRatio = _convertibleRatio;
-        maxSupply = _maxSupply;
-
         _computeScalingFactor(paymentToken);
 
         _grantRole(DEFAULT_ADMIN_ROLE, owner);
@@ -256,7 +251,7 @@ contract Bond is
 
     /**
         @notice mints the amount of specified bonds by transferring in collateral
-        @dev Bonds to mint is bounded by maxSupply
+        @dev Bonds to mint is capped by the ERC20CappedUpgradeable inherited contract
             Mint event is always emitted.
             CollateralDeposit is emitted unless the bond is uncollateralized and
             therefore requires no collateral to mint bonds.
@@ -269,10 +264,6 @@ contract Bond is
         notFullyPaid
         nonReentrant
     {
-        if (totalSupply() + bonds > maxSupply) {
-            revert BondSupplyExceeded();
-        }
-
         uint256 collateralToDeposit = previewMintBeforeMaturity(bonds);
 
         _mint(_msgSender(), bonds);
@@ -472,7 +463,7 @@ contract Bond is
                 to cover convertibleRatio = 0
             bond IS paid AND NOT mature
                 to cover collateralRatio = 0 (bonds need not be backed by collateral)
-                to cover convertibleRatio = total supply * collateral ratio
+                to cover convertibleRatio = total supply * convertibleRatio ratio
 
             bond is NOT paid AND NOT mature:
                 to cover collateralRatio = total uncovered supply * collateralRatio
@@ -590,6 +581,13 @@ contract Bond is
     function amountOwed() public view returns (uint256) {
         uint256 amountUnpaid = totalSupply() - _upscale(totalPaid());
         return amountUnpaid.mulDivUp(ONE, _computeScalingFactor(paymentToken));
+    }
+
+    function _mint(address to, uint256 amount)
+        internal
+        override(ERC20CappedUpgradeable, ERC20Upgradeable)
+    {
+        ERC20CappedUpgradeable._mint(to, amount);
     }
 
     /**

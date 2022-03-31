@@ -533,7 +533,7 @@ describe("Bond", () => {
           it("should not mint more than max supply", async () => {
             await expect(
               bond.mint(config.targetBondSupply.add(1))
-            ).to.be.revertedWith("BondSupplyExceeded");
+            ).to.be.revertedWith("ERC20Capped: cap exceeded");
           });
 
           it("should not mint after maturity", async () => {
@@ -655,7 +655,7 @@ describe("Bond", () => {
           it("should not mint more than max supply", async () => {
             await expect(
               bond.mint(config.targetBondSupply.add(1))
-            ).to.be.revertedWith("BondSupplyExceeded");
+            ).to.be.revertedWith("ERC20Capped: cap exceeded");
           });
 
           it("should not mint after maturity", async () => {
@@ -722,7 +722,7 @@ describe("Bond", () => {
           it("should not mint more than max supply", async () => {
             await expect(
               bond.mint(config.targetBondSupply.add(1))
-            ).to.be.revertedWith("BondSupplyExceeded");
+            ).to.be.revertedWith("ERC20Capped: cap exceeded");
           });
 
           it("should not mint after maturity", async () => {

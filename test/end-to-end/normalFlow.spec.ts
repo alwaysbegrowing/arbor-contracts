@@ -312,7 +312,7 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
 
           it("should not mint more than max supply", async () => {
             await expect(bond.mint(BigNumber.from(1))).to.be.revertedWith(
-              "BondSupplyExceeded"
+              "ERC20Capped: cap exceeded"
             );
           });
         });
@@ -540,7 +540,7 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
 
           it("should not mint more than max supply", async () => {
             await expect(bond.mint(BigNumber.from(1))).to.be.revertedWith(
-              "BondSupplyExceeded"
+              "ERC20Capped: cap exceeded"
             );
           });
         });

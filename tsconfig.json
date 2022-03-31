@@ -11,6 +11,7 @@
     "./hardhat.config.ts",
     "./scripts",
     "./test",
+    "./tasks",
     "./deploy",
     "./typechain"
   ],

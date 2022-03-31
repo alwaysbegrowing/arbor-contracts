@@ -59,9 +59,11 @@ describe("Integration", () => {
       auction,
       "NewAuction"
     );
-    await network.provider.request({
-      method: "hardhat_reset",
-      params: [],
-    });
+    if (network.name === "hardhat") {
+      await network.provider.request({
+        method: "hardhat_reset",
+        params: [],
+      });
+    }
   });
 });
