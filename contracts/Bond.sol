@@ -408,7 +408,6 @@ contract Bond is
     {
         if (
             address(token) == paymentToken ||
-            address(token) == address(this) ||
             address(token) == collateralToken
         ) {
             revert SweepDisallowedForToken();

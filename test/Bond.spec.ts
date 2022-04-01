@@ -1752,9 +1752,6 @@ describe("Bond", () => {
           });
 
           it("should disallow removal of tokens: collateral, payment, or itself", async () => {
-            await expect(bond.sweep(bond.address)).to.be.revertedWith(
-              "SweepDisallowedForToken"
-            );
             await expect(bond.sweep(paymentToken.address)).to.be.revertedWith(
               "SweepDisallowedForToken"
             );
