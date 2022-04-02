@@ -2,18 +2,17 @@ import { ethers } from "hardhat";
 import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { TestERC20, BondFactory, Bond } from "../typechain";
-import { getBondContract } from "./utilities";
+import { getBondContract, getTargetCollateral } from "./utilities";
+import { ConvertibleBondConfig } from "./constants";
 
 export const deployNativeAndPayment = async (owner: SignerWithAddress) => {
   const MockErc20Contract = await ethers.getContractFactory("TestERC20");
-  console.log("factory");
   const native = (await MockErc20Contract.connect(owner).deploy(
     "Native Token",
     "NATIVE",
     ethers.utils.parseUnits("50000000", 20),
     18
   )) as TestERC20;
-  console.log({ native: native.address });
   await native.deployed();
 
   const pay = (await MockErc20Contract.connect(owner).deploy(
@@ -35,14 +34,6 @@ export const createBond = async (
   // these could be converted to parameters
   const bondName = "Always be growing";
   const bondSymbol = "LEARN";
-  const collateralRatio = ethers.utils.parseUnits(".5", 18);
-  const convertibleRatio = ethers.utils.parseUnits(".5", 18);
-  // one day from today
-
-  const maturityDate = Math.round(
-    new Date(new Date().setDate(new Date().getDate() + 1)).getTime() / 1000
-  );
-  const maxSupply = ethers.utils.parseUnits("50000000", 18);
 
   const issuerRole = await factory.ISSUER_ROLE();
   const grantRoleTx = await factory
@@ -50,44 +41,26 @@ export const createBond = async (
     .grantRole(issuerRole, owner.address);
   await grantRoleTx.wait();
 
+  const approveTokens = await nativeToken
+    .connect(owner)
+    .approve(factory.address, getTargetCollateral(ConvertibleBondConfig));
+  await approveTokens.wait();
+
   const bond = await getBondContract(
     factory
       .connect(owner)
       .createBond(
         bondName,
         bondSymbol,
-        owner.address,
-        maturityDate,
+        ConvertibleBondConfig.maturityDate,
         paymentToken.address,
         nativeToken.address,
-        collateralRatio,
-        convertibleRatio,
-        maxSupply
+        ConvertibleBondConfig.collateralRatio,
+        ConvertibleBondConfig.convertibleRatio,
+        ConvertibleBondConfig.maxSupply
       )
   );
   return await bond;
-};
-
-export const mint = async (
-  owner: SignerWithAddress,
-  nativeToken: TestERC20,
-  bond: Bond
-) => {
-  const approveTx = await nativeToken
-    .connect(owner)
-    .approve(bond.address, ethers.constants.MaxUint256);
-  await approveTx.wait();
-
-  const mintRole = await bond.MINT_ROLE();
-  const grantRoleTx = await bond
-    .connect(owner)
-    .grantRole(mintRole, owner.address);
-  await grantRoleTx.wait();
-
-  const mintTx = await bond
-    .connect(owner)
-    .mint(ethers.utils.parseUnits("50000000", 18));
-  return await mintTx.wait();
 };
 
 export const initiateAuction = async (

@@ -7,7 +7,6 @@ import {
   getEventArgumentsFromTransaction,
   getTargetCollateral,
   getTargetPayment,
-  previewMintAndMint,
   previewRedeem,
   redeemAndCheckTokens,
 } from "../utilities";
@@ -18,7 +17,6 @@ import {
   NonConvertibleBondConfig,
   ConvertibleBondConfig,
   UncollateralizedBondConfig,
-  MaliciousBondConfig,
   ZERO,
   ONE,
 } from "../constants";
@@ -29,7 +27,7 @@ const { loadFixture } = waffle;
 // Used throughout tests to use multiple instances of different-decimal tokens
 const DECIMALS_TO_TEST = [6, 8, 18];
 
-describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => {
+describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => {
   // owner deploys and is the "issuer"
   let owner: SignerWithAddress;
   // bondHolder is one who has the bonds and will redeem or convert them
@@ -40,12 +38,10 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
   let factory: BondFactory;
   // roles used with access control
   let withdrawRole: BytesLike;
-  let mintRole: BytesLike;
   // this is a list of bonds created with the specific decimal tokens
   let bonds: BondWithTokens[];
   let roles: {
     defaultAdminRole: string;
-    mintRole: string;
     withdrawRole: string;
   };
   // function to retrieve the bonds and tokens by decimal used
@@ -66,6 +62,7 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
     const issuerRole = await factory.ISSUER_ROLE();
 
     await (await factory.grantRole(issuerRole, owner.address)).wait();
+    await (await factory.grantRole(issuerRole, attacker.address)).wait();
 
     /** 
       Create and deploy all tokens with corresponding decimals for DECIMALS_TO_TEST.
@@ -86,6 +83,14 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
         const token = tokens.find((token) => token.decimals === decimals);
         if (token) {
           const { attackingToken, paymentToken, collateralToken } = token;
+
+          await collateralToken.approve(
+            factory.address,
+            getTargetCollateral(NonConvertibleBondConfig)
+              .add(getTargetCollateral(ConvertibleBondConfig))
+              .add(getTargetCollateral(UncollateralizedBondConfig))
+          );
+
           return {
             decimals,
             attackingToken,
@@ -96,7 +101,6 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
                 factory.createBond(
                   "Bond",
                   "LUG",
-                  owner.address,
                   NonConvertibleBondConfig.maturityDate,
                   paymentToken.address,
                   collateralToken.address,
@@ -112,7 +116,6 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
                 factory.createBond(
                   "Bond",
                   "LUG",
-                  owner.address,
                   ConvertibleBondConfig.maturityDate,
                   paymentToken.address,
                   collateralToken.address,
@@ -128,7 +131,6 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
                 factory.createBond(
                   "Bond",
                   "LUG",
-                  owner.address,
                   UncollateralizedBondConfig.maturityDate,
                   paymentToken.address,
                   collateralToken.address,
@@ -138,22 +140,6 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
                 )
               ),
               config: UncollateralizedBondConfig,
-            },
-            malicious: {
-              bond: await getBondContract(
-                factory.createBond(
-                  "Bond",
-                  "LUG",
-                  owner.address,
-                  MaliciousBondConfig.maturityDate,
-                  attackingToken.address,
-                  attackingToken.address,
-                  MaliciousBondConfig.collateralRatio,
-                  MaliciousBondConfig.convertibleRatio,
-                  MaliciousBondConfig.maxSupply
-                )
-              ),
-              config: MaliciousBondConfig,
             },
           };
         }
@@ -166,7 +152,6 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
       const { nonConvertible } = bonds[0];
       roles = {
         defaultAdminRole: await nonConvertible.bond.DEFAULT_ADMIN_ROLE(),
-        mintRole: await nonConvertible.bond.MINT_ROLE(),
         withdrawRole: await nonConvertible.bond.WITHDRAW_ROLE(),
       };
     }
@@ -194,7 +179,7 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
           [owner, bondHolder, attacker] = await ethers.getSigners();
           // this is the bonds used in the getBond function
           ({ bonds, factory, roles } = await loadFixture(fixture));
-          ({ mintRole, withdrawRole } = roles);
+          ({ withdrawRole } = roles);
           bondWithTokens = getBond({ decimals });
           ({ collateralToken, paymentToken } = bondWithTokens);
           bond = bondWithTokens.nonConvertible.bond;
@@ -223,9 +208,10 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
             expect(await factory.isBond(bond.address)).to.be.equal(true);
           });
 
-          it("should have no minted coins", async () => {
-            expect(await bond.balanceOf(owner.address)).to.be.equal(0);
-            expect(await bond.balanceOf(bondHolder.address)).to.be.equal(0);
+          it("should have minted total supply of coins", async () => {
+            expect(await bond.balanceOf(owner.address)).to.be.equal(
+              config.maxSupply
+            );
           });
 
           it("should have given issuer the default admin role", async () => {
@@ -238,15 +224,6 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
             expect(
               await bond.hasRole(
                 await bond.getRoleAdmin(withdrawRole),
-                owner.address
-              )
-            ).to.be.equal(true);
-          });
-
-          it("should return the issuer as the role admin for the mint role", async () => {
-            expect(
-              await bond.hasRole(
-                await bond.getRoleAdmin(mintRole),
                 owner.address
               )
             ).to.be.equal(true);
@@ -277,42 +254,6 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
             await collateralToken.approve(
               bond.address,
               getTargetCollateral(config)
-            );
-          });
-
-          it("should revert when called by non-minter", async () => {
-            await expect(bond.connect(attacker).mint(0)).to.be.revertedWith(
-              `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${mintRole}`
-            );
-          });
-
-          it(`should preview mint and mint with zero target`, async () => {
-            await previewMintAndMint({
-              bond,
-              collateralToken,
-              mintAmount: ZERO,
-              collateralToDeposit: ZERO,
-            });
-          });
-
-          it(`should preview mint and mint with quarter target`, async () => {
-            await expect(bond.mint(config.targetBondSupply.div(4))).to.not.be
-              .reverted;
-          });
-
-          it(`should preview mint and mint with quarter target`, async () => {
-            await expect(bond.mint(config.targetBondSupply.div(4))).to.not.be
-              .reverted;
-          });
-
-          it(`should preview mint and mint with half target`, async () => {
-            await expect(bond.mint(config.targetBondSupply.div(2))).to.not.be
-              .reverted;
-          });
-
-          it("should not mint more than max supply", async () => {
-            await expect(bond.mint(BigNumber.from(1))).to.be.revertedWith(
-              "ERC20Capped: cap exceeded"
             );
           });
         });
@@ -422,7 +363,7 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
           [owner, bondHolder, attacker] = await ethers.getSigners();
           // this is the bonds used in the getBond function
           ({ bonds, factory, roles } = await loadFixture(fixture));
-          ({ mintRole, withdrawRole } = roles);
+          ({ withdrawRole } = roles);
           bondWithTokens = getBond({ decimals });
           ({ collateralToken, paymentToken } = bondWithTokens);
           bond = bondWithTokens.convertible.bond;
@@ -451,9 +392,10 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
             expect(await factory.isBond(bond.address)).to.be.equal(true);
           });
 
-          it("should have no minted coins", async () => {
-            expect(await bond.balanceOf(owner.address)).to.be.equal(0);
-            expect(await bond.balanceOf(bondHolder.address)).to.be.equal(0);
+          it("should have minted total supply of coins", async () => {
+            expect(await bond.balanceOf(owner.address)).to.be.equal(
+              config.maxSupply
+            );
           });
 
           it("should have given issuer the default admin role", async () => {
@@ -466,15 +408,6 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
             expect(
               await bond.hasRole(
                 await bond.getRoleAdmin(withdrawRole),
-                owner.address
-              )
-            ).to.be.equal(true);
-          });
-
-          it("should return the issuer as the role admin for the mint role", async () => {
-            expect(
-              await bond.hasRole(
-                await bond.getRoleAdmin(mintRole),
                 owner.address
               )
             ).to.be.equal(true);
@@ -500,50 +433,7 @@ describe("e2e: Create -> Mint -> Convert -> Pay -> Withdraw -> Mature -> Redeem"
             expect(await bond.symbol()).to.be.equal("LUG");
           });
         });
-        describe("issuer deposits collateral and mints bonds", async () => {
-          it("should let issuer approve collateral transfer", async () => {
-            await collateralToken.approve(
-              bond.address,
-              getTargetCollateral(config)
-            );
-          });
 
-          it("should revert when called by non-minter", async () => {
-            await expect(bond.connect(attacker).mint(0)).to.be.revertedWith(
-              `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${mintRole}`
-            );
-          });
-
-          it(`should preview mint and mint with zero target`, async () => {
-            await previewMintAndMint({
-              bond,
-              collateralToken,
-              mintAmount: ZERO,
-              collateralToDeposit: ZERO,
-            });
-          });
-
-          it(`should preview mint and mint with quarter target`, async () => {
-            await expect(bond.mint(config.targetBondSupply.div(4))).to.not.be
-              .reverted;
-          });
-
-          it(`should preview mint and mint with quarter target`, async () => {
-            await expect(bond.mint(config.targetBondSupply.div(4))).to.not.be
-              .reverted;
-          });
-
-          it(`should preview mint and mint with half target`, async () => {
-            await expect(bond.mint(config.targetBondSupply.div(2))).to.not.be
-              .reverted;
-          });
-
-          it("should not mint more than max supply", async () => {
-            await expect(bond.mint(BigNumber.from(1))).to.be.revertedWith(
-              "ERC20Capped: cap exceeded"
-            );
-          });
-        });
         describe("bond holder can convert part of their shares before maturity", async () => {
           it("should transfer bonds to bond holder", async () => {
             await bond.transfer(

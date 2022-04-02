@@ -5,6 +5,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { bondFactoryFixture, tokenFixture } from "./shared/fixtures";
 import { BondConfigType } from "./interfaces";
 import { FIFTY_MILLION, THREE_YEARS_FROM_NOW_IN_SECONDS } from "./constants";
+import { getTargetCollateral } from "./utilities";
 
 const { ethers } = require("hardhat");
 
@@ -36,10 +37,13 @@ describe("BondFactory", async () => {
   async function createBond(factory: BondFactory) {
     BondConfig.collateralRatio = utils.parseUnits("0.5", 18);
     BondConfig.convertibleRatio = utils.parseUnits("0.5", 18);
+    await collateralToken.approve(
+      factory.address,
+      getTargetCollateral(BondConfig)
+    );
     return factory.createBond(
       "Bond",
       "LUG",
-      owner.address,
       BondConfig.maturityDate,
       paymentToken.address,
       collateralToken.address,
@@ -65,6 +69,16 @@ describe("BondFactory", async () => {
         .to.emit(factory, "AllowListEnabled")
         .withArgs(false);
       expect(await factory.isAllowListEnabled()).to.be.equal(false);
+      await collateralToken.transfer(
+        user.address,
+        await collateralToken.balanceOf(owner.address)
+      );
+      collateralToken
+        .connect(user)
+        .approve(
+          factory.address,
+          await collateralToken.balanceOf(user.address)
+        );
       await expect(createBond(factory.connect(user))).to.emit(
         factory,
         "BondCreated"
@@ -97,6 +111,16 @@ describe("BondFactory", async () => {
         .to.emit(factory, "AllowListEnabled")
         .withArgs(false);
       expect(await factory.isAllowListEnabled()).to.be.equal(false);
+      await collateralToken.transfer(
+        user.address,
+        await collateralToken.balanceOf(owner.address)
+      );
+      collateralToken
+        .connect(user)
+        .approve(
+          factory.address,
+          await collateralToken.balanceOf(user.address)
+        );
       await expect(createBond(factory.connect(user))).to.emit(
         factory,
         "BondCreated"

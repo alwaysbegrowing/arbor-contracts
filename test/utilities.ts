@@ -80,10 +80,6 @@ export const downscaleAmount = (amount: BigNumber, decimals: BigNumberish) => {
   return amount.mul(ethers.utils.parseUnits("1", decimals)).div(ONE);
 };
 
-export const upscaleAmount = (amount: BigNumber, decimals: BigNumberish) => {
-  return amount.mul(ONE).div(ethers.utils.parseUnits("1", decimals));
-};
-
 /**
  * This function asserts a change of tokens occurs
  * @param tx a transaction to be executed
@@ -123,41 +119,6 @@ export async function useCustomErrorMatcher() {
     });
   });
 }
-
-export const previewMintAndMint = async ({
-  bond,
-  collateralToken,
-  mintAmount,
-  collateralToDeposit,
-}: {
-  bond: Bond;
-  collateralToken: TestERC20;
-  mintAmount: BigNumber;
-  collateralToDeposit: BigNumber;
-}) => {
-  expect(await bond.previewMintBeforeMaturity(mintAmount)).to.equal(
-    collateralToDeposit
-  );
-  await expect(bond.mint(mintAmount)).to.not.be.reverted;
-  expect(await bond.totalSupply()).to.equal(mintAmount);
-  expect(await collateralToken.balanceOf(bond.address)).to.be.equal(
-    collateralToDeposit
-  );
-};
-
-export const failPreviewMint = async ({
-  bond,
-  mintAmount,
-  collateralToDeposit,
-}: {
-  bond: Bond;
-  mintAmount: BigNumber;
-  collateralToDeposit: BigNumber;
-}) => {
-  expect(await bond.previewMintBeforeMaturity(mintAmount)).to.not.equal(
-    collateralToDeposit
-  );
-};
 
 export const payAndWithdraw = async ({
   paymentToken,
