@@ -481,7 +481,7 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
             const totalCollateralRequired = totalBonds
               .mul(config.collateralRatio)
               .div(ONE);
-            const collateralToWithdraw = (await bond.totalCollateral()).sub(
+            const collateralToWithdraw = (await bond.collateralBalance()).sub(
               totalCollateralRequired
             );
             await expect(bond.withdrawCollateral).to.changeTokenBalance(
@@ -536,7 +536,9 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
             await expect(bond.withdrawCollateral).to.changeTokenBalance(
               collateralToken,
               owner,
-              (await bond.totalCollateral()).sub(convertibleCollateralRequired)
+              (
+                await bond.collateralBalance()
+              ).sub(convertibleCollateralRequired)
             );
           });
         });

@@ -355,14 +355,14 @@ describe("Bond", () => {
             await (await bond.pay(thirdSupply)).wait();
             expect(await bond.amountOwed()).to.equal(
               downscaleAmount(config.targetBondSupply, decimals).sub(
-                await bond.totalPaid()
+                await bond.paymentBalance()
               )
             );
 
             await (await bond.pay(thirdSupply)).wait();
             expect(await bond.amountOwed()).to.equal(
               downscaleAmount(config.targetBondSupply, decimals).sub(
-                await bond.totalPaid()
+                await bond.paymentBalance()
               )
             );
 
@@ -958,7 +958,7 @@ describe("Bond", () => {
           it("should redeem unpaid bond at maturity for collateral token", async () => {
             const expectedCollateralToReceive = utils
               .parseUnits("4000", 18)
-              .mul(await bond.totalCollateral())
+              .mul(await bond.collateralBalance())
               .div(await bond.totalSupply());
             await ethers.provider.send("evm_mine", [config.maturityDate]);
             const {
