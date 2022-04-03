@@ -37,7 +37,7 @@ npx hardhat verify <address>
 
 ### Testing
 
-Running the test suite
+Running the hardhat test suite
 
 ```
 npx hardhat test
@@ -54,6 +54,13 @@ and making the target for testing the local node
 ```
 npx hardhat test --network localhost
 ```
+
+Running the fuzzing test suite with Echidna
+
+- Get latest release https://github.com/crytic/echidna
+- Install to `/usr/local/bin`
+- `npm run echidna`
+- change the config located at `echidna.config.yaml` to tweak execution
 
 ### Other useful commands
 

@@ -1,0 +1,132 @@
+testMode: assertion
+# Type: String
+# Default: "property"
+# Description: The test mode to run.
+#   "property": Run user-defined property tests
+#   "assertion": Detect assertion failures (previously checkAsserts)
+#   "optimization": Find the maximum value for a function
+#   "overflow": Detect integer overflows (Solidity 0.8.x+)
+#   "exploration": Execute every line of code without any testing target ("unconstrained execution")
+
+testLimit: 10000
+# Type: Int
+# Default: 50000
+# Description: Number of sequences of transactions to generate during testing.
+
+# seqLen:
+# Type: Int
+# Default: 100
+# Description: Number of transactions to generate during testing.
+
+# shrinkLimit:
+# Type: Int
+# Default: 5000
+# Description: Number of tries to attempt to shrink a failing sequence of transactions.
+
+# contractAddr:
+# Type: Address
+# Default: "0x00a329c0648769a73afac7f9381e08fb43dbea72"
+# Description: Address to deploy the contract to test.
+
+# coverage:
+# Type: Bool
+# Default: true
+# Description: Enable the use of coverage-guided fuzzing and corpus collection.
+
+corpusDir: "corpus"
+# Type: String
+# Default: null
+# Description: Directory to save the corpus collected (requires coverage enabled).
+
+deployer: "0x41414141"
+# Type: Address
+# Default: "0x30000"
+# Description: Address of the deployer of the contract to test.
+
+sender: ["0x42424242", "0x43434343"]
+# Type: [Address]
+# Default: ["0x10000", "0x20000", "0x30000"]
+# Description: List of addresses to (randomly) use during for the transactions sent during testing.
+
+# psender:
+# Type: Address
+# Default: "0x10000"
+# Description: Address of the sender of the property to test.
+
+# prefix:
+# Type: String
+# Default: "echidna_"
+# Description: Prefix of the function names used as properties in the contract to test.
+
+# propMaxGas:
+# Type: Int
+# Default: 12500000 (current max gas per block)
+# Description: Maximum amount of gas to consume when running function properties.
+
+# testMaxGas:
+# Type: Int
+# Default: 12500000 (current max gas per block)
+# Description: Maximum amount of gas to consume when running random transactions.
+
+# maxGasprice:
+# Type: Int
+# Default: 0
+# Description: Maximum amount of gas price to randomly use in transactions. Do not change it unless you absolutely need it.
+
+maxTimeDelay: 63115200 # (two years)
+# Type: Int
+# Default: 604800 (one week)
+# Description: Maximum amount of seconds of delay between transactions.
+
+# maxBlockDelay:
+# Type: Int
+# Default: 60480
+# Description: Maximum amount of block numbers between transactions.
+
+# solcArgs:
+# Type: [String]
+# Default: []
+# Description: Additional arguments to use in solc for the compilation of the contract to test.
+
+# cryticArgs:
+# Type: [String]
+# Default: []
+# Description: Additional arguments to use in crytic-compile for the compilation of the contract to test.
+
+# quiet:
+# Type: Bool
+# Default: False
+# Description: Hide solc stderr output and additional information during the testing.
+
+# dashboard:
+# Type: Bool
+# Default: True
+# Description: Show the ncurses dashboard with real-time information on the properties to test during the fuzzing campaign.
+
+# format:
+# Type: String
+# Default: "text"
+# Description: Select an UI to show the results of each test.
+#   "text": simple textual interface.
+#   "json": JSON output.
+#   "none": no output.
+
+# balanceContract:
+# Type: Int
+# Default: 0
+# Description: Initial Ether balance of contractAddr.
+
+# balanceAddr:
+# Type: Int
+# Default: 0xffffffff
+# Description: Initial Ether balance of deployer and each of the sender accounts.
+
+# maxValue:
+# Type: Int
+# Default: 100000000000000000000 (100 ETH)
+# Description: Max amount of value in each randomly generated transaction.
+
+# testDestruction:
+# Type: Bool
+# Default: False
+# Description: Add a special test that fails if a contract is self-destructed.

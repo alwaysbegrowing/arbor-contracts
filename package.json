@@ -2,7 +2,8 @@
   "name": "hardhat-project",
   "scripts": {
     "rinkeby-integration": "hardhat test ./test/integration-tests/*.spec.ts --network rinkeby",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "echidna": "export TERMINFO=/usr/share/terminfo && hardhat compile && echidna-test . --contract TestBond --config ./echidna.config.yaml"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
