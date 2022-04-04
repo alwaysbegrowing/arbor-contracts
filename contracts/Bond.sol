@@ -146,7 +146,10 @@ contract Bond is
 
     /// @notice attempted to perform an action that would do nothing
     error ZeroAmount();
-
+    
+    /// @notice There is no excess payment in the contract that is avaliable to withdraw
+    error NoPaymentToWithdraw();
+    
     /// @dev used to confirm the bond has not yet matured
     modifier beforeMaturity() {
         if (isMature()) {
