@@ -1,0 +1,131 @@
+{{@if (it.name)}}# {{it.name}}{{/if}}
+
+
+{{@if (it.notice)}}{{it.notice}}{{/if}}
+
+
+
+{{@if (Object.keys(it.events).length > 0)}}
+## Events
+
+{{@foreach(it.events) => key, val}}
+### {{key}}
+
+
+{{@if (val.notice)}}{{ val.notice}}{{/if}}
+
+
+{{@if (val.details)}}*{{val.details}}*{{/if}}
+
+
+{{@if (Object.keys(val.inputs).length > 0)}}
+
+<table>
+{{@foreach(val.inputs) => key, val}}
+  <tr>
+    <td>{{val.type}} {{@if (val.indexed)}}<code>indexed</code>{{/if}}</td>
+    <td>{{key}}</td>
+    {{@if (val.description)}}
+    <td>
+    {{val.description}}
+    </td>
+    {{/if}}
+  </tr>
+{{/foreach}}
+</table>
+{{/if}}
+
+{{/foreach}}
+
+{{/if}}
+
+{{@if (Object.keys(it.errors).length > 0)}}
+## Errors
+
+{{@foreach(it.errors) => key, val}}
+### {{key}}
+
+{{@if (val.notice)}}* {{val.notice}}{{/if}}
+
+{{@if (val.details)}}*{{val.details}}*{{/if}}
+
+
+{{@if (Object.keys(val.inputs).length > 0)}}
+
+<table>
+{{@foreach(val.inputs) => key, val}}
+  <tr>
+    <td>{{val.type}} {{@if (val.indexed)}}<code>indexed</code>{{/if}}</td>
+    <td>{{key}}</td>
+    {{@if (val.description)}}
+    <td>
+    {{val.description}}
+    </td>
+    {{/if}}
+  </tr>
+{{/foreach}}
+</table>
+{{/if}}
+
+{{/foreach}}
+
+{{/if}}
+
+
+{{@if (Object.keys(it.methods).length > 0)}}
+## Methods
+
+
+{{@foreach(it.methods) => key, val}}
+### {{key.split('(')[0]}}
+
+
+```solidity
+{{val.code}}
+
+```
+
+{{@if (val.notice)}}{{val.notice}}{{/if}}
+
+
+{{@if (Object.keys(val.inputs).length > 0)}}
+#### Parameters
+
+<table>
+{{@foreach(val.inputs) => key, val}}
+  <tr>
+    <td>{{val.type}} {{@if (val.indexed)}}<code>indexed</code>{{/if}}</td>
+    <td>{{key}}</td>
+    {{@if (val.description)}}
+    <td>
+    {{val.description}}
+    </td>
+    {{/if}}
+  </tr>
+{{/foreach}}
+</table>
+{{/if}}
+
+{{@if (Object.keys(val.outputs).length > 0)}}
+#### Returns
+
+
+<table>
+{{@foreach(val.outputs) => key, val}}
+  <tr>
+    <td>
+      {{val.type}}
+    </td>
+    {{@if (val.description)}}
+    <td>
+    {{val.description}}
+    </td>
+    {{/if}}
+  </tr>
+{{/foreach}}
+</table>
+{{/if}}
+
+{{/foreach}}
+
+{{/if}}

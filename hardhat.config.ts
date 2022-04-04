@@ -8,6 +8,7 @@ import "@nomiclabs/hardhat-ethers"; // integrates ethers into the hre
 import "solidity-coverage"; // adds 'coverage' task
 import "hardhat-deploy"; // runs scripts in the ./deploy folder
 import "@nomiclabs/hardhat-etherscan"; // adds 'verify' task
+import "@primitivefi/hardhat-dodoc"; // generates docs on compile
 import "hardhat-storage-layout"; // exports storage layout of contracts
 
 import "./tasks/storageLayout.ts"; // add 'storage-layout' task
@@ -60,6 +61,12 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 5000000,
+  },
+  dodoc: {
+    include: ["Bond", "BondFactory"],
+    exclude: ["TestBond"],
+    runOnCompile: true,
+    templatePath: "./template.sqrl",
   },
 };
 

@@ -44,5 +44,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,sol,md}": "npx prettier --write"
+  },
+  "dependencies": {
+    "@primitivefi/hardhat-dodoc": "^0.2.3"
   }
 }
