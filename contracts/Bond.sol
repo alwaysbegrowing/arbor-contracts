@@ -120,6 +120,18 @@ contract Bond is
         uint256 amountOfCollateralTokens
     );
 
+    /**
+        @notice emitted when payment over the required payment amount is withdrawn
+        @param from the caller withdrawing the excessPaymentAmount
+        @param token the paymentToken being withdrawn
+        @param amount the amount of paymentToken withdrawn
+    */
+    event ExcessPaymentWithdraw(
+        address indexed from,
+        address indexed token,
+        uint256 amount
+    );
+
     /// @notice operation restricted because the bond has matured
     error BondPastMaturity();
 
@@ -243,18 +255,14 @@ contract Bond is
         @dev emits Payment event
         @param amount the number of payment tokens to pay
     */
-    function pay(uint256 amount) external nonReentrant beforeMaturity {
+    function pay(uint256 amount) external nonReentrant {
         if (isFullyPaid()) {
             revert PaymentMet();
         }
         if (amount == 0) {
             revert ZeroAmount();
         }
-        // @audit-info
-        // I'm not sure how we can fix this here. We could check that _upscale(paymentBalance() + amount) >= totalSupply() but
-        // that would break in the case of a token taking a fee.
-        // maybe we don't care about reentrency for this method? I was trying to think through potential exploits here, and
-        // if reentrency is exploited here what can they do? Just pay over the maximum amount?
+
         IERC20Metadata(paymentToken).safeTransferFrom(
             _msgSender(),
             address(this),
@@ -413,12 +421,11 @@ contract Bond is
         view
         returns (uint256, uint256)
     {
-        uint256 paidAmount = _upscale(paymentBalance());
-        if (isFullyPaid()) {
-            paidAmount = totalSupply();
-        }
+        uint256 paidAmount = isFullyPaid()
+            ? totalSupply()
+            : _upscale(paymentBalance());
         uint256 paymentTokensToSend = bonds.mulDivDown(
-            paymentBalance(),
+            _downscale(paidAmount),
             totalSupply()
         );
 
@@ -437,6 +444,22 @@ contract Bond is
     */
     function paymentBalance() public view returns (uint256) {
         return IERC20Metadata(paymentToken).balanceOf(address(this));
+    }
+
+    /**
+        @notice withdraws any overpaid payment token 
+    */
+    function withdrawExcessPayment()
+        external
+        nonReentrant
+        onlyRole(WITHDRAW_ROLE)
+    {
+        uint256 overpayment = amountOverPaid();
+        if (overpayment <= 0) {
+            revert NoPaymentToWithdraw();
+        }
+        IERC20Metadata(paymentToken).safeTransfer(_msgSender(), overpayment);
+        emit ExcessPaymentWithdraw(_msgSender(), paymentToken, overpayment);
     }
 
     /**
@@ -468,8 +491,23 @@ contract Bond is
         @notice the amount of payment tokens required to fully pay the contract
     */
     function amountOwed() public view returns (uint256) {
+        if (totalSupply() <= _upscale(paymentBalance())) {
+            return 0;
+        }
         uint256 amountUnpaid = totalSupply() - _upscale(paymentBalance());
         return amountUnpaid.mulDivUp(ONE, _computeScalingFactor(paymentToken));
+    }
+
+    /**
+        @notice gets the amount that was overpaid and can be withdrawn 
+        @return overpayment amount that was overpaid 
+    */
+    function amountOverPaid() public view returns (uint256 overpayment) {
+        if (totalSupply() >= _upscale(paymentBalance())) {
+            return 0;
+        }
+        uint256 amountOverpaid = _upscale(paymentBalance()) - totalSupply();
+        return _downscale(amountOverpaid);
     }
 
     /**
@@ -497,5 +535,9 @@ contract Bond is
     */
     function _upscale(uint256 amount) internal view returns (uint256) {
         return amount.mulDivUp(_computeScalingFactor(paymentToken), ONE);
+    }
+
+    function _downscale(uint256 amount) internal view returns (uint256) {
+        return amount.mulDivDown(ONE, _computeScalingFactor(paymentToken));
     }
 }
