@@ -57,23 +57,23 @@ export const getBondContract = async (tx: Promise<any>): Promise<Bond> => {
 };
 
 export const getTargetCollateral = (bondConfig: BondConfigType): BigNumber => {
-  const { targetBondSupply, collateralRatio } = bondConfig;
-  return targetBondSupply.mul(collateralRatio).div(ONE);
+  const { maxSupply, collateralRatio } = bondConfig;
+  return maxSupply.mul(collateralRatio).div(ONE);
 };
 
 export const getTargetConvertibleCollateral = (
   bondConfig: BondConfigType
 ): BigNumber => {
-  const { targetBondSupply, convertibleRatio } = bondConfig;
-  return targetBondSupply.mul(convertibleRatio).div(ONE);
+  const { maxSupply, convertibleRatio } = bondConfig;
+  return maxSupply.mul(convertibleRatio).div(ONE);
 };
 
 export const getTargetPayment = (
   bondConfig: BondConfigType,
   decimals: BigNumberish
 ): BigNumber => {
-  const { targetBondSupply } = bondConfig;
-  return targetBondSupply.mul(ethers.utils.parseUnits("1", decimals)).div(ONE);
+  const { maxSupply } = bondConfig;
+  return maxSupply.mul(ethers.utils.parseUnits("1", decimals)).div(ONE);
 };
 
 export const downscaleAmount = (amount: BigNumber, decimals: BigNumberish) => {

@@ -267,13 +267,13 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
 
           it(`previews convert target converted`, async () => {
             expect(
-              await bond.previewConvertBeforeMaturity(config.targetBondSupply)
+              await bond.previewConvertBeforeMaturity(config.maxSupply)
             ).to.equal(ZERO);
           });
 
           it("should not allow conversion", async () => {
             await expect(
-              bond.connect(bondHolder).convert(config.targetBondSupply)
+              bond.connect(bondHolder).convert(config.maxSupply)
             ).to.be.revertedWith("ZeroAmount");
           });
         });
@@ -281,14 +281,12 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
           it("should have issuer approve payment token", async () => {
             await paymentToken.approve(
               bond.address,
-              config.targetBondSupply
-                .mul(utils.parseUnits("1", decimals))
-                .div(ONE)
+              config.maxSupply.mul(utils.parseUnits("1", decimals)).div(ONE)
             );
           });
 
           it("should accept one third payment", async () => {
-            const thirdSupply = config.targetBondSupply
+            const thirdSupply = config.maxSupply
               .div(3)
               .mul(utils.parseUnits("1", decimals))
               .div(ONE);
@@ -296,7 +294,7 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
           });
 
           it("should accept the remaining payment", async () => {
-            const thirdSupply = config.targetBondSupply
+            const thirdSupply = config.maxSupply
               .div(3)
               .mul(utils.parseUnits("1", decimals))
               .div(ONE);
@@ -444,10 +442,8 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
 
           it(`previews convert target converted`, async () => {
             expect(
-              await bond.previewConvertBeforeMaturity(config.targetBondSupply)
-            ).to.equal(
-              config.targetBondSupply.mul(config.convertibleRatio).div(ONE)
-            );
+              await bond.previewConvertBeforeMaturity(config.maxSupply)
+            ).to.equal(config.maxSupply.mul(config.convertibleRatio).div(ONE));
           });
 
           it("should allow conversion", async () => {
@@ -475,7 +471,7 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
         describe("issuer withdraws the portion of collateral unlocked by the conversion", async () => {
           it("should allow withdrawl of the portion of collateral", async () => {
             expect(await bond.totalSupply()).to.equal(
-              config.targetBondSupply.sub(utils.parseUnits("1000", 18))
+              config.maxSupply.sub(utils.parseUnits("1000", 18))
             );
             const totalBonds = await bond.totalSupply();
             const totalCollateralRequired = totalBonds
@@ -495,7 +491,7 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
           it("should have issuer approve payment token", async () => {
             await paymentToken.approve(
               bond.address,
-              config.targetBondSupply
+              config.maxSupply
                 .sub(utils.parseUnits("1000", 18))
                 .mul(utils.parseUnits("1", decimals))
                 .div(ONE)
@@ -503,7 +499,7 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
           });
 
           it("should accept one third payment", async () => {
-            const thirdSupply = config.targetBondSupply
+            const thirdSupply = config.maxSupply
               .sub(utils.parseUnits("1000", 18))
               .div(3)
               .mul(utils.parseUnits("1", decimals))
@@ -512,7 +508,7 @@ describe("e2e: Create -> Convert -> Pay -> Withdraw -> Mature -> Redeem", () => 
           });
 
           it("should accept the remaining payment", async () => {
-            const thirdSupply = config.targetBondSupply
+            const thirdSupply = config.maxSupply
               .sub(utils.parseUnits("1000", 18))
               .div(3)
               .mul(utils.parseUnits("1", decimals))

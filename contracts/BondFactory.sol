@@ -64,11 +64,23 @@ contract BondFactory is AccessControl {
         address indexed collateralToken,
         uint256 collateralRatio,
         uint256 convertibleRatio,
-        uint256 maxSupply
+        uint256 maxBonds
     );
 
     /// @notice fails if the collateral token takes a fee
     error InvalidDeposit();
+
+    /// @notice Decimals with more than 18 digits are not supported
+    error DecimalsOver18();
+
+    /// @notice maturity date is not valid
+    error InvalidMaturityDate();
+
+    /// @notice collateralRatio must be greater than convertibleRatio
+    error CollateralRatioLessThanConvertibleRatio();
+
+    /// @notice max bonds must be a positive number
+    error ZeroBondsToMint();
 
     /// @dev If allow list is enabled, only allow listed issuers are able to call functions
     modifier onlyIssuer() {
@@ -108,7 +120,7 @@ contract BondFactory is AccessControl {
         @param collateralRatio Ratio of bond: collateral token
         @param paymentToken Address of the token being paid
         @param convertibleRatio Ratio of bond:token that the bond can be converted into
-        @param maxSupply Max amount of tokens able to mint
+        @param maxBonds Max amount of tokens able to mint
         @dev This uses a clone to save on deployment costs which adds a slight overhead
             everytime users interact with the bonds - but saves on gas during deployment
     */
@@ -120,8 +132,28 @@ contract BondFactory is AccessControl {
         address collateralToken,
         uint256 collateralRatio,
         uint256 convertibleRatio,
-        uint256 maxSupply
+        uint256 maxBonds
     ) external onlyIssuer returns (address clone) {
+        if (maxBonds == 0) {
+            revert ZeroBondsToMint();
+        }
+
+        if (collateralRatio < convertibleRatio) {
+            revert CollateralRatioLessThanConvertibleRatio();
+        }
+        if (
+            maturityDate <= block.timestamp ||
+            maturityDate > block.timestamp + 3650 days
+        ) {
+            revert InvalidMaturityDate();
+        }
+        if (
+            IERC20Metadata(paymentToken).decimals() > 18 ||
+            IERC20Metadata(collateralToken).decimals() > 18
+        ) {
+            revert DecimalsOver18();
+        }
+
         clone = Clones.clone(tokenImplementation);
 
         isBond[clone] = true;
@@ -130,7 +162,7 @@ contract BondFactory is AccessControl {
             _msgSender(),
             clone,
             collateralToken,
-            maxSupply.mulDivUp(collateralRatio, ONE)
+            maxBonds.mulDivUp(collateralRatio, ONE)
         );
 
         Bond(clone).initialize(
@@ -142,7 +174,7 @@ contract BondFactory is AccessControl {
             collateralToken,
             collateralRatio,
             convertibleRatio,
-            maxSupply
+            maxBonds
         );
 
         emit BondCreated(
@@ -155,7 +187,7 @@ contract BondFactory is AccessControl {
             collateralToken,
             collateralRatio,
             convertibleRatio,
-            maxSupply
+            maxBonds
         );
     }
 

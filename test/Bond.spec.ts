@@ -292,13 +292,11 @@ describe("Bond", () => {
             config = bondWithTokens.nonConvertible.config;
             await paymentToken.approve(
               bond.address,
-              config.targetBondSupply
-                .mul(utils.parseUnits("1", decimals))
-                .div(ONE)
+              config.maxSupply.mul(utils.parseUnits("1", decimals)).div(ONE)
             );
           });
           it("should accept partial payment", async () => {
-            const halfSupplyMinusOne = config.targetBondSupply
+            const halfSupplyMinusOne = config.maxSupply
               .div(2)
               .sub(1)
               .mul(utils.parseUnits("1", decimals))
@@ -310,7 +308,7 @@ describe("Bond", () => {
           });
 
           it("should accept full payment in steps", async () => {
-            const thirdSupply = config.targetBondSupply
+            const thirdSupply = config.maxSupply
               .div(3)
               .mul(utils.parseUnits("1", decimals))
               .div(ONE);
@@ -329,9 +327,7 @@ describe("Bond", () => {
 
           it("should fail if already paid", async () => {
             await bond.pay(
-              config.targetBondSupply
-                .mul(utils.parseUnits("1", decimals))
-                .div(ONE)
+              config.maxSupply.mul(utils.parseUnits("1", decimals)).div(ONE)
             );
             await expect(
               bond.pay(getTargetPayment(config, decimals))
@@ -343,25 +339,25 @@ describe("Bond", () => {
           });
 
           it("should return amount owed scaled to payment amount", async () => {
-            const thirdSupply = config.targetBondSupply
+            const thirdSupply = config.maxSupply
               .div(3)
               .mul(utils.parseUnits("1", decimals))
               .div(ONE);
 
             expect(await bond.amountOwed()).to.equal(
-              downscaleAmount(config.targetBondSupply, decimals)
+              downscaleAmount(config.maxSupply, decimals)
             );
 
             await (await bond.pay(thirdSupply)).wait();
             expect(await bond.amountOwed()).to.equal(
-              downscaleAmount(config.targetBondSupply, decimals).sub(
+              downscaleAmount(config.maxSupply, decimals).sub(
                 await bond.paymentBalance()
               )
             );
 
             await (await bond.pay(thirdSupply)).wait();
             expect(await bond.amountOwed()).to.equal(
-              downscaleAmount(config.targetBondSupply, decimals).sub(
+              downscaleAmount(config.maxSupply, decimals).sub(
                 await bond.paymentBalance()
               )
             );
@@ -413,7 +409,7 @@ describe("Bond", () => {
           it(`should make excess collateral available to withdraw when total amount are burned`, async () => {
             await burnAndWithdraw({
               bond,
-              sharesToBurn: config.targetBondSupply,
+              sharesToBurn: config.maxSupply,
               collateralToReceive: getTargetCollateral(config),
             });
           });
@@ -496,7 +492,7 @@ describe("Bond", () => {
           });
 
           it("should allow all collateral to be withdrawn when all bonds are burned", async () => {
-            await bond.burn(config.targetBondSupply);
+            await bond.burn(config.maxSupply);
             expect(await bond.totalSupply()).to.equal(0);
             await expectTokenDelta(
               bond.withdrawCollateral,
@@ -650,11 +646,11 @@ describe("Bond", () => {
             await payAndWithdrawAtMaturity({
               bond,
               paymentToken,
-              paymentTokenAmount: config.targetBondSupply
+              paymentTokenAmount: config.maxSupply
                 .div(4)
                 .mul(utils.parseUnits("1", decimals))
                 .div(ONE),
-              collateralToReceive: config.targetBondSupply
+              collateralToReceive: config.maxSupply
                 .div(4)
                 .mul(config.collateralRatio)
                 .div(ONE),
@@ -732,7 +728,7 @@ describe("Bond", () => {
           it(`should have zero collateral available to withdraw when they are burned`, async () => {
             await burnAndWithdraw({
               bond,
-              sharesToBurn: config.targetBondSupply,
+              sharesToBurn: config.maxSupply,
               collateralToReceive: getTargetCollateral(
                 UncollateralizedBondConfig
               ),
@@ -793,7 +789,7 @@ describe("Bond", () => {
               bondHolder.address,
               utils.parseUnits("4000", 18)
             );
-            await paymentToken.approve(bond.address, config.targetBondSupply);
+            await paymentToken.approve(bond.address, config.maxSupply);
           });
 
           it("should redeem for payment token when bond is fully paid & not past maturity", async () => {
@@ -910,13 +906,13 @@ describe("Bond", () => {
             const portionOfTotalBonds = utils
               .parseUnits("4000", 18)
               .mul(ONE)
-              .div(config.targetBondSupply);
+              .div(config.maxSupply);
             const portionOfPaymentAmount = portionOfTotalBonds
               .mul(paymentAmount)
               .div(ONE);
 
             // the amount of bonds not covered by the payment amount
-            const totalUncoveredSupply = config.targetBondSupply.sub(
+            const totalUncoveredSupply = config.maxSupply.sub(
               utils.parseUnits("4000", 18)
             );
             const totalCollateralTokens = totalUncoveredSupply
@@ -924,7 +920,7 @@ describe("Bond", () => {
               .div(ONE);
             const portionOfCollateralAmount = totalCollateralTokens
               .mul(utils.parseUnits("4000", 18))
-              .div(config.targetBondSupply);
+              .div(config.maxSupply);
             await redeemAndCheckTokens({
               bond,
               bondHolder,
@@ -938,9 +934,7 @@ describe("Bond", () => {
 
           it("should redeem bond at maturity for payment token", async () => {
             await bond.pay(
-              config.targetBondSupply
-                .mul(utils.parseUnits("1", decimals))
-                .div(ONE)
+              config.maxSupply.mul(utils.parseUnits("1", decimals)).div(ONE)
             );
             // Fast forward to expire
             await ethers.provider.send("evm_mine", [config.maturityDate]);
@@ -1009,7 +1003,7 @@ describe("Bond", () => {
               bondHolder.address,
               utils.parseUnits("4000", 18)
             );
-            await paymentToken.approve(bond.address, config.targetBondSupply);
+            await paymentToken.approve(bond.address, config.maxSupply);
           });
 
           it("should redeem for payment token when bond is fully paid & not past maturity", async () => {
@@ -1114,7 +1108,7 @@ describe("Bond", () => {
             const portionOfTotalBonds = utils
               .parseUnits("4000", 18)
               .mul(ONE)
-              .div(config.targetBondSupply);
+              .div(config.maxSupply);
             const portionOfPaymentAmount = portionOfTotalBonds
               .mul(paymentAmount)
               .div(ONE);
@@ -1132,9 +1126,7 @@ describe("Bond", () => {
 
           it("should redeem bond at maturity for payment token", async () => {
             await bond.pay(
-              config.targetBondSupply
-                .mul(utils.parseUnits("1", decimals))
-                .div(ONE)
+              config.maxSupply.mul(utils.parseUnits("1", decimals)).div(ONE)
             );
             // Fast forward to expire
             await ethers.provider.send("evm_mine", [config.maturityDate]);
@@ -1159,7 +1151,7 @@ describe("Bond", () => {
               bond.address,
               getTargetCollateral(config)
             );
-            await bond.transfer(bondHolder.address, config.targetBondSupply);
+            await bond.transfer(bondHolder.address, config.maxSupply);
           });
 
           it(`previews convert zero converted`, async () => {
@@ -1170,26 +1162,20 @@ describe("Bond", () => {
 
           it(`previews convert target converted`, async () => {
             expect(
-              await bond.previewConvertBeforeMaturity(config.targetBondSupply)
-            ).to.equal(
-              config.convertibleRatio.mul(config.targetBondSupply).div(ONE)
-            );
+              await bond.previewConvertBeforeMaturity(config.maxSupply)
+            ).to.equal(config.convertibleRatio.mul(config.maxSupply).div(ONE));
           });
 
           it(`previews convert double target converted`, async () => {
             expect(
-              await bond.previewConvertBeforeMaturity(
-                config.targetBondSupply.div(2)
-              )
+              await bond.previewConvertBeforeMaturity(config.maxSupply.div(2))
             ).to.equal(
-              config.convertibleRatio
-                .mul(config.targetBondSupply.div(2))
-                .div(ONE)
+              config.convertibleRatio.mul(config.maxSupply.div(2)).div(ONE)
             );
           });
 
           it("should convert bond amount into collateral at convertibleRatio", async () => {
-            const expectedCollateralToWithdraw = config.targetBondSupply
+            const expectedCollateralToWithdraw = config.maxSupply
               .mul(config.convertibleRatio)
               .div(ONE);
 
@@ -1199,12 +1185,12 @@ describe("Bond", () => {
               amountOfBondsConverted,
               amountOfCollateralTokens,
             } = await getEventArgumentsFromTransaction(
-              await bond.connect(bondHolder).convert(config.targetBondSupply),
+              await bond.connect(bondHolder).convert(config.maxSupply),
               "Convert"
             );
             expect(from).to.equal(bondHolder.address);
             expect(convertedCollateralToken).to.equal(collateralToken.address);
-            expect(amountOfBondsConverted).to.equal(config.targetBondSupply);
+            expect(amountOfBondsConverted).to.equal(config.maxSupply);
             expect(amountOfCollateralTokens).to.equal(
               expectedCollateralToWithdraw
             );
@@ -1212,12 +1198,10 @@ describe("Bond", () => {
 
           it("should lower amount owed when bonds are converted", async () => {
             const amountOwed = await bond.amountOwed();
-            await bond
-              .connect(bondHolder)
-              .convert(config.targetBondSupply.div(2));
+            await bond.connect(bondHolder).convert(config.maxSupply.div(2));
             expect(await bond.amountOwed()).to.be.equal(amountOwed.div(2));
             expect(await bond.amountOwed()).to.be.equal(
-              downscaleAmount(config.targetBondSupply.div(2), decimals)
+              downscaleAmount(config.maxSupply.div(2), decimals)
             );
           });
         });
@@ -1228,9 +1212,9 @@ describe("Bond", () => {
           });
 
           it("should fail to convert if bond is not convertible", async () => {
-            await expect(
-              bond.convert(config.targetBondSupply)
-            ).to.be.revertedWith("ZeroAmount");
+            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
+              "ZeroAmount"
+            );
           });
         });
         describe("uncollateralized", async () => {
@@ -1240,9 +1224,9 @@ describe("Bond", () => {
           });
 
           it("should fail to convert if bond is uncollateralized and therefore unconvertible", async () => {
-            await expect(
-              bond.convert(config.targetBondSupply)
-            ).to.be.revertedWith("ZeroAmount");
+            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
+              "ZeroAmount"
+            );
           });
         });
       });

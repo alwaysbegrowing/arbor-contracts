@@ -16,7 +16,6 @@ export const FIFTY_MILLION = "50000000";
 
 // The config objects are used as anchors to test against
 export const NonConvertibleBondConfig: BondConfigType = {
-  targetBondSupply: utils.parseUnits(FIFTY_MILLION, 18),
   collateralRatio: utils.parseUnits("0.5", 18),
   convertibleRatio: ZERO,
   maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
@@ -24,7 +23,6 @@ export const NonConvertibleBondConfig: BondConfigType = {
 };
 
 export const ConvertibleBondConfig: BondConfigType = {
-  targetBondSupply: utils.parseUnits(FIFTY_MILLION, 18),
   collateralRatio: utils.parseUnits("0.5", 18),
   convertibleRatio: utils.parseUnits("0.25", 18),
   maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
@@ -32,7 +30,6 @@ export const ConvertibleBondConfig: BondConfigType = {
 };
 
 export const UncollateralizedBondConfig: BondConfigType = {
-  targetBondSupply: utils.parseUnits(FIFTY_MILLION, 18),
   collateralRatio: ZERO,
   convertibleRatio: ZERO,
   maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
@@ -40,7 +37,6 @@ export const UncollateralizedBondConfig: BondConfigType = {
 };
 
 export const MaliciousBondConfig: BondConfigType = {
-  targetBondSupply: utils.parseUnits(FIFTY_MILLION, 18),
   collateralRatio: utils.parseUnits("0.5", 18),
   convertibleRatio: utils.parseUnits("0.25", 18),
   maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
