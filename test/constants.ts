@@ -1,3 +1,4 @@
+import { FallbackProvider } from "@ethersproject/providers";
 import { BigNumber, utils } from "ethers";
 import { BondConfigType } from "./interfaces";
 
@@ -12,33 +13,34 @@ export const ELEVEN_YEARS_FROM_NOW_IN_SECONDS = Math.round(
 
 export const ONE = utils.parseUnits("1", 18);
 export const ZERO = BigNumber.from(0);
-export const FIFTY_MILLION = "50000000";
-
+export const FIFTY_MILLION = 50000000;
+const HALF_FIFTY_MILLION = (FIFTY_MILLION / 2).toString();
+const QUARTER_FIFTY_MILLION = (FIFTY_MILLION / 4).toString();
 // The config objects are used as anchors to test against
 export const NonConvertibleBondConfig: BondConfigType = {
-  collateralRatio: utils.parseUnits("0.5", 18),
-  convertibleRatio: ZERO,
+  collateralTokenAmount: utils.parseUnits(HALF_FIFTY_MILLION, 18),
+  convertibleTokenAmount: ZERO,
   maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
-  maxSupply: utils.parseUnits(FIFTY_MILLION, 18),
+  maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
 export const ConvertibleBondConfig: BondConfigType = {
-  collateralRatio: utils.parseUnits("0.5", 18),
-  convertibleRatio: utils.parseUnits("0.25", 18),
+  collateralTokenAmount: utils.parseUnits(HALF_FIFTY_MILLION, 18),
+  convertibleTokenAmount: utils.parseUnits(QUARTER_FIFTY_MILLION, 18),
   maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
-  maxSupply: utils.parseUnits(FIFTY_MILLION, 18),
+  maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
 export const UncollateralizedBondConfig: BondConfigType = {
-  collateralRatio: ZERO,
-  convertibleRatio: ZERO,
+  collateralTokenAmount: ZERO,
+  convertibleTokenAmount: ZERO,
   maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
-  maxSupply: utils.parseUnits(FIFTY_MILLION, 18),
+  maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
 export const MaliciousBondConfig: BondConfigType = {
-  collateralRatio: utils.parseUnits("0.5", 18),
-  convertibleRatio: utils.parseUnits("0.25", 18),
+  collateralTokenAmount: utils.parseUnits(HALF_FIFTY_MILLION, 18),
+  convertibleTokenAmount: utils.parseUnits(QUARTER_FIFTY_MILLION, 18),
   maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
-  maxSupply: utils.parseUnits(FIFTY_MILLION, 18),
+  maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };

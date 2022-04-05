@@ -2,8 +2,8 @@ import { BigNumber, BigNumberish } from "ethers";
 import { Bond, TestERC20 } from "../typechain";
 
 export type BondConfigType = {
-  collateralRatio: BigNumber;
-  convertibleRatio: BigNumber;
+  convertibleTokenAmount: BigNumber;
+  collateralTokenAmount: BigNumber;
   maturityDate: BigNumberish;
   maxSupply: BigNumber;
 };

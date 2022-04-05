@@ -60,9 +60,9 @@ contract BondFactory is AccessControl {
         uint256 maturityDate,
         address indexed paymentToken,
         address indexed collateralToken,
-        uint256 collateralRatio,
-        uint256 convertibleRatio,
-        uint256 maxBonds
+        uint256 collateralTokenAmount,
+        uint256 convertibleTokenAmount,
+        uint256 bonds
     );
 
     /// @notice fails if the collateral token takes a fee
@@ -74,8 +74,8 @@ contract BondFactory is AccessControl {
     /// @notice maturity date is not valid
     error InvalidMaturityDate();
 
-    /// @notice collateralRatio must be greater than convertibleRatio
-    error CollateralRatioLessThanConvertibleRatio();
+    /// @notice There must be more collateral tokens than convertible tokens
+    error CollateralTokenAmountLessThanConvertibleTokenAmount();
 
     /// @notice max bonds must be a positive number
     error ZeroBondsToMint();
@@ -114,11 +114,11 @@ contract BondFactory is AccessControl {
         @param name Name of the bond
         @param symbol Ticker symbol for the bond
         @param maturityDate Timestamp of when the bond matures
-        @param collateralToken Address of the collateral to use for the bond
-        @param collateralRatio Ratio of bond: collateral token
         @param paymentToken Address of the token being paid
-        @param convertibleRatio Ratio of bond:token that the bond can be converted into
-        @param maxBonds Max amount of tokens able to mint
+        @param collateralToken Address of the collateral to use for the bond
+        @param collateralTokenAmount Number of all collateral tokens that the bonds will convert into
+        @param convertibleTokenAmount Number of the collateral token that all bonds will convert into
+        @param bonds number of bonds to mint
         @dev This uses a clone to save on deployment costs which adds a slight overhead
             everytime users interact with the bonds - but saves on gas during deployment
     */
@@ -128,16 +128,16 @@ contract BondFactory is AccessControl {
         uint256 maturityDate,
         address paymentToken,
         address collateralToken,
-        uint256 collateralRatio,
-        uint256 convertibleRatio,
-        uint256 maxBonds
+        uint256 collateralTokenAmount,
+        uint256 convertibleTokenAmount,
+        uint256 bonds
     ) external onlyIssuer returns (address clone) {
-        if (maxBonds == 0) {
+        if (bonds == 0) {
             revert ZeroBondsToMint();
         }
 
-        if (collateralRatio < convertibleRatio) {
-            revert CollateralRatioLessThanConvertibleRatio();
+        if (collateralTokenAmount < convertibleTokenAmount) {
+            revert CollateralTokenAmountLessThanConvertibleTokenAmount();
         }
         if (
             maturityDate <= block.timestamp ||
@@ -155,13 +155,9 @@ contract BondFactory is AccessControl {
         clone = Clones.clone(tokenImplementation);
 
         isBond[clone] = true;
-
-        _deposit(
-            _msgSender(),
-            clone,
-            collateralToken,
-            maxBonds.mulWadUp(collateralRatio)
-        );
+        uint256 collateralRatio = collateralTokenAmount.divWadUp(bonds);
+        uint256 convertibleRatio = convertibleTokenAmount.divWadUp(bonds);
+        _deposit(_msgSender(), clone, collateralToken, collateralTokenAmount);
 
         Bond(clone).initialize(
             name,
@@ -172,7 +168,7 @@ contract BondFactory is AccessControl {
             collateralToken,
             collateralRatio,
             convertibleRatio,
-            maxBonds
+            bonds
         );
 
         emit BondCreated(
@@ -185,7 +181,7 @@ contract BondFactory is AccessControl {
             collateralToken,
             collateralRatio,
             convertibleRatio,
-            maxBonds
+            bonds
         );
     }
 

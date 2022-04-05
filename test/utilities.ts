@@ -56,18 +56,6 @@ export const getBondContract = async (tx: Promise<any>): Promise<Bond> => {
   return (await ethers.getContractAt("Bond", newBondAddress, owner)) as Bond;
 };
 
-export const getTargetCollateral = (bondConfig: BondConfigType): BigNumber => {
-  const { maxSupply, collateralRatio } = bondConfig;
-  return maxSupply.mul(collateralRatio).div(ONE);
-};
-
-export const getTargetConvertibleCollateral = (
-  bondConfig: BondConfigType
-): BigNumber => {
-  const { maxSupply, convertibleRatio } = bondConfig;
-  return maxSupply.mul(convertibleRatio).div(ONE);
-};
-
 export const getTargetPayment = (
   bondConfig: BondConfigType,
   decimals: BigNumberish

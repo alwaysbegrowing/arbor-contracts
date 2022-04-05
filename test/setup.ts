@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { TestERC20, BondFactory, Bond } from "../typechain";
-import { getBondContract, getTargetCollateral } from "./utilities";
+import { getBondContract } from "./utilities";
 import { ConvertibleBondConfig } from "./constants";
 
 export const deployNativeAndPayment = async (owner: SignerWithAddress) => {
@@ -43,7 +43,7 @@ export const createBond = async (
 
   const approveTokens = await nativeToken
     .connect(owner)
-    .approve(factory.address, getTargetCollateral(ConvertibleBondConfig));
+    .approve(factory.address, ethers.constants.MaxInt256);
   await approveTokens.wait();
 
   const bond = await getBondContract(
@@ -55,8 +55,8 @@ export const createBond = async (
         ConvertibleBondConfig.maturityDate,
         paymentToken.address,
         nativeToken.address,
-        ConvertibleBondConfig.collateralRatio,
-        ConvertibleBondConfig.convertibleRatio,
+        ConvertibleBondConfig.collateralTokenAmount,
+        ConvertibleBondConfig.convertibleTokenAmount,
         ConvertibleBondConfig.maxSupply
       )
   );

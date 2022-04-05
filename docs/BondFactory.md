@@ -61,15 +61,15 @@ Emitted when a new bond is created
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>collateralRatio</td>
+    <td>collateralTokenAmount</td>
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>convertibleRatio</td>
+    <td>convertibleTokenAmount</td>
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>maxBonds</td>
+    <td>bonds</td>
       </tr>
 </table>
 
@@ -215,7 +215,7 @@ the role required to issue bonds
 ### createBond
 
 ```solidity
-function createBond(string name, string symbol, uint256 maturityDate, address paymentToken, address collateralToken, uint256 collateralRatio, uint256 convertibleRatio, uint256 maxBonds) external nonpayable returns (address clone)
+function createBond(string name, string symbol, uint256 maturityDate, address paymentToken, address collateralToken, uint256 collateralTokenAmount, uint256 convertibleTokenAmount, uint256 bonds) external nonpayable returns (address clone)
 ```
 
 Creates a bond
@@ -255,21 +255,21 @@ Creates a bond
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>collateralRatio</td>
+    <td>collateralTokenAmount</td>
         <td>
-    Ratio of bond: collateral token    </td>
+    Number of all collateral tokens that the bonds will convert into    </td>
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>convertibleRatio</td>
+    <td>convertibleTokenAmount</td>
         <td>
-    Ratio of bond:token that the bond can be converted into    </td>
+    Number of the collateral token that all bonds will convert into    </td>
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>maxBonds</td>
+    <td>bonds</td>
         <td>
-    Max amount of tokens able to mint    </td>
+    number of bonds to mint    </td>
       </tr>
 </table>
 
