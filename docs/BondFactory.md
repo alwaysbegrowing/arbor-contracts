@@ -143,8 +143,8 @@ Emitted when a new bond is created
 
 ## Errors
 
-### CollateralRatioLessThanConvertibleRatio
-* collateralRatio must be greater than convertibleRatio
+### CollateralTokenAmountLessThanConvertibleTokenAmount
+* There must be more collateral tokens than convertible tokens
 
 
 

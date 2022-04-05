@@ -2,8 +2,6 @@ import { BigNumber, BigNumberish, ContractTransaction, Event } from "ethers";
 import { use, expect } from "chai";
 import { ethers } from "hardhat";
 import { Bond, TestERC20 } from "../typechain";
-import { BondConfigType } from "./interfaces";
-import { ONE } from "./constants";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 export const addDaysToNow = (days: number = 0) => {
@@ -54,18 +52,6 @@ export const getBondContract = async (tx: Promise<any>): Promise<Bond> => {
   );
 
   return (await ethers.getContractAt("Bond", newBondAddress, owner)) as Bond;
-};
-
-export const getTargetPayment = (
-  bondConfig: BondConfigType,
-  decimals: BigNumberish
-): BigNumber => {
-  const { maxSupply } = bondConfig;
-  return maxSupply.mul(ethers.utils.parseUnits("1", decimals)).div(ONE);
-};
-
-export const downscaleAmount = (amount: BigNumber, decimals: BigNumberish) => {
-  return amount.mul(ethers.utils.parseUnits("1", decimals)).div(ONE);
 };
 
 /**

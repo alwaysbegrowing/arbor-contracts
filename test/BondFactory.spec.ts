@@ -93,7 +93,9 @@ describe("BondFactory", async () => {
           collateralTokenAmount: 5000,
           convertibleTokenAmount: 10000,
         })
-      ).to.be.revertedWith("CollateralRatioLessThanConvertibleRatio");
+      ).to.be.revertedWith(
+        "CollateralTokenAmountLessThanConvertibleTokenAmount"
+      );
     });
 
     it("should revert on too big of a token", async () => {
