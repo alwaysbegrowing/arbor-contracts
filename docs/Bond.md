@@ -27,34 +27,6 @@ A custom ERC20 token that can be used to issue bonds.The contract handles issuan
       </tr>
 </table>
 
-### CollateralDeposit
-
-emitted when a collateral is deposited for a bond
-
-
-
-
-<table>
-  <tr>
-    <td>address <code>indexed</code></td>
-    <td>from</td>
-        <td>
-    the address depositing collateral    </td>
-      </tr>
-  <tr>
-    <td>address <code>indexed</code></td>
-    <td>token</td>
-        <td>
-    the address of the collateral token    </td>
-      </tr>
-  <tr>
-    <td>uint256 </td>
-    <td>amount</td>
-        <td>
-    the number of the tokens deposited    </td>
-      </tr>
-</table>
-
 ### CollateralWithdraw
 
 emitted when collateral is withdrawn
@@ -114,6 +86,34 @@ emitted when bond tokens are converted by a borrower
     <td>amountOfCollateralTokens</td>
         <td>
     the number of collateral tokens received    </td>
+      </tr>
+</table>
+
+### ExcessPaymentWithdraw
+
+emitted when payment over the required payment amount is withdrawn
+
+
+
+
+<table>
+  <tr>
+    <td>address <code>indexed</code></td>
+    <td>from</td>
+        <td>
+    the caller withdrawing the excessPaymentAmount    </td>
+      </tr>
+  <tr>
+    <td>address <code>indexed</code></td>
+    <td>token</td>
+        <td>
+    the paymentToken being withdrawn    </td>
+      </tr>
+  <tr>
+    <td>uint256 </td>
+    <td>amount</td>
+        <td>
+    the amount of paymentToken withdrawn    </td>
       </tr>
 </table>
 
@@ -287,18 +287,8 @@ emitted when a bond is redeemed
 
 
 
-### CollateralRatioLessThanConvertibleRatio
-* collateralRatio must be greater than convertibleRatio
-
-
-
-### DecimalsOver18
-* Decimals with more than 18 digits are not supported
-
-
-
-### InvalidMaturityDate
-* maturity date is not valid
+### NoPaymentToWithdraw
+* There is no excess payment in the contract that is avaliable to withdraw
 
 
 
@@ -389,6 +379,27 @@ function allowance(address owner, address spender) external view returns (uint25
   <tr>
     <td>
       uint256    </td>
+      </tr>
+</table>
+
+### amountOverPaid
+
+```solidity
+function amountOverPaid() external view returns (uint256 overpayment)
+```
+
+gets the amount that was overpaid and can be withdrawn 
+
+
+#### Returns
+
+
+<table>
+  <tr>
+    <td>
+      uint256    </td>
+        <td>
+    amount that was overpaid     </td>
       </tr>
 </table>
 
@@ -1285,6 +1296,16 @@ function withdrawCollateral() external nonpayable
 ```
 
 Withdraw collateral from bond contract the amount of collateral available to be withdrawn depends on the collateralRatio and the convertibleRatio
+
+
+
+### withdrawExcessPayment
+
+```solidity
+function withdrawExcessPayment() external nonpayable
+```
+
+withdraws any overpaid payment token 
 
 
 

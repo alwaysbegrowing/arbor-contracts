@@ -69,7 +69,7 @@ Emitted when a new bond is created
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>maxSupply</td>
+    <td>maxBonds</td>
       </tr>
 </table>
 
@@ -143,8 +143,28 @@ Emitted when a new bond is created
 
 ## Errors
 
+### CollateralRatioLessThanConvertibleRatio
+* collateralRatio must be greater than convertibleRatio
+
+
+
+### DecimalsOver18
+* Decimals with more than 18 digits are not supported
+
+
+
 ### InvalidDeposit
 * fails if the collateral token takes a fee
+
+
+
+### InvalidMaturityDate
+* maturity date is not valid
+
+
+
+### ZeroBondsToMint
+* max bonds must be a positive number
 
 
 
@@ -195,7 +215,7 @@ the role required to issue bonds
 ### createBond
 
 ```solidity
-function createBond(string name, string symbol, uint256 maturityDate, address paymentToken, address collateralToken, uint256 collateralRatio, uint256 convertibleRatio, uint256 maxSupply) external nonpayable returns (address clone)
+function createBond(string name, string symbol, uint256 maturityDate, address paymentToken, address collateralToken, uint256 collateralRatio, uint256 convertibleRatio, uint256 maxBonds) external nonpayable returns (address clone)
 ```
 
 Creates a bond
@@ -247,7 +267,7 @@ Creates a bond
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>maxSupply</td>
+    <td>maxBonds</td>
         <td>
     Max amount of tokens able to mint    </td>
       </tr>

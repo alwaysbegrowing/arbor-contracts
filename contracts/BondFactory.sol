@@ -41,8 +41,6 @@ contract BondFactory is AccessControl {
     /// @notice when enabled, issuance is restricted to those with the ISSUER_ROLE
     bool public isAllowListEnabled = true;
 
-    uint256 internal constant ONE = 1e18;
-
     /**
         @notice Emitted when the allow list is toggled on or off
         @param isAllowListEnabled the new state of the allow list
@@ -162,7 +160,7 @@ contract BondFactory is AccessControl {
             _msgSender(),
             clone,
             collateralToken,
-            maxBonds.mulDivUp(collateralRatio, ONE)
+            maxBonds.mulWadUp(collateralRatio)
         );
 
         Bond(clone).initialize(

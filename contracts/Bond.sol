@@ -67,8 +67,6 @@ contract Bond is
     */
     bytes32 public constant WITHDRAW_ROLE = keccak256("WITHDRAW_ROLE");
 
-    uint256 internal constant ONE = 1e18;
-
     /**
         @notice emitted when bond tokens are converted by a borrower
         @param from the address converting their tokens
@@ -146,10 +144,10 @@ contract Bond is
 
     /// @notice attempted to perform an action that would do nothing
     error ZeroAmount();
-    
+
     /// @notice There is no excess payment in the contract that is avaliable to withdraw
     error NoPaymentToWithdraw();
-    
+
     /// @dev used to confirm the bond has not yet matured
     modifier beforeMaturity() {
         if (isMature()) {
@@ -344,7 +342,7 @@ contract Bond is
         view
         returns (uint256)
     {
-        return bonds.mulDivDown(convertibleRatio, ONE);
+        return bonds.mulWadDown(convertibleRatio);
     }
 
     /** 
@@ -384,12 +382,11 @@ contract Bond is
             collateralTokensRequired = 0;
         } else {
             collateralTokensRequired = (totalSupply() - tokensCoveredByPayment)
-                .mulDivUp(collateralRatio, ONE);
+                .mulWadUp(collateralRatio);
         }
 
-        uint256 convertibleTokensRequired = totalSupply().mulDivUp(
-            convertibleRatio,
-            ONE
+        uint256 convertibleTokensRequired = totalSupply().mulWadUp(
+            convertibleRatio
         );
 
         uint256 totalRequiredCollateral;
@@ -433,9 +430,8 @@ contract Bond is
         );
 
         uint256 nonPaidAmount = totalSupply() - paidAmount;
-        uint256 collateralTokensToSend = collateralRatio.mulDivDown(
-            bonds.mulDivDown(nonPaidAmount, totalSupply()),
-            ONE
+        uint256 collateralTokensToSend = collateralRatio.mulWadDown(
+            bonds.mulDivDown(nonPaidAmount, totalSupply())
         );
 
         return (paymentTokensToSend, collateralTokensToSend);
@@ -498,7 +494,7 @@ contract Bond is
             return 0;
         }
         uint256 amountUnpaid = totalSupply() - _upscale(paymentBalance());
-        return amountUnpaid.mulDivUp(ONE, _computeScalingFactor(paymentToken));
+        return _downscale(amountUnpaid);
     }
 
     /**
@@ -528,7 +524,7 @@ contract Bond is
         uint256 tokenDecimals = IERC20Metadata(token).decimals();
 
         uint256 decimalsDifference = 18 - tokenDecimals;
-        return ONE * 10**decimalsDifference;
+        return 1e18 * 10**decimalsDifference;
     }
 
     /**
@@ -537,10 +533,10 @@ contract Bond is
         bond tokens, scaling to the same base allows calculations between them.
     */
     function _upscale(uint256 amount) internal view returns (uint256) {
-        return amount.mulDivUp(_computeScalingFactor(paymentToken), ONE);
+        return amount.mulWadUp(_computeScalingFactor(paymentToken));
     }
 
     function _downscale(uint256 amount) internal view returns (uint256) {
-        return amount.mulDivDown(ONE, _computeScalingFactor(paymentToken));
+        return amount.divWadDown(_computeScalingFactor(paymentToken));
     }
 }
