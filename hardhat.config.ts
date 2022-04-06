@@ -12,6 +12,7 @@ import "@primitivefi/hardhat-dodoc"; // generates docs on compile
 import "hardhat-storage-layout"; // exports storage layout of contracts
 
 import "./tasks/storageLayout.ts"; // add 'storage-layout' task
+import "./tasks/rinkebyIntegration.ts"; // add 'integration' task
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     rinkeby: {
+      live: true,
       url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],

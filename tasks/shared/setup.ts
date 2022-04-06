@@ -1,32 +1,44 @@
-import { ethers } from "hardhat";
-import { Contract } from "ethers";
+import {
+  Contract,
+  utils,
+  constants,
+  ContractFactory,
+  ContractTransaction,
+  Event,
+} from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { TestERC20, BondFactory, Bond } from "../typechain";
-import { getBondContract } from "./utilities";
-import { ConvertibleBondConfig } from "./constants";
+import { TestERC20, BondFactory, Bond } from "../../typechain";
+import { ConvertibleBondConfig } from "../../test/constants";
 
-export const deployNativeAndPayment = async (owner: SignerWithAddress) => {
-  const MockErc20Contract = await ethers.getContractFactory("TestERC20");
+export const deployNativeAndPayment = async (
+  owner: SignerWithAddress,
+  MockErc20Contract: ContractFactory
+) => {
   const native = (await MockErc20Contract.connect(owner).deploy(
     "Native Token",
     "NATIVE",
-    ethers.utils.parseUnits("50000000", 20),
+    utils.parseUnits("50000000", 20),
     18
   )) as TestERC20;
-  await native.deployed();
 
   const pay = (await MockErc20Contract.connect(owner).deploy(
     "Payment Token",
     "PAY",
-    ethers.utils.parseUnits("500"),
+    utils.parseUnits("500"),
     18
   )) as TestERC20;
-  await pay.deployed();
-  return await Promise.all([native, pay]);
+
+  return await Promise.all([native.deployed(), pay.deployed()]);
 };
 
+/*
+  This function is copied from the one in utils because
+  we need to pass in the getContractAt due to hardhat limitations
+  importing their injected ethers variables during tasks execution
+*/
 export const createBond = async (
   owner: SignerWithAddress,
+  getContractAt: Function,
   nativeToken: TestERC20,
   paymentToken: TestERC20,
   factory: BondFactory
@@ -43,10 +55,12 @@ export const createBond = async (
 
   const approveTokens = await nativeToken
     .connect(owner)
-    .approve(factory.address, ethers.constants.MaxInt256);
+    .approve(factory.address, constants.MaxInt256);
   await approveTokens.wait();
 
   const bond = await getBondContract(
+    getContractAt,
+    owner,
     factory
       .connect(owner)
       .createBond(
@@ -82,11 +96,11 @@ export const initiateAuction = async (
   const minimumBiddingAmountPerOrder = 1000000000000000;
   const minFundingThreshold = 0;
   const isAtomicClosureAllowed = false;
-  const accessManagerContract = ethers.constants.AddressZero;
-  const accessManagerContractData = ethers.constants.HashZero;
+  const accessManagerContract = constants.AddressZero;
+  const accessManagerContractData = constants.HashZero;
   const approveTx = await bond
     .connect(owner)
-    .approve(auction.address, ethers.constants.MaxUint256);
+    .approve(auction.address, constants.MaxUint256);
   await approveTx.wait();
 
   const initiateAuctionTx = await auction
@@ -106,3 +120,27 @@ export const initiateAuction = async (
     );
   return initiateAuctionTx;
 };
+
+const getBondContract = async (
+  getContractAt: Function,
+  signer: SignerWithAddress,
+  tx: Promise<any>
+): Promise<Bond> => {
+  const [newBondAddress] = await getEventArgumentsFromTransaction(
+    await tx,
+    "BondCreated"
+  );
+
+  return (await getContractAt("Bond", newBondAddress, signer)) as Bond;
+};
+
+async function getEventArgumentsFromTransaction(
+  tx: ContractTransaction,
+  eventName: string
+): Promise<any> {
+  const receipt = await tx.wait();
+  const args = receipt?.events?.find((e: Event) => e.event === eventName)?.args;
+  if (args) return args;
+  console.error(`No event with name ${eventName} found in transaction`);
+  return {};
+}
