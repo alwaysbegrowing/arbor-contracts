@@ -12,6 +12,8 @@ export const ELEVEN_YEARS_FROM_NOW_IN_SECONDS = Math.round(
 );
 
 export const ONE = utils.parseUnits("1", 18);
+export const WAD = utils.parseUnits("1", 18);
+
 export const ZERO = BigNumber.from(0);
 export const FIFTY_MILLION = 50000000;
 const HALF_FIFTY_MILLION = (FIFTY_MILLION / 2).toString();

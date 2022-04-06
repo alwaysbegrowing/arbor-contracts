@@ -3,7 +3,7 @@ import { use, expect } from "chai";
 import { ethers } from "hardhat";
 import { Bond, TestERC20 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
+import { WAD } from "./constants";
 export const addDaysToNow = (days: number = 0) => {
   return BigNumber.from(
     Math.floor(new Date().getTime() / 1000) + days * 24 * 60 * 60
@@ -170,6 +170,14 @@ export const redeemAndCheckTokens = async ({
     bondHolder,
     paymentTokenToSend
   );
+};
+
+export const mulWad = (x: BigNumber, y: BigNumber) => {
+  return x.mul(y).div(WAD);
+};
+
+export const divWad = (x: BigNumber, y: BigNumber) => {
+  return x.mul(y).div(WAD);
 };
 
 export const previewRedeem = async ({
