@@ -1077,7 +1077,10 @@ describe("Bond", () => {
 
           it("should remove a token from the contract", async () => {
             await attackingToken.connect(attacker).transfer(bond.address, 1000);
-            await bond.sweep(attackingToken.address);
+            await expect(bond.sweep(attackingToken.address)).to.emit(
+              bond,
+              "TokenSweep"
+            );
             expect(await attackingToken.balanceOf(owner.address)).to.be.equal(
               1000
             );

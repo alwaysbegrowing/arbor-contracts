@@ -131,6 +131,14 @@ contract Bond is
         uint256 amount
     );
 
+    /**
+        @notice emitted when payment over the required payment amount is withdrawn
+        @param from the caller who the tokens were sent to 
+        @param token the token that was swept 
+        @param amount the amount that was swept 
+    */
+    event TokenSweep(address from, IERC20Metadata token, uint256 amount);
+
     /// @notice operation restricted because the bond has matured
     error BondPastMaturity();
 
@@ -207,6 +215,9 @@ contract Bond is
         @param bonds the number of bonds which will be burnt and converted into the collateral at the convertibleRatio
     */
     function convert(uint256 bonds) external nonReentrant beforeMaturity {
+        if (bonds == 0) {
+            revert ZeroAmount();
+        }
         uint256 convertibleTokensToSend = previewConvertBeforeMaturity(bonds);
         if (convertibleTokensToSend == 0) {
             revert ZeroAmount();
@@ -277,6 +288,9 @@ contract Bond is
         @param bonds the amount of bonds to redeem and burn
     */
     function redeem(uint256 bonds) external nonReentrant afterMaturityOrPaid {
+        if (bonds == 0) {
+            revert ZeroAmount();
+        }
         // calculate amount before burning as the preview function uses totalSupply.
         (
             uint256 paymentTokensToSend,
@@ -290,13 +304,13 @@ contract Bond is
         burn(bonds);
 
         // reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
-        if (paymentTokensToSend > 0) {
+        if (paymentTokensToSend != 0) {
             IERC20Metadata(paymentToken).safeTransfer(
                 _msgSender(),
                 paymentTokensToSend
             );
         }
-        if (collateralTokensToSend > 0) {
+        if (collateralTokensToSend != 0) {
             // reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
             IERC20Metadata(collateralToken).safeTransfer(
                 _msgSender(),
@@ -328,7 +342,9 @@ contract Bond is
         ) {
             revert SweepDisallowedForToken();
         }
-        token.safeTransfer(msg.sender, token.balanceOf(address(this)));
+        uint256 tokenBalance = token.balanceOf(address(this));
+        token.safeTransfer(_msgSender(), tokenBalance);
+        emit TokenSweep(_msgSender(), token, tokenBalance);
     }
 
     /**
@@ -487,7 +503,7 @@ contract Bond is
     /**
         @notice the amount of payment tokens required to fully pay the contract
     */
-    function amountOwed() public view returns (uint256) {
+    function amountOwed() external view returns (uint256) {
         if (totalSupply() <= paymentBalance()) {
             return 0;
         }

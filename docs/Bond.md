@@ -251,6 +251,34 @@ emitted when a bond is redeemed
       </tr>
 </table>
 
+### TokenSweep
+
+emitted when payment over the required payment amount is withdrawn
+
+
+
+
+<table>
+  <tr>
+    <td>address </td>
+    <td>from</td>
+        <td>
+    the caller who the tokens were sent to     </td>
+      </tr>
+  <tr>
+    <td>contract IERC20Metadata </td>
+    <td>token</td>
+        <td>
+    the token that was swept     </td>
+      </tr>
+  <tr>
+    <td>uint256 </td>
+    <td>amount</td>
+        <td>
+    the amount that was swept     </td>
+      </tr>
+</table>
+
 ### Transfer
 
 
