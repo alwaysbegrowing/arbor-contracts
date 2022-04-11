@@ -110,25 +110,6 @@ export const payAndWithdraw = async ({
   expect(await bond.previewWithdraw()).to.equal(collateralToReceive);
 };
 
-export const payAndWithdrawAtMaturity = async ({
-  paymentToken,
-  bond,
-  paymentTokenAmount,
-  collateralToReceive,
-  maturityDate,
-}: {
-  paymentToken: TestERC20;
-  bond: Bond;
-  paymentTokenAmount: BigNumber;
-  collateralToReceive: BigNumber;
-  maturityDate: BigNumberish;
-}) => {
-  await paymentToken.approve(bond.address, paymentTokenAmount);
-  await (await bond.pay(paymentTokenAmount)).wait();
-  await ethers.provider.send("evm_mine", [maturityDate]);
-  expect(await bond.previewWithdraw()).to.equal(collateralToReceive);
-};
-
 export const burnAndWithdraw = async ({
   bond,
   sharesToBurn,

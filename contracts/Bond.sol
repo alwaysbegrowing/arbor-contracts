@@ -375,17 +375,17 @@ contract Bond is
         There are the following scenarios:
         "total uncovered supply" is the tokens that are not covered by the amount repaid.
 
-            bond IS paid AND mature
+            bond IS paid AND mature (Paid)
                 to cover collateralRatio = 0
                 to cover convertibleRatio = 0
-            bond IS paid AND NOT mature
+            bond IS paid AND NOT mature (PaidEarly)
                 to cover collateralRatio = 0 (bonds need not be backed by collateral)
                 to cover convertibleRatio = total supply * convertibleRatio ratio
 
-            bond is NOT paid AND NOT mature:
+            bond is NOT paid AND NOT mature (Active)
                 to cover collateralRatio = total uncovered supply * collateralRatio
                 to cover convertibleRatio = total supply * convertibleRatio
-            bond is NOT paid AND mature
+            bond is NOT paid AND mature (Defaulted)
                 to cover collateralRatio = total uncovered supply * collateralRatio
                 to cover convertibleRatio = 0 (bonds cannot be converted)
             All outstanding bonds must be covered by the convertibleRatio
@@ -409,13 +409,16 @@ contract Bond is
 
         if (isFullyPaid()) {
             totalRequiredCollateral = isMature()
-                ? 0
-                : convertibleTokensRequired;
+                ? 0 // Paid
+                : convertibleTokensRequired; // PaidEarly
         } else {
-            totalRequiredCollateral = convertibleTokensRequired >
+            uint256 convertibleOrCollateral = convertibleTokensRequired >
                 collateralTokensRequired
                 ? convertibleTokensRequired
                 : collateralTokensRequired;
+            totalRequiredCollateral = isMature()
+                ? collateralTokensRequired // Defaulted
+                : convertibleOrCollateral; // Active
         }
 
         if (totalRequiredCollateral >= collateralBalance()) {

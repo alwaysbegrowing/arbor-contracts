@@ -155,8 +155,8 @@ contract BondFactory is AccessControl {
         clone = Clones.clone(tokenImplementation);
 
         isBond[clone] = true;
-        uint256 collateralRatio = collateralTokenAmount.divWadUp(bonds);
-        uint256 convertibleRatio = convertibleTokenAmount.divWadUp(bonds);
+        uint256 collateralRatio = collateralTokenAmount.divWadDown(bonds);
+        uint256 convertibleRatio = convertibleTokenAmount.divWadDown(bonds);
         _deposit(_msgSender(), clone, collateralToken, collateralTokenAmount);
 
         Bond(clone).initialize(
