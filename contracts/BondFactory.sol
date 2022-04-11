@@ -80,6 +80,9 @@ contract BondFactory is AccessControl {
     /// @notice max bonds must be a positive number
     error ZeroBondsToMint();
 
+    /// @notice payment and collateral token can not be the same
+    error TokensMustBeDifferent();
+
     /// @dev If allow list is enabled, only allow listed issuers are able to call functions
     modifier onlyIssuer() {
         if (isAllowListEnabled) {
@@ -134,6 +137,9 @@ contract BondFactory is AccessControl {
     ) external onlyIssuer returns (address clone) {
         if (bonds == 0) {
             revert ZeroBondsToMint();
+        }
+        if (paymentToken == collateralToken) {
+            revert TokensMustBeDifferent();
         }
 
         if (collateralTokenAmount < convertibleTokenAmount) {

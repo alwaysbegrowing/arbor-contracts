@@ -163,6 +163,11 @@ Emitted when a new bond is created
 
 
 
+### TokensMustBeDifferent
+* payment and collateral token can not be the same
+
+
+
 ### ZeroBondsToMint
 * max bonds must be a positive number
 

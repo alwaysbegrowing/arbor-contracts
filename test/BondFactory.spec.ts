@@ -86,6 +86,16 @@ describe("BondFactory", async () => {
       await expect(createBond(factory)).to.emit(factory, "BondCreated");
     });
 
+    it("fails if collateralToken == paymentToken", async () => {
+      await factory.grantRole(ISSUER_ROLE, owner.address);
+      await expect(
+        createBond(factory, {
+          collateralToken: paymentToken.address,
+          paymentToken: paymentToken.address,
+        })
+      ).to.be.revertedWith("TokensMustBeDifferent");
+    });
+
     it("should revert on less collateral than convertible ratio", async () => {
       await factory.grantRole(ISSUER_ROLE, owner.address);
       await expect(
