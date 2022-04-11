@@ -109,7 +109,7 @@ contract BondFactory is AccessControl {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         isAllowListEnabled = _isAllowListEnabled;
-        emit AllowListEnabled(isAllowListEnabled);
+        emit AllowListEnabled(_isAllowListEnabled);
     }
 
     /**
