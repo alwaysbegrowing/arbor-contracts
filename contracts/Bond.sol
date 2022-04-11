@@ -185,6 +185,7 @@ contract Bond is
         @param _collateralToken the ERC20 token address for the bond
         @param _collateralRatio the amount of tokens per bond needed as collateral
         @param _convertibleRatio the amount of tokens per bond a convertible bond can be converted for
+        @param maxSupply the amount of bonds to mint initially
     */
     function initialize(
         string memory bondName,
@@ -380,7 +381,7 @@ contract Bond is
                 to cover convertibleRatio = 0
             bond IS paid AND NOT mature (PaidEarly)
                 to cover collateralRatio = 0 (bonds need not be backed by collateral)
-                to cover convertibleRatio = total supply * convertibleRatio ratio
+                to cover convertibleRatio = total supply * convertibleRatio
 
             bond is NOT paid AND NOT mature (Active)
                 to cover collateralRatio = total uncovered supply * collateralRatio
@@ -505,6 +506,7 @@ contract Bond is
 
     /**
         @notice the amount of payment tokens required to fully pay the contract
+        @return the amount of payment tokens
     */
     function amountOwed() external view returns (uint256) {
         if (totalSupply() <= paymentBalance()) {

@@ -124,6 +124,7 @@ contract BondFactory is AccessControl {
         @param bonds number of bonds to mint
         @dev This uses a clone to save on deployment costs which adds a slight overhead
             everytime users interact with the bonds - but saves on gas during deployment
+        @return clone the address of the newly created bond-clone
     */
     function createBond(
         string memory name,
