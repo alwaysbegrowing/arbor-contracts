@@ -394,10 +394,8 @@ contract Bond is
      */
     function previewWithdraw() public view returns (uint256) {
         uint256 tokensCoveredByPayment = paymentBalance();
-        uint256 collateralTokensRequired;
-        if (tokensCoveredByPayment >= totalSupply()) {
-            collateralTokensRequired = 0;
-        } else {
+        uint256 collateralTokensRequired = 0;
+        if (tokensCoveredByPayment < totalSupply()) {
             collateralTokensRequired = (totalSupply() - tokensCoveredByPayment)
                 .mulWadUp(collateralRatio);
         }

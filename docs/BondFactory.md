@@ -285,6 +285,8 @@ Creates a bond
   <tr>
     <td>
       address    </td>
+        <td>
+    the address of the newly created bond-clone    </td>
       </tr>
 </table>
 

@@ -447,6 +447,8 @@ the amount of payment tokens required to fully pay the contract
   <tr>
     <td>
       uint256    </td>
+        <td>
+    the amount of payment tokens    </td>
       </tr>
 </table>
 
@@ -869,6 +871,8 @@ this function is called one time during initial bond creation and sets up the co
   <tr>
     <td>uint256 </td>
     <td>maxSupply</td>
+        <td>
+    the amount of bonds to mint initially    </td>
       </tr>
 </table>
 
