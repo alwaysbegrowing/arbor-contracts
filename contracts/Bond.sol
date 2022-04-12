@@ -120,11 +120,7 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function withdrawExcessCollateral()
-        external
-        nonReentrant
-        onlyRole(WITHDRAW_ROLE)
-    {
+    function withdrawExcessCollateral() external onlyRole(WITHDRAW_ROLE) {
         uint256 collateralToSend = previewWithdraw();
 
         // Saves an extra SLOAD
@@ -198,7 +194,6 @@ contract Bond is
     /// @inheritdoc IBond
     function sweep(IERC20Metadata sweepingToken)
         external
-        nonReentrant
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         // Check the balances before and compare to after to protect
@@ -298,11 +293,7 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function withdrawExcessPayment()
-        external
-        nonReentrant
-        onlyRole(WITHDRAW_ROLE)
-    {
+    function withdrawExcessPayment() external onlyRole(WITHDRAW_ROLE) {
         uint256 overpayment = amountOverPaid();
         if (overpayment <= 0) {
             revert NoPaymentToWithdraw();
