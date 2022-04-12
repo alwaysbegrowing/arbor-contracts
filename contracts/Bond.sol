@@ -196,19 +196,35 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function sweep(IERC20Metadata token)
+    function sweep(IERC20Metadata sweepingToken)
         external
         nonReentrant
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
+        // Check the balances before and compare to after to protect
+        // against tokens that may proxy transfers through different addresses.
+        uint256 paymentTokenBalanceBefore = IERC20Metadata(paymentToken)
+            .balanceOf(address(this));
+        uint256 collateralTokenBalanceBefore = IERC20Metadata(collateralToken)
+            .balanceOf(address(this));
+
+        uint256 sweepingTokenBalance = sweepingToken.balanceOf(address(this));
+
+        sweepingToken.safeTransfer(_msgSender(), sweepingTokenBalance);
+
+        uint256 paymentTokenBalanceAfter = IERC20Metadata(paymentToken)
+            .balanceOf(address(this));
+        uint256 collateralTokenBalanceAfter = IERC20Metadata(collateralToken)
+            .balanceOf(address(this));
+
         if (
-            address(token) == paymentToken || address(token) == collateralToken
+            paymentTokenBalanceBefore != paymentTokenBalanceAfter ||
+            collateralTokenBalanceBefore != collateralTokenBalanceAfter
         ) {
             revert SweepDisallowedForToken();
         }
-        uint256 tokenBalance = token.balanceOf(address(this));
-        token.safeTransfer(_msgSender(), tokenBalance);
-        emit TokenSweep(_msgSender(), token, tokenBalance);
+
+        emit TokenSweep(_msgSender(), sweepingToken, sweepingTokenBalance);
     }
 
     /// @inheritdoc IBond
@@ -322,7 +338,7 @@ contract Bond is
         return (amountUnpaid);
     }
 
-    /// @inheritdoc  IBond
+    /// @inheritdoc IBond
     function amountOverPaid() public view returns (uint256 overpayment) {
         if (totalSupply() >= paymentBalance()) {
             return 0;

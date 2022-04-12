@@ -932,6 +932,8 @@ describe("Bond", () => {
           beforeEach(async () => {
             bond = bondWithTokens.nonConvertible.bond;
             config = bondWithTokens.nonConvertible.config;
+            paymentToken.transfer(bond.address, utils.parseEther("1"));
+            collateralToken.transfer(bond.address, utils.parseEther("1"));
           });
 
           it("should remove a token from the contract", async () => {
@@ -945,7 +947,7 @@ describe("Bond", () => {
             );
           });
 
-          it("should disallow removal of tokens: collateral, payment, or itself", async () => {
+          it("should disallow removal of collateralToken and paymentToken", async () => {
             await expect(bond.sweep(paymentToken.address)).to.be.revertedWith(
               "SweepDisallowedForToken"
             );
