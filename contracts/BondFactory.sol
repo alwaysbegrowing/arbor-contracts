@@ -15,15 +15,15 @@ import "./Bond.sol";
 /** 
     @title Bond Factory
     @author Porter Finance
-    @notice This factory contract issues new bond contracts
-    @dev This uses a cloneFactory to save on gas costs during deployment
-        see OpenZeppelin's "Clones" proxy
+    @notice This factory contract issues new bond contracts.
+    @dev This uses a cloneFactory to save on gas costs during deployment.
+        See OpenZeppelin's "Clones" proxy.
 */
 contract BondFactory is IBondFactory, AccessControl {
     using SafeERC20 for IERC20Metadata;
     using FixedPointMathLib for uint256;
 
-    /// @notice the role required to issue bonds
+    /// @notice The role required to issue bonds.
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
     /// @inheritdoc IBondFactory
@@ -35,7 +35,10 @@ contract BondFactory is IBondFactory, AccessControl {
     /// @inheritdoc IBondFactory
     bool public isAllowListEnabled = true;
 
-    /// @dev If allow list is enabled, only allow listed issuers are able to call functions
+    /**
+        @dev If allow list is enabled, only allow-listed issuers are
+            able to call functions.
+    */
     modifier onlyIssuer() {
         if (isAllowListEnabled) {
             _checkRole(ISSUER_ROLE, _msgSender());
@@ -45,9 +48,9 @@ contract BondFactory is IBondFactory, AccessControl {
 
     constructor() {
         tokenImplementation = address(new Bond());
-        // this grants the user deploying this contract the DEFAULT_ADMIN_ROLE
+        // This grants the user deploying this contract the DEFAULT_ADMIN_ROLE
         // which gives them the ability to call grantRole to grant access to
-        // the ISSUER_ROLE
+        // the ISSUER_ROLE.
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
@@ -141,8 +144,8 @@ contract BondFactory is IBondFactory, AccessControl {
         uint256 amountDeposited = IERC20Metadata(collateralToken).balanceOf(
             clone
         );
-        // greater than instead of != for the case where the collateral is sent to the
-        // clone address before creation
+        // Greater than instead of != for the case where the collateralToken
+        // is sent to the clone address before creation.
         if (collateralToDeposit > amountDeposited) {
             revert InvalidDeposit();
         }

@@ -15,7 +15,7 @@ A new `Bond` contract is created for each [borrower](https://docs.porter.finance
 Borrowers are on chain entities that want to borrow stablecoins using their native token as collateral with a fixed interest rate and no liquidation risk.
 
 - Creation and minting new `BondTokens` via `initialize()` and `mint()`
-- Depositing/withdrawing collateral via `mint()` and `withdrawCollateral()`
+- Depositing/withdrawing collateral via `mint()` and `withdrawExcessCollateral()`
 - Handling convertibility via a configured ratio and the ability for lenders to convert their `BondTokens` using `convert()`
 - Handling payment for the issuer via `pay()`
 - Allowing bond redemption for the bond holders via `redeem()`

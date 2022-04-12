@@ -111,8 +111,10 @@ contract TestBond {
         checkGeneralInvariants();
     }
 
-    function withdrawCollateral() public {
-        try bond.withdrawCollateral() {} catch Error(string memory reason) {
+    function withdrawExcessCollateral() public {
+        try bond.withdrawExcessCollateral() {} catch Error(
+            string memory reason
+        ) {
             emit AssertionFailed(reason);
         }
         checkGeneralInvariants();

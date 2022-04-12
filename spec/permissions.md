@@ -63,7 +63,7 @@ The bond admin is able to grant or revoke the `WITHDRAW_ROLE` as well as the `MI
 The bond admin is automatically granted this role upon the creation of the bond. Additional withdrawers can be added by the bond admin.
 
 Methods only callable by this role:
-`Bond.withdrawCollateral()`
+`Bond.withdrawExcessCollateral()`
 Only addresses with this role are able to withdraw bond collateral. This role will be used in the future to allow refinancing of loans.
 
 ### MINT_ROLE

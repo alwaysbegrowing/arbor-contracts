@@ -8,7 +8,7 @@ A new `Bond` contract is created for each [borrower](https://docs.porter.finance
 
 - Depositing collateral and minting new `Bonds` via `mint()`
 - Handling repayment for the issuer via `repay()`
-- withdrawing collateral `withdrawCollateral()`
+- withdrawing collateral `withdrawExcessCollateral()`
 
 ### Lenders
 

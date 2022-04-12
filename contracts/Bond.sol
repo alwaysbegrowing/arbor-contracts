@@ -16,10 +16,12 @@ import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
     @title Bond
     @author Porter Finance
     @notice A custom ERC20 token that can be used to issue bonds.
-    @notice The contract handles issuance, payment, conversion, and redemption of bonds.
-    @dev External calls to tokens used for collateral and payment are used throughout to transfer and check balances
-        there is risk that these tokens are malicious and each one should be carefully inspected before being trusted. 
-    @dev does not inherit from ERC20Upgradeable or Initializable since ERC20BurnableUpgradeable inherits from them
+    @notice The contract handles issuance, payment, conversion, and redemption.
+    @dev External calls to tokens used for collateral and payment are used
+        throughout to transfer and check balances. There is risk that these
+        are non-standard and should be carefully inspected before being trusted. 
+    @dev Does not inherit from ERC20Upgradeable or Initializable since
+        ERC20BurnableUpgradeable inherits from them.
 */
 contract Bond is
     IBond,
@@ -47,13 +49,14 @@ contract Bond is
     uint256 public convertibleRatio;
 
     /**
-        @notice this role permits the withdraw of collateral from the contract
-        @dev this is assigned to owner in `initialize`
-            the owner can assign other addresses with this role to enable their withdraw
+        @notice This role permits the withdraw of collateral from the contract.
+        @dev This role is assigned to the owner upon bond creation who can also
+            assign this role to other addresses to enable their withdraw.
+            
     */
     bytes32 public constant WITHDRAW_ROLE = keccak256("WITHDRAW_ROLE");
 
-    /// @dev used to confirm the bond has not yet matured
+    /// @dev Used to confirm the bond has not yet matured.
     modifier beforeMaturity() {
         if (isMature()) {
             revert BondPastMaturity();
@@ -61,7 +64,7 @@ contract Bond is
         _;
     }
 
-    /// @dev used to confirm that the maturity date has passed or the bond has been repaid
+    /// @dev Used to confirm that the bon is either mature or has been paid.
     modifier afterMaturityOrPaid() {
         if (!isMature() && !isFullyPaid()) {
             revert BondNotYetMaturedOrPaid();
@@ -105,10 +108,9 @@ contract Bond is
 
         burn(bonds);
 
-        // saves an extra SLOAD
+        // Saves an extra SLOAD
         address collateral = collateralToken;
 
-        //  Reentrancy possibility: the bonds are already burnt - if there weren't enough bonds to burn, an error is thrown
         IERC20Metadata(collateral).safeTransfer(
             _msgSender(),
             convertibleTokensToSend
@@ -118,14 +120,14 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function withdrawCollateral()
+    function withdrawExcessCollateral()
         external
         nonReentrant
         onlyRole(WITHDRAW_ROLE)
     {
         uint256 collateralToSend = previewWithdraw();
 
-        // saves an extra SLOAD
+        // Saves an extra SLOAD
         address collateral = collateralToken;
 
         IERC20Metadata(collateral).safeTransfer(_msgSender(), collateralToSend);
@@ -167,11 +169,10 @@ contract Bond is
 
         burn(bonds);
 
-        // saves an extra SLOAD
+        // Saves an extra SLOAD
         address payment = paymentToken;
         address collateral = collateralToken;
 
-        // reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
         if (paymentTokensToSend != 0) {
             IERC20Metadata(payment).safeTransfer(
                 _msgSender(),
@@ -179,7 +180,6 @@ contract Bond is
             );
         }
         if (collateralTokensToSend != 0) {
-            // reentrancy possibility: the bonds are burnt here already - if there weren't enough bonds to burn, an error is thrown
             IERC20Metadata(collateral).safeTransfer(
                 _msgSender(),
                 collateralTokensToSend
@@ -291,7 +291,7 @@ contract Bond is
         if (overpayment <= 0) {
             revert NoPaymentToWithdraw();
         }
-        // saves an extra SLOAD
+        // Saves an extra SLOAD
         address payment = paymentToken;
 
         IERC20Metadata(payment).safeTransfer(_msgSender(), overpayment);
