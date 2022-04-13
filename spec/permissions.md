@@ -6,6 +6,7 @@ There are a few different entities with different permissions in the porter prot
 
 - Control allow-list settings
 - Grant and revoke issuer role to accounts
+- Add and remove borrowTokens and collateralTokens from allow-list
 
 ## Borrowers can
 
@@ -32,9 +33,12 @@ Owner of the bondfactory contract.
 Method only callable by this role
 `BondFactory.grantRole('ISSUER_ROLE')`
 `BondFactory.revokeRole('ISSUER_ROLE)`
-`BondFactory.isIssuerAllowListEnabled(bool)`
+`BondFactory.setIsIssuerAllowListEnabled(bool)`
+`BondFactory.grantRole('ALLOWED_TOKEN')`
+`BondFactory.revokeRole('ALLOWED_TOKEN)`
+`BondFactory.setIsTokenrAllowListEnabled(bool)`
 
-The Porter Admin can grant or revoke the `ISSUER_ROLE`, in addition to enabled or disabling the allow-list for creating new bonds. This toggling of the allow-list like adding or removing new issuers is not time-locked. However, this role has the ability to be revoked. Disabling the allow list then revoking this role would leave `BondFactory` in a fully permissionless state.
+The Porter Admin can grant or revoke the `ISSUER_ROLE` & `ALLOWED_TOKEN` role, in addition to enabling or disabling the allow-list for creating new bonds or any tokens. This toggling the allow lists is not time-locked. However, the admin role has the ability to be revoked. Disabling the allow lists then revoking this role would leave `BondFactory` in a fully unreversible permissionless state.
 
 ### Issuer - ISSUER_ROLE
 

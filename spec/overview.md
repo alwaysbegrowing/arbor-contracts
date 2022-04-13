@@ -14,8 +14,9 @@ A new `Bond` contract is created for each [borrower](https://docs.porter.finance
 
 Borrowers are on chain entities that want to borrow stablecoins using their native token as collateral with a fixed interest rate and no liquidation risk.
 
-- Creation and minting new `BondTokens` via `initialize()` and `mint()`
-- Depositing/withdrawing collateral via `mint()` and `withdrawExcessCollateral()`
+- Creation, depositing collateral, and minting new `BondTokens` via `initialize()`
+- withdrawing collateralToken via`withdrawExcessCollateral()`
+- withdrawing paymentToken via`withdrawExcessPayment()`
 - Handling convertibility via a configured ratio and the ability for lenders to convert their `BondTokens` using `convert()`
 - Handling payment for the issuer via `pay()`
 - Allowing bond redemption for the bond holders via `redeem()`
@@ -27,33 +28,36 @@ To borrow money, a borrower has to issue a bond and then sell it.
 Borrowers decide on multiple paramaters and call the `Factory.createBond` method passing in their address as the owner.
 
 ```solidity
-    /**
-        @notice Creates a bond
-        @param name Name of the bond
-        @param symbol Ticker symbol for the bond
-        @param owner Owner of the bond
-        @param maturityDate Timestamp of when the bond matures
-        @param collateralToken Address of the collateral to use for the bond
-        @param collateralRatio Ratio of bond: collateral token
-        @param repaymentToken Address of the token being paid
-        @param convertibleRatio Ratio of bond:token that the bond can be converted into
-        @param maxSupply Max amount of tokens able to mint
-        @dev This uses a clone to save on deployment costs https://github.com/porter-finance/v1-core/issues/15 which adds a slight overhead everytime users interact with the bonds - but saves 10x the gas during deployment
+/**
+        @notice Creates a new Bond. The calculated ratios are rounded down.
+        @param name Passed into the ERC20 token to define the name.
+        @param symbol Passed into the ERC20 token to define the symbol.
+        @param maturityDate The timestamp at which the Bond will mature.
+        @param paymentToken The ERC20 token address the Bond is redeemable for.
+        @param collateralToken The ERC20 token address the Bond is backed by.
+        @param collateralTokenAmount The amount of collateral tokens per bond.
+        @param convertibleTokenAmount The amount of convertible tokens per bond.
+        @param bonds The amount of Bonds given to the owner during the one-time
+            mint during the `Bond`'s `initialize`.
+        @dev This uses a clone to save on deployment costs which adds a slight
+            overhead when users interact with the bonds, but also saves on gas
+            during every deployment.
+        @return clone The address of the newly created Bond.
     */
-    function createBond(
-        string memory name,
-        string memory symbol,
-        address owner,
-        uint256 maturityDate,
-        address repaymentToken,
-        address collateralToken,
-        uint256 collateralRatio,
-        uint256 convertibleRatio,
-        uint256 maxSupply
-    )
+function createBond(
+  string memory name,
+  string memory symbol,
+  uint256 maturityDate,
+  address paymentToken,
+  address collateralToken,
+  uint256 collateralTokenAmount,
+  uint256 convertibleTokenAmount,
+  uint256 bonds
+) external returns (address clone);
+
 ```
 
-This method creates a new bond and grants the borrower the `MINT_ROLE` and the `ISSUER_ROLE` on the newly deployed bond.
+This method creates a new bond and transfers the bond ownership to the caller of the `createBond` method.
 
 After a bond is issued, there are a few things the borrower can do.
 
@@ -61,11 +65,7 @@ After a bond is issued, there are a few things the borrower can do.
 
 This gives the ability for a borrower to pay their debt. Paying allows the borrower to withdraw any collateral that is not used to back convertible tokens. After the maturity date is met, all collateral can be withdrawn and the bond will be considered to be `PAID`. At this time, lenders lose the ability to convert their bond tokens into the collateral token. Lenders gain the ability to redeem their bond tokens for the borrowing token.
 
-### `Bond.mint()`
-
-To get `Bonds` to sell, the borrower needs the call the `Bond.mint()` method to deposit collateral at their configured `collateralRatio` in exchange for `Bonds`
-
-### `Bond.repay()`
+### `Bond.pay()`
 
 The borrower can call this method to pay `repaymentToken` and unlock their collateral. This will typically be done a week before the maturity date of the bond.
 
@@ -73,11 +73,9 @@ The borrower can call this method to pay `repaymentToken` and unlock their colla
 
 After repaying, the borrower can call this method to withdraw any collateral that has been unlocked. The borrower can also call `Bond.burn()` to burn any bonds they own and unlock collateral to withdraw at (collateralRatio \* burnedBonds)
 
-To get `Bonds` to sell, the borrower needs the call the `Bond.mint()` method to deposit collateral at their configured `collateralRatio` in exchange for `Bonds`
-
 ### Sell Bonds
 
-After calling `Bond.mint()` borrowers can sell thier bonds using [Gnosis Auction](https://github.com/gnosis/ido-contracts)
+Borrowers can sell thier bonds using [Gnosis Auction](https://github.com/gnosis/ido-contracts)
 
 ## Lenders
 

@@ -9,7 +9,7 @@
 ## Not fully paid and not matured
 
 - When maturity date passes move to "Not fully paid and matured"
-- Owner can fully pay and move to "Fully paid and not matured"
+- Anyone can fully pay and move to "Fully paid and not matured"
 
 ## Fully paid and not matured
 
@@ -17,7 +17,7 @@
 
 ## Not fully paid and matured
 
-- This state is terminal (no more transitions are possible)
+- Anyone can fully pay and move to "Not fully paid and matured"
 
 ## Fully paid and matured
 
