@@ -77,7 +77,7 @@ Emitted when a new bond is created.
 
 ### IssuerAllowListEnabled
 
-Emitted when the issuerallow list is toggled on or off.
+Emitted when the restriction of bond creation to allow-listed accounts is toggled on or off.
 
 
 
@@ -93,7 +93,7 @@ Emitted when the issuerallow list is toggled on or off.
 
 ### TokenAllowListEnabled
 
-Emitted when the token allow list is toggled on or off.
+Emitted when the restriction of collateralToken and paymentToken to allow-listed tokens is toggled on or off.
 
 
 
@@ -263,6 +263,8 @@ If enabled, issuance is restricted to those with ISSUER_ROLE.
   <tr>
     <td>
       bool    </td>
+        <td>
+    Whether or not the `ISSUER_ROLE` will be checked when creating new bonds.    </td>
       </tr>
 </table>
 
@@ -282,6 +284,8 @@ If enabled, usable tokens are restricted to those with the ALLOWED_TOKEN role.
   <tr>
     <td>
       bool    </td>
+        <td>
+    Whether or not the collateralToken and paymentToken are checked for the `ALLOWED_TOKEN` role when creating new bonds.    </td>
       </tr>
 </table>
 
@@ -291,7 +295,7 @@ If enabled, usable tokens are restricted to those with the ALLOWED_TOKEN role.
 function setIsIssuerAllowListEnabled(bool _isIssuerAllowListEnabled) external nonpayable
 ```
 
-Turns the issuer allow list on or off.
+Sets the state of bond restriction to allow-listed accounts.
 
 #### Parameters
 
@@ -311,7 +315,7 @@ Turns the issuer allow list on or off.
 function setIsTokenAllowListEnabled(bool _isTokenAllowListEnabled) external nonpayable
 ```
 
-Turns the token allow list on or off.
+Sets the state of token restriction to the list of allowed tokens.
 
 #### Parameters
 

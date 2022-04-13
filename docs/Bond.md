@@ -929,7 +929,7 @@ The amount of collateral that the issuer would be able to  withdraw from the con
     <td>uint256 </td>
     <td>payment</td>
         <td>
-    previews amount withdrawable after a payment    </td>
+    The amount of paymentToken to add when previewing a withdraw.    </td>
       </tr>
 </table>
 
@@ -994,7 +994,7 @@ Sends tokens to the owner that are in this contract.
     <td>address </td>
     <td>receiver</td>
         <td>
-    The address that is transfered the sweep token    </td>
+    The address that is transferred the swept token.    </td>
       </tr>
 </table>
 
@@ -1136,7 +1136,7 @@ The Owner may withdraw excess collateral from bond contract. The number of colla
     <td>address </td>
     <td>receiver</td>
         <td>
-    The address that is transfered the excess collateral    </td>
+    The address that is transferred the excess collateral.    </td>
       </tr>
 </table>
 
@@ -1156,7 +1156,7 @@ The Owner can withdraw any overpaid payment token in the contract.
     <td>address </td>
     <td>receiver</td>
         <td>
-    The address that is transfered the excess payment    </td>
+    The address that is transferred the excess payment.    </td>
       </tr>
 </table>
 
