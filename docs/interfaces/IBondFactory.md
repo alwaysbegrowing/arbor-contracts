@@ -137,7 +137,7 @@ Emitted when a new bond is created.
 function createBond(string name, string symbol, uint256 maturityDate, address paymentToken, address collateralToken, uint256 collateralTokenAmount, uint256 convertibleTokenAmount, uint256 bonds) external nonpayable returns (address clone)
 ```
 
-Creates a new Bond.
+Creates a new Bond. The calculated ratios are rounded down.
 
 #### Parameters
 

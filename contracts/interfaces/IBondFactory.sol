@@ -57,7 +57,7 @@ interface IBondFactory {
     error TokensMustBeDifferent();
 
     /**
-        @notice Creates a new Bond.
+        @notice Creates a new Bond. The calculated ratios are rounded down.
         @param name Passed into the ERC20 token to define the name.
         @param symbol Passed into the ERC20 token to define the symbol.
         @param maturityDate The timestamp at which the Bond will mature.

@@ -275,7 +275,7 @@ contract Bond is
     {
         uint256 paidAmount = isFullyPaid() ? totalSupply() : paymentBalance();
         uint256 paymentTokensToSend = bonds.mulDivDown(
-            (paidAmount),
+            paidAmount,
             totalSupply()
         );
 

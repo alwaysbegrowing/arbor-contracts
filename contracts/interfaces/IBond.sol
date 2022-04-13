@@ -217,8 +217,8 @@ interface IBond {
 
     /**
         @notice Before maturity, if the given bonds are converted, this would be
-            the number of collateralTokens received.
-        @dev This function rounds down the number of returned collateral.
+            the number of collateralTokens received. This function rounds down
+            the number of returned collateral.
         @param bonds The number of Bonds burnt and converted into collateral.
         @return The number of collateralTokens the Bonds will be converted into.
     */
@@ -229,7 +229,8 @@ interface IBond {
 
     /**
         @notice At maturity, if the given bonds are redeemed, this would be the
-            amount of collateralTokens and paymentTokens received.
+            amount of collateralTokens and paymentTokens received. The number
+            of paymentTokens to receive is rounded down.
         @param bonds The number of Bonds to burn and redeem for tokens.
         @return The number of paymentTokens to receive.
         @return The number of collateralTokens to receive.
@@ -241,7 +242,9 @@ interface IBond {
 
     /** 
         @notice The amount of collateral that the issuer would be able to 
-            withdraw from the contract.
+            withdraw from the contract. This function rounds up the number 
+            of collateralTokens required in the contract and therefore may round
+            down the amount received.
         @dev This function calculates the amount of collateralTokens that are
             able to be withdrawn by the issuer. The amount of tokens can
             increase when Bonds are burnt and converted as well when payment is

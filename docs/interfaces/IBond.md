@@ -574,7 +574,7 @@ This is the token the borrower deposits into the contract and what the Bond hold
 function previewConvertBeforeMaturity(uint256 bonds) external view returns (uint256)
 ```
 
-Before maturity, if the given bonds are converted, this would be the number of collateralTokens received.
+Before maturity, if the given bonds are converted, this would be the number of collateralTokens received. This function rounds down the number of returned collateral.
 
 #### Parameters
 
@@ -605,7 +605,7 @@ Before maturity, if the given bonds are converted, this would be the number of c
 function previewRedeemAtMaturity(uint256 bonds) external view returns (uint256, uint256)
 ```
 
-At maturity, if the given bonds are redeemed, this would be the amount of collateralTokens and paymentTokens received.
+At maturity, if the given bonds are redeemed, this would be the amount of collateralTokens and paymentTokens received. The number of paymentTokens to receive is rounded down.
 
 #### Parameters
 
@@ -642,7 +642,7 @@ At maturity, if the given bonds are redeemed, this would be the amount of collat
 function previewWithdraw() external view returns (uint256)
 ```
 
-The amount of collateral that the issuer would be able to  withdraw from the contract.
+The amount of collateral that the issuer would be able to  withdraw from the contract. This function rounds up the number  of collateralTokens required in the contract and therefore may round down the amount received.
 
 
 #### Returns
