@@ -112,15 +112,18 @@ interface IBond {
 
     /**
         @notice The amount of paymentTokens required to fully pay the contract.
-        @return The amount of paymentTokens.
+        @return amountUnpaid The amount of paymentTokens.
     */
-    function amountOwed() external view returns (uint256);
+    function amountOwed() external view returns (uint256 amountUnpaid);
 
     /**
         @notice The external balance of the ERC20 collateral token.
-        @return The amount of collateralTokens in the contract.
+        @return collateralTokens The amount of collateralTokens in the contract.
     */
-    function collateralBalance() external view returns (uint256);
+    function collateralBalance()
+        external
+        view
+        returns (uint256 collateralTokens);
 
     /**
         @notice The ratio of collateralTokens per Bond.
@@ -189,15 +192,15 @@ interface IBond {
 
     /**
         @notice Checks if the balance of payment token covers the Bond supply.
-        @return Whether or not the Bond is fully paid.
+        @return isPaid Whether or not the Bond is fully paid.
     */
-    function isFullyPaid() external view returns (bool);
+    function isFullyPaid() external view returns (bool isPaid);
 
     /**
         @notice Checks if the maturity date has passed.
-        @return Whether or not the Bond has reached the maturity date.
+        @return isBondMature Whether or not the Bond has reached the maturity date.
     */
-    function isMature() external view returns (bool);
+    function isMature() external view returns (bool isBondMature);
 
     /**
         @notice A date set at Bond creation when the Bond will mature.
@@ -214,9 +217,9 @@ interface IBond {
 
     /**
         @notice Gets the external balance of the ERC20 payment token.
-        @return The number of paymentTokens in the contract.
+        @return paymentTokens The number of paymentTokens in the contract.
     */
-    function paymentBalance() external view returns (uint256);
+    function paymentBalance() external view returns (uint256 paymentTokens);
 
     /**
         @notice This is the token the borrower deposits into the contract and
@@ -230,25 +233,25 @@ interface IBond {
             the number of collateralTokens received. This function rounds down
             the number of returned collateral.
         @param bonds The number of Bonds burnt and converted into collateral.
-        @return The number of collateralTokens the Bonds will be converted into.
+        @return collateralTokens The number of collateralTokens the Bonds will be converted into.
     */
     function previewConvertBeforeMaturity(uint256 bonds)
         external
         view
-        returns (uint256);
+        returns (uint256 collateralTokens);
 
     /**
         @notice At maturity, if the given bonds are redeemed, this would be the
             amount of collateralTokens and paymentTokens received. The number
             of paymentTokens to receive is rounded down.
         @param bonds The number of Bonds to burn and redeem for tokens.
-        @return The number of paymentTokens to receive.
-        @return The number of collateralTokens to receive.
+        @return paymentTokensToSend The number of paymentTokens to receive.
+        @return collateralTokensToSend The number of collateralTokens to receive.
     */
     function previewRedeemAtMaturity(uint256 bonds)
         external
         view
-        returns (uint256, uint256);
+        returns (uint256 paymentTokensToSend, uint256 collateralTokensToSend);
 
     /** 
         @notice The amount of collateral that the issuer would be able to 
@@ -288,9 +291,12 @@ interface IBond {
                 to cover collateralRatio: totalUncoveredSupply * collateralRatio
                 to cover convertibleRatio: 0
         @param payment The amount of paymentToken to add when previewing a withdraw.
-        @return The number of collateralTokens received.
+        @return collateralTokens The number of collateralTokens received.
      */
-    function previewWithdraw(uint256 payment) external view returns (uint256);
+    function previewWithdraw(uint256 payment)
+        external
+        view
+        returns (uint256 collateralTokens);
 
     /**
         @notice The Bond holder can burn Bonds in return for their portion of

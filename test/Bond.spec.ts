@@ -819,6 +819,17 @@ describe.only("Bond", () => {
               "BondNotYetMaturedOrPaid"
             );
           });
+
+          it("returns 0 if all bonds are burned", async () => {
+            const bonds = await bond.balanceOf(owner.address);
+            await bond.burn(bonds);
+            await previewRedeem({
+              bond,
+              sharesToRedeem: ZERO,
+              paymentTokenToSend: ZERO,
+              collateralTokenToSend: ZERO,
+            });
+          });
         });
       });
       describe("convert", async () => {

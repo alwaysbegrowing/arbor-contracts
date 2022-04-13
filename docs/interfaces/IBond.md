@@ -273,7 +273,7 @@ The amount that was overpaid and can be withdrawn.
 ### amountOwed
 
 ```solidity
-function amountOwed() external view returns (uint256)
+function amountOwed() external view returns (uint256 amountUnpaid)
 ```
 
 The amount of paymentTokens required to fully pay the contract.
@@ -294,7 +294,7 @@ The amount of paymentTokens required to fully pay the contract.
 ### collateralBalance
 
 ```solidity
-function collateralBalance() external view returns (uint256)
+function collateralBalance() external view returns (uint256 collateralTokens)
 ```
 
 The external balance of the ERC20 collateral token.
@@ -464,7 +464,7 @@ This one-time setup initiated by the BondFactory initializes the Bond with the g
 ### isFullyPaid
 
 ```solidity
-function isFullyPaid() external view returns (bool)
+function isFullyPaid() external view returns (bool isPaid)
 ```
 
 Checks if the balance of payment token covers the Bond supply.
@@ -485,7 +485,7 @@ Checks if the balance of payment token covers the Bond supply.
 ### isMature
 
 ```solidity
-function isMature() external view returns (bool)
+function isMature() external view returns (bool isBondMature)
 ```
 
 Checks if the maturity date has passed.
@@ -547,7 +547,7 @@ Allows the issuer to pay the bond by depositing payment token.
 ### paymentBalance
 
 ```solidity
-function paymentBalance() external view returns (uint256)
+function paymentBalance() external view returns (uint256 paymentTokens)
 ```
 
 Gets the external balance of the ERC20 payment token.
@@ -589,7 +589,7 @@ This is the token the borrower deposits into the contract and what the Bond hold
 ### previewConvertBeforeMaturity
 
 ```solidity
-function previewConvertBeforeMaturity(uint256 bonds) external view returns (uint256)
+function previewConvertBeforeMaturity(uint256 bonds) external view returns (uint256 collateralTokens)
 ```
 
 Before maturity, if the given bonds are converted, this would be the number of collateralTokens received. This function rounds down the number of returned collateral.
@@ -620,7 +620,7 @@ Before maturity, if the given bonds are converted, this would be the number of c
 ### previewRedeemAtMaturity
 
 ```solidity
-function previewRedeemAtMaturity(uint256 bonds) external view returns (uint256, uint256)
+function previewRedeemAtMaturity(uint256 bonds) external view returns (uint256 paymentTokensToSend, uint256 collateralTokensToSend)
 ```
 
 At maturity, if the given bonds are redeemed, this would be the amount of collateralTokens and paymentTokens received. The number of paymentTokens to receive is rounded down.
@@ -657,7 +657,7 @@ At maturity, if the given bonds are redeemed, this would be the amount of collat
 ### previewWithdraw
 
 ```solidity
-function previewWithdraw(uint256 payment) external view returns (uint256)
+function previewWithdraw(uint256 payment) external view returns (uint256 collateralTokens)
 ```
 
 The amount of collateral that the issuer would be able to  withdraw from the contract. This function rounds up the number  of collateralTokens required in the contract and therefore may round down the amount received.
