@@ -5,6 +5,7 @@ There are a few different entities with different permissions in the porter prot
 ## Porter admins can
 
 - Control allow-list settings
+- Grant and revoke issuer role to accounts
 
 ## Borrowers can
 
@@ -33,8 +34,7 @@ Method only callable by this role
 `BondFactory.revokeRole('ISSUER_ROLE)`
 `BondFactory.isAllowListEnabled(bool)`
 
-The Porter Admin can grant or revoke the `ISSUER_ROLE`, in addition to enabled or disabling the allow-list for creating new bonds.
-This role has the ability to be revoked. Disabling the allow list then revoking this role would leave `BondFactory` in a fully permissionless state.
+The Porter Admin can grant or revoke the `ISSUER_ROLE`, in addition to enabled or disabling the allow-list for creating new bonds. This toggling of the allow-list like adding or removing new issuers is not time-locked. However, this role has the ability to be revoked. Disabling the allow list then revoking this role would leave `BondFactory` in a fully permissionless state.
 
 ### Issuer - ISSUER_ROLE
 

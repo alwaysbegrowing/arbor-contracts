@@ -46,11 +46,14 @@ contract BondFactory is IBondFactory, AccessControl {
         _;
     }
 
+    /*
+        When deployed, the deployer will be granted the DEFAULT_ADMIN_ROLE. This
+        gives the ability the ability to call `grantRole` to grant access to
+        the ISSUER_ROLE as well as the ability to toggle if the allow list
+        is enabled or not at any time.
+    */
     constructor() {
         tokenImplementation = address(new Bond());
-        // This grants the user deploying this contract the DEFAULT_ADMIN_ROLE
-        // which gives them the ability to call grantRole to grant access to
-        // the ISSUER_ROLE.
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
