@@ -32,7 +32,7 @@ Owner of the bondfactory contract.
 Method only callable by this role
 `BondFactory.grantRole('ISSUER_ROLE')`
 `BondFactory.revokeRole('ISSUER_ROLE)`
-`BondFactory.isAllowListEnabled(bool)`
+`BondFactory.isIssuerAllowListEnabled(bool)`
 
 The Porter Admin can grant or revoke the `ISSUER_ROLE`, in addition to enabled or disabling the allow-list for creating new bonds. This toggling of the allow-list like adding or removing new issuers is not time-locked. However, this role has the ability to be revoked. Disabling the allow list then revoking this role would leave `BondFactory` in a fully permissionless state.
 

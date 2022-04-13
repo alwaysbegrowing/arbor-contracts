@@ -26,6 +26,9 @@ contract BondFactory is IBondFactory, AccessControl {
     /// @notice The role required to issue bonds.
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
+    /// @notice The role given to allowed tokens
+    bytes32 public constant ALLOWED_TOKEN = keccak256("ALLOWED_TOKEN");
+
     /// @inheritdoc IBondFactory
     address public immutable tokenImplementation;
 
@@ -33,14 +36,17 @@ contract BondFactory is IBondFactory, AccessControl {
     mapping(address => bool) public isBond;
 
     /// @inheritdoc IBondFactory
-    bool public isAllowListEnabled = true;
+    bool public isIssuerAllowListEnabled = true;
+
+    /// @inheritdoc IBondFactory
+    bool public isTokenAllowListEnabled = true;
 
     /**
         @dev If allow list is enabled, only allow-listed issuers are
             able to call functions.
     */
     modifier onlyIssuer() {
-        if (isAllowListEnabled) {
+        if (isIssuerAllowListEnabled) {
             _checkRole(ISSUER_ROLE, _msgSender());
         }
         _;
@@ -58,12 +64,20 @@ contract BondFactory is IBondFactory, AccessControl {
     }
 
     /// @inheritdoc IBondFactory
-    function setIsAllowListEnabled(bool _isAllowListEnabled)
+    function setIsIssuerAllowListEnabled(bool _isIssuerAllowListEnabled)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        isAllowListEnabled = _isAllowListEnabled;
-        emit AllowListEnabled(_isAllowListEnabled);
+        isIssuerAllowListEnabled = _isIssuerAllowListEnabled;
+        emit IssuerAllowListEnabled(_isIssuerAllowListEnabled);
+    }
+
+    function setIsTokenAllowListEnabled(bool _isTokenAllowListEnabled)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        isTokenAllowListEnabled = _isTokenAllowListEnabled;
+        emit TokenAllowListEnabled(_isTokenAllowListEnabled);
     }
 
     /// @inheritdoc IBondFactory
@@ -98,6 +112,10 @@ contract BondFactory is IBondFactory, AccessControl {
             IERC20Metadata(collateralToken).decimals() > 18
         ) {
             revert DecimalsOver18();
+        }
+        if (isTokenAllowListEnabled) {
+            _checkRole(ALLOWED_TOKEN, paymentToken);
+            _checkRole(ALLOWED_TOKEN, collateralToken);
         }
 
         clone = Clones.clone(tokenImplementation);

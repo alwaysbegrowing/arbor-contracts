@@ -3,10 +3,18 @@ pragma solidity 0.8.9;
 
 interface IBondFactory {
     /**
-        @notice Emitted when the allow list is toggled on or off.
-        @param isAllowListEnabled The new state of the allow list.
+        @notice Emitted when the restriction of bond creation to allow-listed
+            accounts is toggled on or off.
+        @param isIssuerAllowListEnabled The new state of the allow list.
     */
-    event AllowListEnabled(bool isAllowListEnabled);
+    event IssuerAllowListEnabled(bool isIssuerAllowListEnabled);
+
+    /**
+        @notice Emitted when the restriction of collateralToken and paymentToken
+            to allow-listed tokens is toggled on or off.
+        @param isTokenAllowListEnabled The new state of the allow list.
+    */
+    event TokenAllowListEnabled(bool isTokenAllowListEnabled);
 
     /**
         @notice Emitted when a new bond is created.
@@ -83,8 +91,18 @@ interface IBondFactory {
         uint256 bonds
     ) external returns (address clone);
 
-    /// @notice If enabled, issuance is restricted to those with ISSUER_ROLE.
-    function isAllowListEnabled() external view returns (bool);
+    /**  
+    @notice If enabled, issuance is restricted to those with ISSUER_ROLE.
+    @return isEnabled Whether or not the `ISSUER_ROLE` will be checked when creating new bonds.
+    */
+    function isIssuerAllowListEnabled() external view returns (bool isEnabled);
+
+    /**  
+    @notice If enabled, usable tokens are restricted to those with the ALLOWED_TOKEN role.
+    @return isEnabled Whether or not the collateralToken and paymentToken are checked
+        for the `ALLOWED_TOKEN` role when creating new bonds.
+    */
+    function isTokenAllowListEnabled() external view returns (bool isEnabled);
 
     /**
         @notice Check if the address was created by this Bond factory.
@@ -97,11 +115,19 @@ interface IBondFactory {
     function isBond(address) external view returns (bool);
 
     /**
-        @notice Turns the allow list on or off.
-        @param _isAllowListEnabled If the allow list should be enabled or not.
+        @notice Sets the state of bond restriction to allow-listed accounts.
+        @param _isIssuerAllowListEnabled If the issuer allow list should be enabled or not.
         @dev Must be called by the current owner.
     */
-    function setIsAllowListEnabled(bool _isAllowListEnabled) external;
+    function setIsIssuerAllowListEnabled(bool _isIssuerAllowListEnabled)
+        external;
+
+    /**
+        @notice Sets the state of token restriction to the list of allowed tokens.
+        @param _isTokenAllowListEnabled If the token allow list should be enabled or not.
+        @dev Must be called by the current owner.
+    */
+    function setIsTokenAllowListEnabled(bool _isTokenAllowListEnabled) external;
 
     /**
         @notice Address where the bond implementation contract is stored.

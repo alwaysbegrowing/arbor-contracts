@@ -36,6 +36,7 @@ describe("BondFactory", async () => {
   let collateralToken: TestERC20;
   let paymentToken: TestERC20;
   let ISSUER_ROLE: any;
+  let ALLOWED_TOKEN: any;
 
   beforeEach(async () => {
     [owner, user] = await ethers.getSigners();
@@ -45,6 +46,9 @@ describe("BondFactory", async () => {
     ).tokens[0]);
 
     ISSUER_ROLE = await factory.ISSUER_ROLE();
+    ALLOWED_TOKEN = await factory.ALLOWED_TOKEN();
+    await factory.grantRole(ALLOWED_TOKEN, collateralToken.address);
+    await factory.grantRole(ALLOWED_TOKEN, paymentToken.address);
   });
 
   async function createBond(factory: BondFactory, params: BondParams = {}) {
@@ -108,6 +112,24 @@ describe("BondFactory", async () => {
       );
     });
 
+    it("fails if trying to use a non allow-listed token", async () => {
+      await factory.grantRole(ISSUER_ROLE, owner.address);
+      await factory.revokeRole(ALLOWED_TOKEN, collateralToken.address);
+
+      await expect(createBond(factory)).to.be.revertedWith(
+        `AccessControl: account ${collateralToken.address.toLowerCase()} is missing role ${ALLOWED_TOKEN}`
+      );
+    });
+
+    it("allows any tokens to be used with token allow-list disabled", async () => {
+      await factory.grantRole(ISSUER_ROLE, owner.address);
+      await factory.revokeRole(ALLOWED_TOKEN, collateralToken.address);
+
+      await factory.setIsTokenAllowListEnabled(false);
+
+      await expect(createBond(factory)).to.emit(factory, "BondCreated");
+    });
+
     it("should revert on too big of a token", async () => {
       const { paymentToken: bigPaymentToken } = await (
         await tokenFixture([20])
@@ -122,6 +144,7 @@ describe("BondFactory", async () => {
     describe("invalid maturity dates", async () => {
       it("should revert on a maturity date already passed", async () => {
         await factory.grantRole(ISSUER_ROLE, owner.address);
+
         await expect(
           createBond(factory, { maturityDate: BigNumber.from(1) })
         ).to.be.revertedWith("InvalidMaturityDate");
@@ -135,12 +158,14 @@ describe("BondFactory", async () => {
           .timestamp;
 
         await factory.grantRole(ISSUER_ROLE, owner.address);
+
         await expect(
           createBond(factory, { maturityDate: currentTimestamp })
         ).to.be.revertedWith("InvalidMaturityDate");
       });
       it("should revert on a maturity date 10 years in the future", async () => {
         await factory.grantRole(ISSUER_ROLE, owner.address);
+
         await expect(
           createBond(factory, {
             maturityDate: ELEVEN_YEARS_FROM_NOW_IN_SECONDS,
@@ -178,8 +203,7 @@ describe("BondFactory", async () => {
     it(
       "should mint a very large number of bonds and handle overflow correctly"
     );
-    it("should handle a robust amount of imputs for the bond creation");
-    it("should work with any amount of decimals >= 18");
+    it("should handle a robust amount of inputs for the bond creation");
 
     it("should revert on a token without decimals", async () => {
       await factory.grantRole(ISSUER_ROLE, owner.address);
@@ -189,10 +213,10 @@ describe("BondFactory", async () => {
     });
 
     it("should allow anyone to call createBond with allow list disabled", async () => {
-      await expect(factory.setIsAllowListEnabled(false))
-        .to.emit(factory, "AllowListEnabled")
+      await expect(factory.setIsIssuerAllowListEnabled(false))
+        .to.emit(factory, "IssuerAllowListEnabled")
         .withArgs(false);
-      expect(await factory.isAllowListEnabled()).to.be.equal(false);
+      expect(await factory.isIssuerAllowListEnabled()).to.be.equal(false);
       await collateralToken.transfer(
         user.address,
         await collateralToken.balanceOf(owner.address)
@@ -210,7 +234,7 @@ describe("BondFactory", async () => {
     });
   });
 
-  describe("grantRole", async () => {
+  describe("#grantRole", async () => {
     it("should fail if non owner tries to grantRole", async () => {
       await expect(factory.connect(user).grantRole(ISSUER_ROLE, owner.address))
         .to.be.reverted;
@@ -223,18 +247,18 @@ describe("BondFactory", async () => {
       );
     });
   });
-  describe("setIsAllowListEnabled", async () => {
+  describe("#setIsIssuerAllowListEnabled", async () => {
     it("should fail if non owner tries to update allow list", async () => {
-      await expect(factory.connect(user).setIsAllowListEnabled(false)).to.be
-        .reverted;
+      await expect(factory.connect(user).setIsIssuerAllowListEnabled(false)).to
+        .be.reverted;
     });
-    it("should toggle allow list", async () => {
-      expect(await factory.isAllowListEnabled()).to.be.equal(true);
+    it("should toggle issuer allow list", async () => {
+      expect(await factory.isIssuerAllowListEnabled()).to.be.equal(true);
 
-      await expect(factory.setIsAllowListEnabled(false))
-        .to.emit(factory, "AllowListEnabled")
+      await expect(factory.setIsIssuerAllowListEnabled(false))
+        .to.emit(factory, "IssuerAllowListEnabled")
         .withArgs(false);
-      expect(await factory.isAllowListEnabled()).to.be.equal(false);
+      expect(await factory.isIssuerAllowListEnabled()).to.be.equal(false);
       await collateralToken.transfer(
         user.address,
         await collateralToken.balanceOf(owner.address)
@@ -250,10 +274,36 @@ describe("BondFactory", async () => {
         "BondCreated"
       );
 
-      await expect(factory.setIsAllowListEnabled(true))
-        .to.emit(factory, "AllowListEnabled")
+      await expect(factory.setIsIssuerAllowListEnabled(true))
+        .to.emit(factory, "IssuerAllowListEnabled")
         .withArgs(true);
-      expect(await factory.isAllowListEnabled()).to.be.equal(true);
+      expect(await factory.isIssuerAllowListEnabled()).to.be.equal(true);
+    });
+  });
+
+  describe("#setIsTokenAllowListEnabled", async () => {
+    it("should fail if non owner tries to update token allow list", async () => {
+      await expect(factory.connect(user).setIsTokenAllowListEnabled(false)).to
+        .be.reverted;
+    });
+    it("should toggle token allow list", async () => {
+      await factory.revokeRole(ALLOWED_TOKEN, collateralToken.address);
+      await factory.revokeRole(ALLOWED_TOKEN, paymentToken.address);
+
+      await factory.grantRole(ISSUER_ROLE, owner.address);
+      expect(await factory.isTokenAllowListEnabled()).to.be.equal(true);
+
+      await expect(factory.setIsTokenAllowListEnabled(false))
+        .to.emit(factory, "TokenAllowListEnabled")
+        .withArgs(false);
+      expect(await factory.isTokenAllowListEnabled()).to.be.equal(false);
+
+      await expect(createBond(factory)).to.emit(factory, "BondCreated");
+
+      await expect(factory.setIsTokenAllowListEnabled(true))
+        .to.emit(factory, "TokenAllowListEnabled")
+        .withArgs(true);
+      expect(await factory.isTokenAllowListEnabled()).to.be.equal(true);
     });
   });
 });

@@ -78,6 +78,7 @@ describe("Bond", () => {
   async function fixture() {
     const { factory } = await bondFactoryFixture();
     const issuerRole = await factory.ISSUER_ROLE();
+    const allowedToken = await factory.ALLOWED_TOKEN();
 
     await (await factory.grantRole(issuerRole, owner.address)).wait();
     await (await factory.grantRole(issuerRole, attacker.address)).wait();
@@ -101,6 +102,9 @@ describe("Bond", () => {
         const token = tokens.find((token) => token.decimals === decimals);
         if (token) {
           const { attackingToken, paymentToken, collateralToken } = token;
+
+          await factory.grantRole(allowedToken, paymentToken.address);
+          await factory.grantRole(allowedToken, collateralToken.address);
 
           await collateralToken.approve(
             factory.address,
