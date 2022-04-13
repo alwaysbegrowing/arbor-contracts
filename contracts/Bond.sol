@@ -227,13 +227,17 @@ contract Bond is
     function previewConvertBeforeMaturity(uint256 bonds)
         public
         view
-        returns (uint256)
+        returns (uint256 collateralTokens)
     {
-        return bonds.mulWadDown(convertibleRatio);
+        collateralTokens = bonds.mulWadDown(convertibleRatio);
     }
 
     /// @inheritdoc IBond
-    function previewWithdraw(uint256 payment) public view returns (uint256) {
+    function previewWithdraw(uint256 payment)
+        public
+        view
+        returns (uint256 collateralTokens)
+    {
         uint256 tokensCoveredByPayment = paymentBalance() + payment;
         uint256 collateralTokensRequired = 0;
         uint256 supply = totalSupply();
@@ -259,37 +263,36 @@ contract Bond is
                 ? collateralTokensRequired // Defaulted
                 : convertibleOrCollateral; // Active
         }
-
-        if (totalRequiredCollateral >= collateralBalance()) {
+        uint256 collBalance = collateralBalance();
+        if (totalRequiredCollateral >= collBalance) {
             return 0;
         }
 
-        return collateralBalance() - totalRequiredCollateral;
+        collateralTokens = collBalance - totalRequiredCollateral;
     }
 
     /// @inheritdoc IBond
     function previewRedeemAtMaturity(uint256 bonds)
         public
         view
-        returns (uint256, uint256)
+        returns (uint256 paymentTokensToSend, uint256 collateralTokensToSend)
     {
-        uint256 paidAmount = isFullyPaid() ? totalSupply() : paymentBalance();
-        uint256 paymentTokensToSend = bonds.mulDivDown(
-            paidAmount,
-            totalSupply()
-        );
+        uint256 supply = totalSupply();
+        if (supply == 0) {
+            return (0, 0);
+        }
+        uint256 paidAmount = isFullyPaid() ? supply : paymentBalance();
+        paymentTokensToSend = bonds.mulDivDown(paidAmount, supply);
 
-        uint256 nonPaidAmount = totalSupply() - paidAmount;
-        uint256 collateralTokensToSend = collateralRatio.mulWadDown(
-            bonds.mulDivDown(nonPaidAmount, totalSupply())
+        uint256 nonPaidAmount = supply - paidAmount;
+        collateralTokensToSend = collateralRatio.mulWadDown(
+            bonds.mulDivDown(nonPaidAmount, supply)
         );
-
-        return (paymentTokensToSend, collateralTokensToSend);
     }
 
     /// @inheritdoc IBond
-    function paymentBalance() public view returns (uint256) {
-        return IERC20Metadata(paymentToken).balanceOf(address(this));
+    function paymentBalance() public view returns (uint256 paymentTokens) {
+        paymentTokens = IERC20Metadata(paymentToken).balanceOf(address(this));
     }
 
     /// @inheritdoc IBond
@@ -311,36 +314,44 @@ contract Bond is
     }
 
     /// @inheritdoc  IBond
-    function collateralBalance() public view returns (uint256) {
-        return IERC20Metadata(collateralToken).balanceOf(address(this));
+    function collateralBalance()
+        public
+        view
+        returns (uint256 collateralTokens)
+    {
+        collateralTokens = IERC20Metadata(collateralToken).balanceOf(
+            address(this)
+        );
     }
 
     /// @inheritdoc IBond
-    function isFullyPaid() public view returns (bool) {
-        return paymentBalance() >= totalSupply();
+    function isFullyPaid() public view returns (bool isPaid) {
+        isPaid = paymentBalance() >= totalSupply();
     }
 
     /// @inheritdoc IBond
-    function isMature() public view returns (bool) {
-        return block.timestamp >= maturityDate;
+    function isMature() public view returns (bool isBondMature) {
+        isBondMature = block.timestamp >= maturityDate;
     }
 
     /// @inheritdoc IBond
-    function amountOwed() external view returns (uint256) {
-        if (totalSupply() <= paymentBalance()) {
+    function amountOwed() external view returns (uint256 amountUnpaid) {
+        uint256 supply = totalSupply();
+        uint256 balance = paymentBalance();
+        if (supply <= balance) {
             return 0;
         }
-        uint256 amountUnpaid = totalSupply() - paymentBalance();
-        return (amountUnpaid);
+        amountUnpaid = supply - balance;
     }
 
     /// @inheritdoc IBond
     function amountOverPaid() public view returns (uint256 overpayment) {
-        if (totalSupply() >= paymentBalance()) {
+        uint256 supply = totalSupply();
+        uint256 balance = paymentBalance();
+        if (supply >= balance) {
             return 0;
         }
-        uint256 amountOverpaid = paymentBalance() - totalSupply();
-        return (amountOverpaid);
+        overpayment = balance - supply;
     }
 
     function decimals() public view override returns (uint8) {
