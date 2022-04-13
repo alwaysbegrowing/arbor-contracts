@@ -47,4 +47,4 @@ Bonds can be redeemed for a pro rata share of the collateral + payment amount.
 
 ## Upgradability strategy
 
-Contracts are not upgradable. In the future it will be possible for borrowers to refinance their loan by granting the `WITHDRAW_ROLE` and the `MINT_ROLE` to a refinance contract.
+Contracts are not upgradable. In the future it will be possible for borrowers to refinance their loan by transferring bond ownership to a Refi Vault.

@@ -10,9 +10,9 @@ There are a few different entities with different permissions in the porter prot
 ## Borrowers can
 
 - Create bonds if added to allow-list
-- Control permissions on the bond that they created
+- Transfer bond ownership
 - Withdraw collateral
-- Mint bonds
+- Withdraw payment
 - Sweep erc20 tokens sent to contract
 
 ## Anyone can
@@ -47,29 +47,13 @@ If the allow-list is enabled - only addresses with this role can call the `creat
 
 ## BondToken
 
-### Bond Admin
+### Bond Owner
 
 The bond admin is passed into the `BondFactory.createBond` method.
 
 Methods only callable by this role:
-`BondFactory.grantRole()`
-`BondFactory.revokeRole()`
-
-The bond admin is passed in as a parameter to the `createBond` method on `bondFactory`
-The bond admin is able to grant or revoke the `WITHDRAW_ROLE` as well as the `MINT_ROLE`.
-
-### WITHDRAW_ROLE
-
-The bond admin is automatically granted this role upon the creation of the bond. Additional withdrawers can be added by the bond admin.
-
-Methods only callable by this role:
 `Bond.withdrawExcessCollateral()`
-Only addresses with this role are able to withdraw bond collateral. This role will be used in the future to allow refinancing of loans.
-
-### MINT_ROLE
-
-The bond admin is automatically granted this role upon the creation of the bond. Additional minters can be added by the bond admin.
-
-Methods only callable by this role:
-`Bond.mint()`
-Only addresses with this role are able to deposit collateral to mint bonds. This role will be used in the future to allow refinancing of loans.
+`Bond.withdrawExcessPayment()`
+`Bond.sweep()`
+`Bond.transferOwnership()`
+`Bond.renounceOwnership()`

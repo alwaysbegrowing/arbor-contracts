@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import {IBond} from "./interfaces/IBond.sol";
 
 import {ERC20BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -25,7 +25,7 @@ import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
 */
 contract Bond is
     IBond,
-    AccessControlUpgradeable,
+    OwnableUpgradeable,
     ERC20BurnableUpgradeable,
     ReentrancyGuard
 {
@@ -48,14 +48,6 @@ contract Bond is
     /// @inheritdoc IBond
     uint256 public convertibleRatio;
 
-    /**
-        @notice This role permits the withdraw of collateral from the contract.
-        @dev This role is assigned to the owner upon bond creation who can also
-            assign this role to other addresses to enable their withdraw.
-            
-    */
-    bytes32 public constant WITHDRAW_ROLE = keccak256("WITHDRAW_ROLE");
-
     /// @dev Used to confirm the bond has not yet matured.
     modifier beforeMaturity() {
         if (isMature()) {
@@ -76,7 +68,7 @@ contract Bond is
     function initialize(
         string memory bondName,
         string memory bondSymbol,
-        address owner,
+        address bondOwner,
         uint256 _maturityDate,
         address _paymentToken,
         address _collateralToken,
@@ -85,15 +77,14 @@ contract Bond is
         uint256 maxSupply
     ) external initializer {
         __ERC20_init(bondName, bondSymbol);
+        _transferOwnership(bondOwner);
 
         maturityDate = _maturityDate;
         paymentToken = _paymentToken;
         collateralToken = _collateralToken;
         collateralRatio = _collateralRatio;
         convertibleRatio = _convertibleRatio;
-        _grantRole(DEFAULT_ADMIN_ROLE, owner);
-        _grantRole(WITHDRAW_ROLE, owner);
-        _mint(owner, maxSupply);
+        _mint(bondOwner, maxSupply);
     }
 
     /// @inheritdoc IBond
@@ -120,15 +111,20 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function withdrawExcessCollateral() external onlyRole(WITHDRAW_ROLE) {
+    function withdrawExcessCollateral(address receiver) external onlyOwner {
         uint256 collateralToSend = previewWithdraw();
 
         // Saves an extra SLOAD
         address collateral = collateralToken;
 
-        IERC20Metadata(collateral).safeTransfer(_msgSender(), collateralToSend);
+        IERC20Metadata(collateral).safeTransfer(receiver, collateralToSend);
 
-        emit CollateralWithdraw(_msgSender(), collateral, collateralToSend);
+        emit CollateralWithdraw(
+            _msgSender(),
+            receiver,
+            collateral,
+            collateralToSend
+        );
     }
 
     /// @inheritdoc IBond
@@ -192,9 +188,9 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function sweep(IERC20Metadata sweepingToken)
+    function sweep(IERC20Metadata sweepingToken, address receiver)
         external
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyOwner
     {
         // Check the balances before and compare to after to protect
         // against tokens that may proxy transfers through different addresses.
@@ -205,7 +201,7 @@ contract Bond is
 
         uint256 sweepingTokenBalance = sweepingToken.balanceOf(address(this));
 
-        sweepingToken.safeTransfer(_msgSender(), sweepingTokenBalance);
+        sweepingToken.safeTransfer(receiver, sweepingTokenBalance);
 
         uint256 paymentTokenBalanceAfter = IERC20Metadata(paymentToken)
             .balanceOf(address(this));
@@ -219,7 +215,12 @@ contract Bond is
             revert SweepDisallowedForToken();
         }
 
-        emit TokenSweep(_msgSender(), sweepingToken, sweepingTokenBalance);
+        emit TokenSweep(
+            _msgSender(),
+            receiver,
+            sweepingToken,
+            sweepingTokenBalance
+        );
     }
 
     /// @inheritdoc IBond
@@ -293,7 +294,7 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function withdrawExcessPayment() external onlyRole(WITHDRAW_ROLE) {
+    function withdrawExcessPayment(address receiver) external onlyOwner {
         uint256 overpayment = amountOverPaid();
         if (overpayment <= 0) {
             revert NoPaymentToWithdraw();
@@ -301,8 +302,13 @@ contract Bond is
         // Saves an extra SLOAD
         address payment = paymentToken;
 
-        IERC20Metadata(payment).safeTransfer(_msgSender(), overpayment);
-        emit ExcessPaymentWithdraw(_msgSender(), payment, overpayment);
+        IERC20Metadata(payment).safeTransfer(receiver, overpayment);
+        emit ExcessPaymentWithdraw(
+            _msgSender(),
+            receiver,
+            payment,
+            overpayment
+        );
     }
 
     /// @inheritdoc  IBond

@@ -5,7 +5,7 @@
     "echidna": "export TERMINFO=/usr/share/terminfo && hardhat compile && echidna-test . --contract TestBond --config ./echidna.config.yaml"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.5.0",
@@ -26,7 +26,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^3.4.1",
     "eslint-plugin-promise": "^5.2.0",
-    "ethers": "^5.5.4",
+    "ethers": "^5.6.3",
     "hardhat": "^2.9.1",
     "hardhat-deploy": "^0.10.5",
     "hardhat-gas-reporter": "^1.0.7",

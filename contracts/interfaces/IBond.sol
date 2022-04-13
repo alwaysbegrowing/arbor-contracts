@@ -39,11 +39,13 @@ interface IBond {
     /**
         @notice Emitted when collateral is withdrawn.
         @param from The address withdrawing the collateral.
+        @param receiver The address receiving the collateralTokens.
         @param token The address of the collateralToken.
         @param amount The number of collateralTokens withdrawn.
     */
     event CollateralWithdraw(
         address indexed from,
+        address indexed receiver,
         address indexed token,
         uint256 amount
     );
@@ -77,11 +79,13 @@ interface IBond {
     /**
         @notice Emitted when payment over the required amount is withdrawn.
         @param from The caller withdrawing the excess payment amount.
+        @param receiver The address receiving the paymentTokens.
         @param token The paymentToken being withdrawn.
         @param amount The amount of paymentToken withdrawn.
     */
     event ExcessPaymentWithdraw(
         address indexed from,
+        address indexed receiver,
         address indexed token,
         uint256 amount
     );
@@ -89,10 +93,16 @@ interface IBond {
     /**
         @notice Emitted when a token is swept by the contract owner.
         @param from The owner's address.
+        @param receiver The address receiving the swept tokens.
         @param token The token that was swept.
         @param amount The amount that was swept.
     */
-    event TokenSweep(address from, IERC20Metadata token, uint256 amount);
+    event TokenSweep(
+        address from,
+        address indexed receiver,
+        IERC20Metadata token,
+        uint256 amount
+    );
 
     /**
         @notice The amount that was overpaid and can be withdrawn.
@@ -155,8 +165,8 @@ interface IBond {
         @param bondName Passed into the ERC20 token to define the name.
         @param bondSymbol Passed into the ERC20 token to define the symbol.
         @param owner Ownership of the created Bond is transferred to this
-            address by way of DEFAULT_ADMIN_ROLE. The ability to withdraw is 
-            given by WITHDRAW_ROLE, and tokens are minted to this address.
+            address by way of _transfeOwnership and tokens are minted to this address. See
+            `initialize` in `Bond`.
         @param _maturityDate The timestamp at which the Bond will mature.
         @param _paymentToken The ERC20 token address the Bond is redeemable for.
         @param _collateralToken The ERC20 token address the Bond is backed by.
@@ -297,20 +307,25 @@ interface IBond {
         @notice Sends tokens to the owner that are in this contract.
         @dev The collateralToken and paymentToken, cannot be swept.
         @param token The ERC20 token to sweep and send to the owner.
+        @param receiver The address that is transferred the swept token.
+
     */
-    function sweep(IERC20Metadata token) external;
+    function sweep(IERC20Metadata token, address receiver) external;
 
     /**
-        @notice A caller with the WITHDRAW_ROLE may withdraw excess collateral
+        @notice The Owner may withdraw excess collateral
             from bond contract. The number of collateralTokens remaining in the
             contract must be enough to cover the total supply of Bonds in
             accordance to both the collateralRatio and convertibleRatio.
+        @param receiver The address that is transferred the excess collateral.
     */
-    function withdrawExcessCollateral() external;
+    function withdrawExcessCollateral(address receiver) external;
 
     /**
-        @notice A caller with the WITHDRAW_ROLE can withdraw any overpaid
+        @notice The Owner can withdraw any overpaid
             payment token in the contract.
+        @param receiver The address that is transferred the excess payment.
+
     */
-    function withdrawExcessPayment() external;
+    function withdrawExcessPayment(address receiver) external;
 }

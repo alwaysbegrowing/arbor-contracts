@@ -35,7 +35,7 @@ Emitted when a new bond is created.
     <td>address <code>indexed</code></td>
     <td>owner</td>
         <td>
-    Ownership of the created Bond is transferred to this address by way of DEFAULT_ADMIN_ROLE. The ability to withdraw is  given by WITHDRAW_ROLE, and tokens are minted to this address. See `initialize` in `Bond`.    </td>
+    Ownership of the created Bond is transferred to this address by way of _transfeOwnership and tokens are minted to this address. See `initialize` in `Bond`.    </td>
       </tr>
   <tr>
     <td>uint256 </td>

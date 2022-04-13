@@ -45,7 +45,7 @@ const DECIMALS_TO_TEST = [6, 8, 18];
   Recommended to use your editors "fold all" and unfolding the test of interest.
   "command / ctrl + k" -> "command / ctrl 0" for Visual Studio Code
 */
-describe("Bond", () => {
+describe.only("Bond", () => {
   // owner deploys and is the "issuer"
   let owner: SignerWithAddress;
   // bondHolder is one who has the bonds and will redeem or convert them
@@ -54,14 +54,9 @@ describe("Bond", () => {
   let attacker: SignerWithAddress;
   // our factory contract that deploys bonds
   let factory: BondFactory;
-  // roles used with access control
-  let withdrawRole: BytesLike;
   // this is a list of bonds created with the specific decimal tokens
   let bonds: BondWithTokens[];
-  let roles: {
-    defaultAdminRole: string;
-    withdrawRole: string;
-  };
+
   // function to retrieve the bonds and tokens by decimal used
   const getBond = ({ decimals }: { decimals: number }) => {
     const foundBond = bonds.find((bond) => bond.decimals === decimals);
@@ -166,20 +161,9 @@ describe("Bond", () => {
       })
     );
 
-    // all bonds will be the same roles - take the first one
-    let roles;
-    if (bonds[0]) {
-      const { nonConvertible } = bonds[0];
-      roles = {
-        defaultAdminRole: await nonConvertible.bond.DEFAULT_ADMIN_ROLE(),
-        withdrawRole: await nonConvertible.bond.WITHDRAW_ROLE(),
-      };
-    }
-
     return {
       bonds,
       factory,
-      roles,
     };
   }
 
@@ -187,8 +171,7 @@ describe("Bond", () => {
     // the signers are assigned here and used throughout the tests
     [owner, bondHolder, attacker] = await ethers.getSigners();
     // this is the bonds used in the getBond function
-    ({ bonds, factory, roles } = await loadFixture(fixture));
-    ({ withdrawRole } = roles);
+    ({ bonds, factory } = await loadFixture(fixture));
   });
 
   /**
@@ -246,19 +229,8 @@ describe("Bond", () => {
             );
           });
 
-          it("should have given issuer the default admin role", async () => {
-            expect(
-              await bond.hasRole(await bond.DEFAULT_ADMIN_ROLE(), owner.address)
-            ).to.be.equal(true);
-          });
-
-          it("should return the issuer as the role admin for the withdraw role", async () => {
-            expect(
-              await bond.hasRole(
-                await bond.getRoleAdmin(withdrawRole),
-                owner.address
-              )
-            ).to.be.equal(true);
+          it("should have given issuer the owner role", async () => {
+            expect(await bond.owner()).to.be.equal(owner.address);
           });
 
           it("should return configured public parameters");
@@ -292,7 +264,7 @@ describe("Bond", () => {
               (await bond.amountOwed()).add(1)
             );
             expect(await bond.amountOverPaid()).to.equal(1);
-            await bond.withdrawExcessPayment();
+            await bond.withdrawExcessPayment(owner.address);
             expect(await bond.amountOverPaid()).to.equal(0);
           });
           it("should withdraw excess payment when bonds are redeemed", async () => {
@@ -305,7 +277,7 @@ describe("Bond", () => {
             await bond.redeem(bonds);
 
             expect(await bond.amountOverPaid()).to.equal(fullPayment);
-            await bond.withdrawExcessPayment();
+            await bond.withdrawExcessPayment(owner.address);
             expect(await bond.amountOverPaid()).to.equal(0);
           });
           it("should have available overpayment when partially paid and all bonds are burnt", async () => {
@@ -335,7 +307,7 @@ describe("Bond", () => {
             expect(await bond.amountOverPaid()).to.equal(fullPayment.div(2));
             await bond.convert(halfBonds);
             expect(await bond.amountOverPaid()).to.equal(fullPayment);
-            await bond.withdrawExcessPayment();
+            await bond.withdrawExcessPayment(owner.address);
             expect(await bond.amountOverPaid()).to.equal(0);
           });
         });
@@ -452,7 +424,7 @@ describe("Bond", () => {
               expect(await bond.totalSupply()).to.not.equal(0);
 
               await expectTokenDelta(
-                bond.withdrawExcessCollateral,
+                () => bond.withdrawExcessCollateral(owner.address),
                 collateralToken,
                 owner,
                 bond.address,
@@ -517,30 +489,29 @@ describe("Bond", () => {
               ).wait();
               await (await bond.pay(targetPayment)).wait();
               const amountOwed = await bond.amountOwed();
-              await (await bond.withdrawExcessCollateral()).wait();
+              await (await bond.withdrawExcessCollateral(owner.address)).wait();
               expect(await bond.amountOwed()).to.be.equal(amountOwed);
             });
 
-            it("should revert when called by non-withdrawer", async () => {
-              await expect(
-                bond.connect(attacker).withdrawExcessCollateral()
-              ).to.be.revertedWith(
-                `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${withdrawRole}`
-              );
-            });
+            // it("should revert when called by non-withdrawer", async () => {
+            //   await expect(
+            //     bond.connect(attacker).withdrawExcessCollateral()
+            //   ).to.be.revertedWith(
+            //     `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${withdrawRole}`
+            //   );
+            // });
 
-            it("should grant and revoke withdraw role", async () => {
-              await bond.grantRole(withdrawRole, attacker.address);
-              await expect(bond.connect(attacker).withdrawExcessCollateral()).to
-                .not.be.reverted;
+            // it("should grant and revoke withdraw role", async () => {
+            //   await expect(bond.connect(attacker).withdrawExcessCollateral()).to
+            //     .not.be.reverted;
 
-              await bond.revokeRole(withdrawRole, attacker.address);
-              await expect(
-                bond.connect(attacker).withdrawExcessCollateral()
-              ).to.be.revertedWith(
-                `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${withdrawRole}`
-              );
-            });
+            //   await bond.revokeRole(withdrawRole, attacker.address);
+            //   await expect(
+            //     bond.connect(attacker).withdrawExcessCollateral()
+            //   ).to.be.revertedWith(
+            //     `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${withdrawRole}`
+            //   );
+            // });
             it("should withdraw zero collateral when zero amount are burned", async () => {
               await burnAndWithdraw({
                 bond,
@@ -599,7 +570,7 @@ describe("Bond", () => {
               await bond.burn(config.maxSupply);
               expect(await bond.totalSupply()).to.equal(0);
               await expectTokenDelta(
-                bond.withdrawExcessCollateral,
+                () => bond.withdrawExcessCollateral(owner.address),
                 collateralToken,
                 owner,
                 owner.address,
@@ -942,21 +913,20 @@ describe("Bond", () => {
 
           it("should remove a token from the contract", async () => {
             await attackingToken.connect(attacker).transfer(bond.address, 1000);
-            await expect(bond.sweep(attackingToken.address)).to.emit(
-              bond,
-              "TokenSweep"
-            );
+            await expect(
+              bond.sweep(attackingToken.address, owner.address)
+            ).to.emit(bond, "TokenSweep");
             expect(await attackingToken.balanceOf(owner.address)).to.be.equal(
               1000
             );
           });
 
           it("should disallow removal of collateralToken and paymentToken", async () => {
-            await expect(bond.sweep(paymentToken.address)).to.be.revertedWith(
-              "SweepDisallowedForToken"
-            );
             await expect(
-              bond.sweep(collateralToken.address)
+              bond.sweep(paymentToken.address, owner.address)
+            ).to.be.revertedWith("SweepDisallowedForToken");
+            await expect(
+              bond.sweep(collateralToken.address, owner.address)
             ).to.be.revertedWith("SweepDisallowedForToken");
           });
         });

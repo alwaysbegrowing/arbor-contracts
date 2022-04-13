@@ -41,6 +41,10 @@ Emitted when collateral is withdrawn.
       </tr>
   <tr>
     <td>address <code>indexed</code></td>
+    <td>receiver</td>
+      </tr>
+  <tr>
+    <td>address <code>indexed</code></td>
     <td>token</td>
       </tr>
   <tr>
@@ -89,11 +93,33 @@ Emitted when payment over the required amount is withdrawn.
       </tr>
   <tr>
     <td>address <code>indexed</code></td>
+    <td>receiver</td>
+      </tr>
+  <tr>
+    <td>address <code>indexed</code></td>
     <td>token</td>
       </tr>
   <tr>
     <td>uint256 </td>
     <td>amount</td>
+      </tr>
+</table>
+
+### OwnershipTransferred
+
+
+
+
+
+
+<table>
+  <tr>
+    <td>address <code>indexed</code></td>
+    <td>previousOwner</td>
+      </tr>
+  <tr>
+    <td>address <code>indexed</code></td>
+    <td>newOwner</td>
       </tr>
 </table>
 
@@ -149,72 +175,6 @@ Emitted when a Bond is redeemed.
       </tr>
 </table>
 
-### RoleAdminChanged
-
-
-
-
-
-
-<table>
-  <tr>
-    <td>bytes32 <code>indexed</code></td>
-    <td>role</td>
-      </tr>
-  <tr>
-    <td>bytes32 <code>indexed</code></td>
-    <td>previousAdminRole</td>
-      </tr>
-  <tr>
-    <td>bytes32 <code>indexed</code></td>
-    <td>newAdminRole</td>
-      </tr>
-</table>
-
-### RoleGranted
-
-
-
-
-
-
-<table>
-  <tr>
-    <td>bytes32 <code>indexed</code></td>
-    <td>role</td>
-      </tr>
-  <tr>
-    <td>address <code>indexed</code></td>
-    <td>account</td>
-      </tr>
-  <tr>
-    <td>address <code>indexed</code></td>
-    <td>sender</td>
-      </tr>
-</table>
-
-### RoleRevoked
-
-
-
-
-
-
-<table>
-  <tr>
-    <td>bytes32 <code>indexed</code></td>
-    <td>role</td>
-      </tr>
-  <tr>
-    <td>address <code>indexed</code></td>
-    <td>account</td>
-      </tr>
-  <tr>
-    <td>address <code>indexed</code></td>
-    <td>sender</td>
-      </tr>
-</table>
-
 ### TokenSweep
 
 Emitted when a token is swept by the contract owner.
@@ -226,6 +186,10 @@ Emitted when a token is swept by the contract owner.
   <tr>
     <td>address </td>
     <td>from</td>
+      </tr>
+  <tr>
+    <td>address <code>indexed</code></td>
+    <td>receiver</td>
       </tr>
   <tr>
     <td>contract IERC20Metadata </td>
@@ -298,44 +262,6 @@ Emitted when a token is swept by the contract owner.
 
 ## Methods
 
-
-### DEFAULT_ADMIN_ROLE
-
-```solidity
-function DEFAULT_ADMIN_ROLE() external view returns (bytes32)
-```
-
-
-
-
-#### Returns
-
-
-<table>
-  <tr>
-    <td>
-      bytes32    </td>
-      </tr>
-</table>
-
-### WITHDRAW_ROLE
-
-```solidity
-function WITHDRAW_ROLE() external view returns (bytes32)
-```
-
-This role permits the withdraw of collateral from the contract.
-
-
-#### Returns
-
-
-<table>
-  <tr>
-    <td>
-      bytes32    </td>
-      </tr>
-</table>
 
 ### allowance
 
@@ -660,86 +586,6 @@ function decreaseAllowance(address spender, uint256 subtractedValue) external no
       </tr>
 </table>
 
-### getRoleAdmin
-
-```solidity
-function getRoleAdmin(bytes32 role) external view returns (bytes32)
-```
-
-
-
-#### Parameters
-
-<table>
-  <tr>
-    <td>bytes32 </td>
-    <td>role</td>
-      </tr>
-</table>
-
-#### Returns
-
-
-<table>
-  <tr>
-    <td>
-      bytes32    </td>
-      </tr>
-</table>
-
-### grantRole
-
-```solidity
-function grantRole(bytes32 role, address account) external nonpayable
-```
-
-
-
-#### Parameters
-
-<table>
-  <tr>
-    <td>bytes32 </td>
-    <td>role</td>
-      </tr>
-  <tr>
-    <td>address </td>
-    <td>account</td>
-      </tr>
-</table>
-
-
-### hasRole
-
-```solidity
-function hasRole(bytes32 role, address account) external view returns (bool)
-```
-
-
-
-#### Parameters
-
-<table>
-  <tr>
-    <td>bytes32 </td>
-    <td>role</td>
-      </tr>
-  <tr>
-    <td>address </td>
-    <td>account</td>
-      </tr>
-</table>
-
-#### Returns
-
-
-<table>
-  <tr>
-    <td>
-      bool    </td>
-      </tr>
-</table>
-
 ### increaseAllowance
 
 ```solidity
@@ -774,7 +620,7 @@ function increaseAllowance(address spender, uint256 addedValue) external nonpaya
 ### initialize
 
 ```solidity
-function initialize(string bondName, string bondSymbol, address owner, uint256 _maturityDate, address _paymentToken, address _collateralToken, uint256 _collateralRatio, uint256 _convertibleRatio, uint256 maxSupply) external nonpayable
+function initialize(string bondName, string bondSymbol, address bondOwner, uint256 _maturityDate, address _paymentToken, address _collateralToken, uint256 _collateralRatio, uint256 _convertibleRatio, uint256 maxSupply) external nonpayable
 ```
 
 This one-time setup initiated by the BondFactory initializes the Bond with the given configuration.
@@ -796,9 +642,7 @@ This one-time setup initiated by the BondFactory initializes the Bond with the g
       </tr>
   <tr>
     <td>address </td>
-    <td>owner</td>
-        <td>
-    Ownership of the created Bond is transferred to this address by way of DEFAULT_ADMIN_ROLE. The ability to withdraw is  given by WITHDRAW_ROLE, and tokens are minted to this address.    </td>
+    <td>bondOwner</td>
       </tr>
   <tr>
     <td>uint256 </td>
@@ -918,6 +762,25 @@ function name() external view returns (string)
   <tr>
     <td>
       string    </td>
+      </tr>
+</table>
+
+### owner
+
+```solidity
+function owner() external view returns (address)
+```
+
+
+
+
+#### Returns
+
+
+<table>
+  <tr>
+    <td>
+      address    </td>
       </tr>
 </table>
 
@@ -1092,81 +955,20 @@ The Bond holder can burn Bonds in return for their portion of paymentTokens and 
 </table>
 
 
-### renounceRole
+### renounceOwnership
 
 ```solidity
-function renounceRole(bytes32 role, address account) external nonpayable
+function renounceOwnership() external nonpayable
 ```
 
 
 
-#### Parameters
 
-<table>
-  <tr>
-    <td>bytes32 </td>
-    <td>role</td>
-      </tr>
-  <tr>
-    <td>address </td>
-    <td>account</td>
-      </tr>
-</table>
-
-
-### revokeRole
-
-```solidity
-function revokeRole(bytes32 role, address account) external nonpayable
-```
-
-
-
-#### Parameters
-
-<table>
-  <tr>
-    <td>bytes32 </td>
-    <td>role</td>
-      </tr>
-  <tr>
-    <td>address </td>
-    <td>account</td>
-      </tr>
-</table>
-
-
-### supportsInterface
-
-```solidity
-function supportsInterface(bytes4 interfaceId) external view returns (bool)
-```
-
-
-
-#### Parameters
-
-<table>
-  <tr>
-    <td>bytes4 </td>
-    <td>interfaceId</td>
-      </tr>
-</table>
-
-#### Returns
-
-
-<table>
-  <tr>
-    <td>
-      bool    </td>
-      </tr>
-</table>
 
 ### sweep
 
 ```solidity
-function sweep(contract IERC20Metadata sweepingToken) external nonpayable
+function sweep(contract IERC20Metadata sweepingToken, address receiver) external nonpayable
 ```
 
 Sends tokens to the owner that are in this contract.
@@ -1177,6 +979,12 @@ Sends tokens to the owner that are in this contract.
   <tr>
     <td>contract IERC20Metadata </td>
     <td>sweepingToken</td>
+      </tr>
+  <tr>
+    <td>address </td>
+    <td>receiver</td>
+        <td>
+    The address that is transfered the sweep token    </td>
       </tr>
 </table>
 
@@ -1285,24 +1093,62 @@ function transferFrom(address from, address to, uint256 amount) external nonpaya
       </tr>
 </table>
 
+### transferOwnership
+
+```solidity
+function transferOwnership(address newOwner) external nonpayable
+```
+
+
+
+#### Parameters
+
+<table>
+  <tr>
+    <td>address </td>
+    <td>newOwner</td>
+      </tr>
+</table>
+
+
 ### withdrawExcessCollateral
 
 ```solidity
-function withdrawExcessCollateral() external nonpayable
+function withdrawExcessCollateral(address receiver) external nonpayable
 ```
 
-A caller with the WITHDRAW_ROLE may withdraw excess collateral from bond contract. The number of collateralTokens remaining in the contract must be enough to cover the total supply of Bonds in accordance to both the collateralRatio and convertibleRatio.
+The Owner may withdraw excess collateral from bond contract. The number of collateralTokens remaining in the contract must be enough to cover the total supply of Bonds in accordance to both the collateralRatio and convertibleRatio.
 
+#### Parameters
+
+<table>
+  <tr>
+    <td>address </td>
+    <td>receiver</td>
+        <td>
+    The address that is transfered the excess collateral    </td>
+      </tr>
+</table>
 
 
 ### withdrawExcessPayment
 
 ```solidity
-function withdrawExcessPayment() external nonpayable
+function withdrawExcessPayment(address receiver) external nonpayable
 ```
 
-A caller with the WITHDRAW_ROLE can withdraw any overpaid payment token in the contract.
+The Owner can withdraw any overpaid payment token in the contract.
 
+#### Parameters
+
+<table>
+  <tr>
+    <td>address </td>
+    <td>receiver</td>
+        <td>
+    The address that is transfered the excess payment    </td>
+      </tr>
+</table>
 
 
 

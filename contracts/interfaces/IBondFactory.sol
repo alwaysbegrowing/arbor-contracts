@@ -22,8 +22,7 @@ interface IBondFactory {
         @param name Passed into the ERC20 token to define the name.
         @param symbol Passed into the ERC20 token to define the symbol.
         @param owner Ownership of the created Bond is transferred to this
-            address by way of DEFAULT_ADMIN_ROLE. The ability to withdraw is 
-            given by WITHDRAW_ROLE, and tokens are minted to this address. See
+            address by way of _transfeOwnership and tokens are minted to this address. See
             `initialize` in `Bond`.
         @param maturityDate The timestamp at which the Bond will mature.
         @param paymentToken The ERC20 token address the Bond is redeemable for.

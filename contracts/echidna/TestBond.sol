@@ -112,7 +112,7 @@ contract TestBond {
     }
 
     function withdrawExcessCollateral() public {
-        try bond.withdrawExcessCollateral() {} catch Error(
+        try bond.withdrawExcessCollateral(msg.sender) {} catch Error(
             string memory reason
         ) {
             emit AssertionFailed(reason);
