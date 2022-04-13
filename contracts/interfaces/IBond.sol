@@ -22,6 +22,9 @@ interface IBond {
     /// @notice Attempted to withdraw with no excess payment in the contract.
     error NoPaymentToWithdraw();
 
+    /// @notice Attempted to withdraw more collateral than avaliable
+    error NotEnoughCollateral();
+
     /**
         @notice Emitted when Bond tokens are converted by a borrower.
         @param from The address converting their tokens.
@@ -318,9 +321,11 @@ interface IBond {
             from bond contract. The number of collateralTokens remaining in the
             contract must be enough to cover the total supply of Bonds in
             accordance to both the collateralRatio and convertibleRatio.
+        @param amount The amount of collateral to withdraw. Reverts if this number is greater than avaliable. 
         @param receiver The address that is transferred the excess collateral.
     */
-    function withdrawExcessCollateral(address receiver) external;
+    function withdrawExcessCollateral(uint256 amount, address receiver)
+        external;
 
     /**
         @notice The Owner can withdraw any overpaid

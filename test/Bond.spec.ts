@@ -424,7 +424,11 @@ describe.only("Bond", () => {
               expect(await bond.totalSupply()).to.not.equal(0);
 
               await expectTokenDelta(
-                () => bond.withdrawExcessCollateral(owner.address),
+                async () =>
+                  bond.withdrawExcessCollateral(
+                    await bond.previewWithdraw(0),
+                    owner.address
+                  ),
                 collateralToken,
                 owner,
                 bond.address,
@@ -489,25 +493,30 @@ describe.only("Bond", () => {
               ).wait();
               await (await bond.pay(targetPayment)).wait();
               const amountOwed = await bond.amountOwed();
-              await (await bond.withdrawExcessCollateral(owner.address)).wait();
+              await (
+                await bond.withdrawExcessCollateral(
+                  await bond.previewWithdraw(0),
+                  owner.address
+                )
+              ).wait();
               expect(await bond.amountOwed()).to.be.equal(amountOwed);
             });
 
             // it("should revert when called by non-withdrawer", async () => {
             //   await expect(
-            //     bond.connect(attacker).withdrawExcessCollateral()
+            //     bond.connect(attacker).withdrawExcessCollateral(await bond.previewWithdraw(0), )
             //   ).to.be.revertedWith(
             //     `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${withdrawRole}`
             //   );
             // });
 
             // it("should grant and revoke withdraw role", async () => {
-            //   await expect(bond.connect(attacker).withdrawExcessCollateral()).to
+            //   await expect(bond.connect(attacker).withdrawExcessCollateral(await bond.previewWithdraw(0), )).to
             //     .not.be.reverted;
 
             //   await bond.revokeRole(withdrawRole, attacker.address);
             //   await expect(
-            //     bond.connect(attacker).withdrawExcessCollateral()
+            //     bond.connect(attacker).withdrawExcessCollateral(await bond.previewWithdraw(0), )
             //   ).to.be.revertedWith(
             //     `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${withdrawRole}`
             //   );
@@ -570,7 +579,11 @@ describe.only("Bond", () => {
               await bond.burn(config.maxSupply);
               expect(await bond.totalSupply()).to.equal(0);
               await expectTokenDelta(
-                () => bond.withdrawExcessCollateral(owner.address),
+                async () =>
+                  bond.withdrawExcessCollateral(
+                    await bond.previewWithdraw(0),
+                    owner.address
+                  ),
                 collateralToken,
                 owner,
                 owner.address,

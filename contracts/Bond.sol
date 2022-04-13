@@ -111,21 +111,20 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-
-    function withdrawExcessCollateral(address receiver) external onlyOwner {
-        uint256 collateralToSend = previewWithdraw(0);
+    function withdrawExcessCollateral(uint256 amount, address receiver)
+        external
+        onlyOwner
+    {
+        if (amount > previewWithdraw(0)) {
+            revert NotEnoughCollateral();
+        }
 
         // Saves an extra SLOAD
         address collateral = collateralToken;
 
-        IERC20Metadata(collateral).safeTransfer(receiver, collateralToSend);
+        IERC20Metadata(collateral).safeTransfer(receiver, amount);
 
-        emit CollateralWithdraw(
-            _msgSender(),
-            receiver,
-            collateral,
-            collateralToSend
-        );
+        emit CollateralWithdraw(_msgSender(), receiver, collateral, amount);
     }
 
     /// @inheritdoc IBond

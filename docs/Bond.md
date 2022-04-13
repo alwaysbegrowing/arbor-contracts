@@ -242,6 +242,11 @@ Emitted when a token is swept by the contract owner.
 
 
 
+### NotEnoughCollateral
+* Attempted to withdraw more collateral than avaliable
+
+
+
 ### PaymentMet
 * Attempted to pay after payment was met.
 
@@ -1124,7 +1129,7 @@ function transferOwnership(address newOwner) external nonpayable
 ### withdrawExcessCollateral
 
 ```solidity
-function withdrawExcessCollateral(address receiver) external nonpayable
+function withdrawExcessCollateral(uint256 amount, address receiver) external nonpayable
 ```
 
 The Owner may withdraw excess collateral from bond contract. The number of collateralTokens remaining in the contract must be enough to cover the total supply of Bonds in accordance to both the collateralRatio and convertibleRatio.
@@ -1132,6 +1137,12 @@ The Owner may withdraw excess collateral from bond contract. The number of colla
 #### Parameters
 
 <table>
+  <tr>
+    <td>uint256 </td>
+    <td>amount</td>
+        <td>
+    The amount of collateral to withdraw. Reverts if this number is greater than avaliable.     </td>
+      </tr>
   <tr>
     <td>address </td>
     <td>receiver</td>
