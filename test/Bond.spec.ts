@@ -45,7 +45,7 @@ const DECIMALS_TO_TEST = [6, 8, 18];
   Recommended to use your editors "fold all" and unfolding the test of interest.
   "command / ctrl + k" -> "command / ctrl 0" for Visual Studio Code
 */
-describe.only("Bond", () => {
+describe("Bond", () => {
   // owner deploys and is the "issuer"
   let owner: SignerWithAddress;
   // bondHolder is one who has the bonds and will redeem or convert them
@@ -405,6 +405,36 @@ describe.only("Bond", () => {
               });
             });
 
+            it("allows a partial withdraw", async () => {
+              const owed = await bond.amountOwed();
+              await paymentToken.approve(bond.address, owed);
+              await bond.pay(owed);
+
+              await expectTokenDelta(
+                async () =>
+                  bond.withdrawExcessCollateral(
+                    (await bond.previewWithdraw(0)).div(2),
+                    owner.address
+                  ),
+                collateralToken,
+                owner,
+                bond.address,
+                config.collateralTokenAmount.div(2)
+              );
+            });
+            it("fails if requesting too much", async () => {
+              const owed = await bond.amountOwed();
+              await paymentToken.approve(bond.address, owed);
+              await bond.pay(owed);
+
+              await expect(
+                bond.withdrawExcessCollateral(
+                  (await bond.previewWithdraw(0)).add(1),
+                  owner.address
+                )
+              ).to.be.revertedWith("NotEnoughCollateral");
+            });
+
             it("should make excess collateral available to withdraw when maturity is reached", async () => {});
           });
         });
@@ -502,25 +532,6 @@ describe.only("Bond", () => {
               expect(await bond.amountOwed()).to.be.equal(amountOwed);
             });
 
-            // it("should revert when called by non-withdrawer", async () => {
-            //   await expect(
-            //     bond.connect(attacker).withdrawExcessCollateral(await bond.previewWithdraw(0), )
-            //   ).to.be.revertedWith(
-            //     `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${withdrawRole}`
-            //   );
-            // });
-
-            // it("should grant and revoke withdraw role", async () => {
-            //   await expect(bond.connect(attacker).withdrawExcessCollateral(await bond.previewWithdraw(0), )).to
-            //     .not.be.reverted;
-
-            //   await bond.revokeRole(withdrawRole, attacker.address);
-            //   await expect(
-            //     bond.connect(attacker).withdrawExcessCollateral(await bond.previewWithdraw(0), )
-            //   ).to.be.revertedWith(
-            //     `AccessControl: account ${attacker.address.toLowerCase()} is missing role ${withdrawRole}`
-            //   );
-            // });
             it("should withdraw zero collateral when zero amount are burned", async () => {
               await burnAndWithdraw({
                 bond,
