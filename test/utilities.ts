@@ -107,7 +107,7 @@ export const payAndWithdraw = async ({
 }) => {
   await paymentToken.approve(bond.address, paymentTokenAmount);
   await (await bond.pay(paymentTokenAmount)).wait();
-  expect(await bond.previewWithdraw(0)).to.equal(collateralToReceive);
+  expect(await bond.previewWithdraw()).to.equal(collateralToReceive);
 };
 
 export const burnAndWithdraw = async ({
@@ -120,7 +120,7 @@ export const burnAndWithdraw = async ({
   collateralToReceive: BigNumber;
 }) => {
   await (await bond.burn(sharesToBurn)).wait();
-  expect(await bond.previewWithdraw(0)).to.equal(collateralToReceive);
+  expect(await bond.previewWithdraw()).to.equal(collateralToReceive);
 };
 
 export const redeemAndCheckTokens = async ({

@@ -296,10 +296,21 @@ interface IBond {
         @param payment The amount of paymentToken to add when previewing a withdraw.
         @return collateralTokens The number of collateralTokens received.
      */
-    function previewWithdraw(uint256 payment)
+    function previewWithdrawAfterPayment(uint256 payment)
         external
         view
         returns (uint256 collateralTokens);
+
+    /**
+        @notice The amount of collateral that the issuer would be able to 
+            withdraw from the contract. This does not take into account an
+            amount of payment like `previewWithdrawAfterPayment` does. See that
+            function for more information.
+        @dev Calls `previewWithdrawAfterPayment` with a payment amount of 0.
+        @return collateralTokens The number of collateralTokens that would be
+        received by the issuer.
+    */
+    function previewWithdraw() external view returns (uint256 collateralTokens);
 
     /**
         @notice The Bond holder can burn Bonds in return for their portion of

@@ -413,7 +413,7 @@ describe("Bond", () => {
               await expectTokenDelta(
                 async () =>
                   bond.withdrawExcessCollateral(
-                    (await bond.previewWithdraw(0)).div(2),
+                    (await bond.previewWithdraw()).div(2),
                     owner.address
                   ),
                 collateralToken,
@@ -429,7 +429,7 @@ describe("Bond", () => {
 
               await expect(
                 bond.withdrawExcessCollateral(
-                  (await bond.previewWithdraw(0)).add(1),
+                  (await bond.previewWithdraw()).add(1),
                   owner.address
                 )
               ).to.be.revertedWith("NotEnoughCollateral");
@@ -456,7 +456,7 @@ describe("Bond", () => {
               await expectTokenDelta(
                 async () =>
                   bond.withdrawExcessCollateral(
-                    await bond.previewWithdraw(0),
+                    await bond.previewWithdraw(),
                     owner.address
                   ),
                 collateralToken,
@@ -525,7 +525,7 @@ describe("Bond", () => {
               const amountOwed = await bond.amountOwed();
               await (
                 await bond.withdrawExcessCollateral(
-                  await bond.previewWithdraw(0),
+                  await bond.previewWithdraw(),
                   owner.address
                 )
               ).wait();
@@ -592,7 +592,7 @@ describe("Bond", () => {
               await expectTokenDelta(
                 async () =>
                   bond.withdrawExcessCollateral(
-                    await bond.previewWithdraw(0),
+                    await bond.previewWithdraw(),
                     owner.address
                   ),
                 collateralToken,
@@ -644,7 +644,7 @@ describe("Bond", () => {
                 bond.address,
                 utils.parseEther("1")
               );
-              expect(await bond.previewWithdraw(0)).to.equal(
+              expect(await bond.previewWithdraw()).to.equal(
                 utils.parseEther("1")
               );
             });
