@@ -116,7 +116,7 @@ describe("Bond", () => {
                 factory.createBond(
                   "Bond",
                   "LUG",
-                  NonConvertibleBondConfig.maturityDate,
+                  NonConvertibleBondConfig.maturity,
                   paymentToken.address,
                   collateralToken.address,
                   NonConvertibleBondConfig.collateralTokenAmount,
@@ -131,7 +131,7 @@ describe("Bond", () => {
                 factory.createBond(
                   "Bond",
                   "LUG",
-                  ConvertibleBondConfig.maturityDate,
+                  ConvertibleBondConfig.maturity,
                   paymentToken.address,
                   collateralToken.address,
                   ConvertibleBondConfig.collateralTokenAmount,
@@ -146,7 +146,7 @@ describe("Bond", () => {
                 factory.createBond(
                   "Bond",
                   "LUG",
-                  UncollateralizedBondConfig.maturityDate,
+                  UncollateralizedBondConfig.maturity,
                   paymentToken.address,
                   collateralToken.address,
                   UncollateralizedBondConfig.collateralTokenAmount,
@@ -207,7 +207,7 @@ describe("Bond", () => {
                 "Bond",
                 "LUG",
                 owner.address,
-                config.maturityDate,
+                config.maturity,
                 paymentToken.address,
                 collateralToken.address,
                 utils.parseUnits(".25", decimals),
@@ -350,7 +350,7 @@ describe("Bond", () => {
           it("should fail if already paid", async () => {
             await bond.pay(config.maxSupply);
             await expect(bond.pay(config.maxSupply)).to.be.revertedWith(
-              "PaymentMet"
+              "PaymentAlreadyMet"
             );
           });
 
@@ -393,7 +393,7 @@ describe("Bond", () => {
 
         describe("Paid state", async () => {
           beforeEach(async () => {
-            await ethers.provider.send("evm_mine", [config.maturityDate]);
+            await ethers.provider.send("evm_mine", [config.maturity]);
           });
           describe("simple", async () => {
             it("should withdraw all collateral in Paid state", async () => {
@@ -504,7 +504,7 @@ describe("Bond", () => {
             it("should withdraw collateral that was locked to give bondholders the option to convert", async () => {
               bond = bondWithTokens.convertible.bond;
               config = bondWithTokens.convertible.config;
-              await ethers.provider.send("evm_mine", [config.maturityDate]);
+              await ethers.provider.send("evm_mine", [config.maturity]);
               await payAndWithdraw({
                 bond,
                 paymentToken,
@@ -661,7 +661,7 @@ describe("Bond", () => {
         describe("Paid state", async () => {
           it("should redeem for payment token", async () => {
             await bond.pay(config.maxSupply);
-            await ethers.provider.send("evm_mine", [config.maturityDate]);
+            await ethers.provider.send("evm_mine", [config.maturity]);
 
             await previewRedeem({
               bond,
@@ -714,7 +714,7 @@ describe("Bond", () => {
         });
         describe("Defaulted state", async () => {
           beforeEach(async () => {
-            await ethers.provider.send("evm_mine", [config.maturityDate]);
+            await ethers.provider.send("evm_mine", [config.maturity]);
           });
 
           it("should not be possible to redeem zero bonds", async () => {

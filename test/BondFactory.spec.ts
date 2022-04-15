@@ -16,12 +16,12 @@ const { ethers } = require("hardhat");
 const BondConfig: BondConfigType = {
   collateralTokenAmount: utils.parseUnits("2", 18),
   convertibleTokenAmount: utils.parseUnits("1", 18),
-  maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
+  maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
   maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
 interface BondParams {
-  maturityDate?: any;
+  maturity?: any;
   paymentToken?: any;
   collateralToken?: any;
   collateralTokenAmount?: any;
@@ -52,7 +52,7 @@ describe("BondFactory", async () => {
   });
 
   async function createBond(factory: BondFactory, params: BondParams = {}) {
-    const testMaturityDate = params.maturityDate || BondConfig.maturityDate;
+    const testmaturity = params.maturity || BondConfig.maturity;
     const testPaymentToken = params.paymentToken || paymentToken.address;
     const testCollateralToken =
       params.collateralToken || collateralToken.address;
@@ -70,7 +70,7 @@ describe("BondFactory", async () => {
     return factory.createBond(
       "Bond",
       "LUG",
-      testMaturityDate,
+      testmaturity,
       testPaymentToken,
       testCollateralToken,
       testCollateralTokenAmount,
@@ -138,7 +138,7 @@ describe("BondFactory", async () => {
       await factory.grantRole(ISSUER_ROLE, owner.address);
       await expect(
         createBond(factory, { paymentToken: bigPaymentToken.address })
-      ).to.be.revertedWith("DecimalsOver18()");
+      ).to.be.revertedWith("TooManyDecimals()");
     });
 
     describe("invalid maturity dates", async () => {
@@ -146,8 +146,8 @@ describe("BondFactory", async () => {
         await factory.grantRole(ISSUER_ROLE, owner.address);
 
         await expect(
-          createBond(factory, { maturityDate: BigNumber.from(1) })
-        ).to.be.revertedWith("InvalidMaturityDate");
+          createBond(factory, { maturity: BigNumber.from(1) })
+        ).to.be.revertedWith("InvalidMaturity");
       });
 
       it("should revert on a maturity date current timestamp", async () => {
@@ -160,17 +160,17 @@ describe("BondFactory", async () => {
         await factory.grantRole(ISSUER_ROLE, owner.address);
 
         await expect(
-          createBond(factory, { maturityDate: currentTimestamp })
-        ).to.be.revertedWith("InvalidMaturityDate");
+          createBond(factory, { maturity: currentTimestamp })
+        ).to.be.revertedWith("InvalidMaturity");
       });
       it("should revert on a maturity date 10 years in the future", async () => {
         await factory.grantRole(ISSUER_ROLE, owner.address);
 
         await expect(
           createBond(factory, {
-            maturityDate: ELEVEN_YEARS_FROM_NOW_IN_SECONDS,
+            maturity: ELEVEN_YEARS_FROM_NOW_IN_SECONDS,
           })
-        ).to.be.revertedWith("InvalidMaturityDate");
+        ).to.be.revertedWith("InvalidMaturity");
       });
     });
 

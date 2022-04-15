@@ -22,27 +22,27 @@ const QUARTER_FIFTY_MILLION = (FIFTY_MILLION / 4).toString();
 export const NonConvertibleBondConfig: BondConfigType = {
   collateralTokenAmount: utils.parseUnits(HALF_FIFTY_MILLION, 18),
   convertibleTokenAmount: ZERO,
-  maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
+  maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
   maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
 export const ConvertibleBondConfig: BondConfigType = {
   collateralTokenAmount: utils.parseUnits(HALF_FIFTY_MILLION, 18),
   convertibleTokenAmount: utils.parseUnits(QUARTER_FIFTY_MILLION, 18),
-  maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
+  maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
   maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
 export const UncollateralizedBondConfig: BondConfigType = {
   collateralTokenAmount: ZERO,
   convertibleTokenAmount: ZERO,
-  maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
+  maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
   maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
 export const MaliciousBondConfig: BondConfigType = {
   collateralTokenAmount: utils.parseUnits(HALF_FIFTY_MILLION, 18),
   convertibleTokenAmount: utils.parseUnits(QUARTER_FIFTY_MILLION, 18),
-  maturityDate: THREE_YEARS_FROM_NOW_IN_SECONDS,
+  maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
   maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };

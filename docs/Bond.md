@@ -55,7 +55,7 @@ Emitted when collateral is withdrawn.
 
 ### Convert
 
-Emitted when Bond tokens are converted by a borrower.
+Emitted when bond shares are converted by a lender.
 
 
 
@@ -247,7 +247,7 @@ Emitted when a token is swept by the contract owner.
 
 
 
-### PaymentMet
+### PaymentAlreadyMet
 * Attempted to pay after payment was met.
 
 
@@ -625,7 +625,7 @@ function increaseAllowance(address spender, uint256 addedValue) external nonpaya
 ### initialize
 
 ```solidity
-function initialize(string bondName, string bondSymbol, address bondOwner, uint256 _maturityDate, address _paymentToken, address _collateralToken, uint256 _collateralRatio, uint256 _convertibleRatio, uint256 maxSupply) external nonpayable
+function initialize(string bondName, string bondSymbol, address bondOwner, uint256 _maturity, address _paymentToken, address _collateralToken, uint256 _collateralRatio, uint256 _convertibleRatio, uint256 maxSupply) external nonpayable
 ```
 
 This one-time setup initiated by the BondFactory initializes the Bond with the given configuration.
@@ -651,7 +651,7 @@ This one-time setup initiated by the BondFactory initializes the Bond with the g
       </tr>
   <tr>
     <td>uint256 </td>
-    <td>_maturityDate</td>
+    <td>_maturity</td>
         <td>
     The timestamp at which the Bond will mature.    </td>
       </tr>
@@ -730,10 +730,10 @@ Checks if the maturity date has passed.
       </tr>
 </table>
 
-### maturityDate
+### maturity
 
 ```solidity
-function maturityDate() external view returns (uint256)
+function maturity() external view returns (uint256)
 ```
 
 A date set at Bond creation when the Bond will mature.

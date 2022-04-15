@@ -4,7 +4,7 @@ import { Bond, TestERC20 } from "../typechain";
 export type BondConfigType = {
   convertibleTokenAmount: BigNumber;
   collateralTokenAmount: BigNumber;
-  maturityDate: BigNumberish;
+  maturity: BigNumberish;
   maxSupply: BigNumber;
 };
 

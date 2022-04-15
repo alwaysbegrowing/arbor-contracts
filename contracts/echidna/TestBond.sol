@@ -16,10 +16,10 @@ contract TestBond {
     uint256 internal constant CONVERTIBLE_RATIO = .5 ether;
     uint256 internal constant ONE = 1e18;
     uint256 internal constant MAX_INT = 2**256 - 1;
-    uint256 internal maturityDate;
+    uint256 internal maturity;
 
     constructor() {
-        maturityDate = block.timestamp + 365 days;
+        maturity = block.timestamp + 365 days;
 
         paymentToken = new TestERC20("PT", "PT", MAX_INT, 6);
         collateralToken = new TestERC20("CT", "CT", MAX_INT, 18);
@@ -30,7 +30,7 @@ contract TestBond {
                 "bondName",
                 "bondSymbol",
                 address(this),
-                maturityDate,
+                maturity,
                 address(paymentToken),
                 address(collateralToken),
                 COLLATERAL_RATIO,
@@ -60,7 +60,7 @@ contract TestBond {
         amount = amount % MAX_SUPPLY;
         uint256 sharesOwned = bond.balanceOf(address(this));
 
-        if (sharesOwned < amount || block.timestamp >= maturityDate) {
+        if (sharesOwned < amount || block.timestamp >= maturity) {
             try bond.convert(amount) {
                 emit AssertionFailed("convertBonds//did not revert");
             } catch {}
@@ -96,7 +96,7 @@ contract TestBond {
     function redeemBonds(uint256 amountToRedeem) public {
         if (
             bond.balanceOf(address(this)) < amountToRedeem ||
-            block.timestamp < maturityDate
+            block.timestamp < maturity
         ) {
             try bond.redeem(amountToRedeem) {
                 emit AssertionFailed("redeemBonds//did not revert");

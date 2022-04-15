@@ -23,6 +23,14 @@ contract BondFactory is IBondFactory, AccessControl {
     using SafeERC20 for IERC20Metadata;
     using FixedPointMathLib for uint256;
 
+    /// @notice Max length of the Bond.
+    uint256 internal constant MAX_TIME_TO_MATURITY = 3650 days;
+
+    /** @notice The max amount of decimals for the paymentToken and
+        collateralToken.
+    */
+    uint8 internal constant MAX_DECIMALS = 18;
+
     /// @notice The role required to issue bonds.
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
@@ -84,7 +92,7 @@ contract BondFactory is IBondFactory, AccessControl {
     function createBond(
         string memory name,
         string memory symbol,
-        uint256 maturityDate,
+        uint256 maturity,
         address paymentToken,
         address collateralToken,
         uint256 collateralTokenAmount,
@@ -102,16 +110,16 @@ contract BondFactory is IBondFactory, AccessControl {
             revert CollateralTokenAmountLessThanConvertibleTokenAmount();
         }
         if (
-            maturityDate <= block.timestamp ||
-            maturityDate > block.timestamp + 3650 days
+            maturity <= block.timestamp ||
+            maturity > block.timestamp + MAX_TIME_TO_MATURITY
         ) {
-            revert InvalidMaturityDate();
+            revert InvalidMaturity();
         }
         if (
-            IERC20Metadata(paymentToken).decimals() > 18 ||
-            IERC20Metadata(collateralToken).decimals() > 18
+            IERC20Metadata(paymentToken).decimals() > MAX_DECIMALS ||
+            IERC20Metadata(collateralToken).decimals() > MAX_DECIMALS
         ) {
-            revert DecimalsOver18();
+            revert TooManyDecimals();
         }
         if (isTokenAllowListEnabled) {
             _checkRole(ALLOWED_TOKEN, paymentToken);
@@ -129,7 +137,7 @@ contract BondFactory is IBondFactory, AccessControl {
             name,
             symbol,
             _msgSender(),
-            maturityDate,
+            maturity,
             paymentToken,
             collateralToken,
             collateralRatio,
@@ -142,7 +150,7 @@ contract BondFactory is IBondFactory, AccessControl {
             name,
             symbol,
             _msgSender(),
-            maturityDate,
+            maturity,
             paymentToken,
             collateralToken,
             collateralRatio,
@@ -165,9 +173,12 @@ contract BondFactory is IBondFactory, AccessControl {
         uint256 amountDeposited = IERC20Metadata(collateralToken).balanceOf(
             clone
         );
-        // Greater than instead of != for the case where the collateralToken
-        // is sent to the clone address before creation.
-        if (collateralToDeposit > amountDeposited) {
+
+        /**  
+        Check that the amount of collateral in the contract is the expected amount deposited. 
+            A token could take a fee upon transfer. If the collateralToken takes a fee than the transaction will be reverted. 
+        */
+        if (collateralToDeposit != amountDeposited) {
             revert InvalidDeposit();
         }
     }

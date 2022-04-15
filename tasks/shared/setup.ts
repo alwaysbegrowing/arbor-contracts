@@ -66,7 +66,7 @@ export const createBond = async (
       .createBond(
         bondName,
         bondSymbol,
-        ConvertibleBondConfig.maturityDate,
+        ConvertibleBondConfig.maturity,
         paymentToken.address,
         nativeToken.address,
         ConvertibleBondConfig.collateralTokenAmount,

@@ -34,15 +34,15 @@ contract Bond is
     using FixedPointMathLib for uint256;
 
     /// @inheritdoc IBond
-    uint256 public maturityDate;
+    uint256 public maturity;
 
     /// @inheritdoc IBond
     address public paymentToken;
 
-    /// @inheritdoc  IBond
+    /// @inheritdoc IBond
     address public collateralToken;
 
-    /// @inheritdoc  IBond
+    /// @inheritdoc IBond
     uint256 public collateralRatio;
 
     /// @inheritdoc IBond
@@ -69,7 +69,7 @@ contract Bond is
         string memory bondName,
         string memory bondSymbol,
         address bondOwner,
-        uint256 _maturityDate,
+        uint256 _maturity,
         address _paymentToken,
         address _collateralToken,
         uint256 _collateralRatio,
@@ -79,7 +79,7 @@ contract Bond is
         __ERC20_init(bondName, bondSymbol);
         _transferOwnership(bondOwner);
 
-        maturityDate = _maturityDate;
+        maturity = _maturity;
         paymentToken = _paymentToken;
         collateralToken = _collateralToken;
         collateralRatio = _collateralRatio;
@@ -130,7 +130,7 @@ contract Bond is
     /// @inheritdoc IBond
     function pay(uint256 amount) external nonReentrant {
         if (isFullyPaid()) {
-            revert PaymentMet();
+            revert PaymentAlreadyMet();
         }
         if (amount == 0) {
             revert ZeroAmount();
@@ -255,13 +255,9 @@ contract Bond is
                 ? 0 // Paid
                 : convertibleTokensRequired; // PaidEarly
         } else {
-            uint256 convertibleOrCollateral = convertibleTokensRequired >
-                collateralTokensRequired
-                ? convertibleTokensRequired
-                : collateralTokensRequired;
             totalRequiredCollateral = isMature()
                 ? collateralTokensRequired // Defaulted
-                : convertibleOrCollateral; // Active
+                : _max(convertibleTokensRequired, collateralTokensRequired); // Active
         }
         uint256 collBalance = collateralBalance();
         if (totalRequiredCollateral >= collBalance) {
@@ -313,7 +309,7 @@ contract Bond is
         );
     }
 
-    /// @inheritdoc  IBond
+    /// @inheritdoc IBond
     function collateralBalance()
         public
         view
@@ -331,7 +327,7 @@ contract Bond is
 
     /// @inheritdoc IBond
     function isMature() public view returns (bool isBondMature) {
-        isBondMature = block.timestamp >= maturityDate;
+        isBondMature = block.timestamp >= maturity;
     }
 
     /// @inheritdoc IBond
@@ -356,5 +352,9 @@ contract Bond is
 
     function decimals() public view override returns (uint8) {
         return IERC20Metadata(paymentToken).decimals();
+    }
+
+    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a >= b ? a : b;
     }
 }

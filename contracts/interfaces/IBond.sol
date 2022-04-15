@@ -11,7 +11,7 @@ interface IBond {
     error BondNotYetMaturedOrPaid();
 
     /// @notice Attempted to pay after payment was met.
-    error PaymentMet();
+    error PaymentAlreadyMet();
 
     /// @notice Attempted to sweep a token used in the contract.
     error SweepDisallowedForToken();
@@ -26,7 +26,7 @@ interface IBond {
     error NotEnoughCollateral();
 
     /**
-        @notice Emitted when Bond tokens are converted by a borrower.
+        @notice Emitted when bond shares are converted by a lender.
         @param from The address converting their tokens.
         @param collateralToken The address of the collateralToken.
         @param amountOfBondsConverted The number of burnt Bonds.
@@ -173,7 +173,7 @@ interface IBond {
         @param owner Ownership of the created Bond is transferred to this
             address by way of _transfeOwnership and tokens are minted to this address. See
             `initialize` in `Bond`.
-        @param _maturityDate The timestamp at which the Bond will mature.
+        @param _maturity The timestamp at which the Bond will mature.
         @param _paymentToken The ERC20 token address the Bond is redeemable for.
         @param _collateralToken The ERC20 token address the Bond is backed by.
         @param _collateralRatio The amount of collateral tokens per bond.
@@ -185,7 +185,7 @@ interface IBond {
         string memory bondName,
         string memory bondSymbol,
         address owner,
-        uint256 _maturityDate,
+        uint256 _maturity,
         address _paymentToken,
         address _collateralToken,
         uint256 _collateralRatio,
@@ -209,7 +209,7 @@ interface IBond {
         @notice A date set at Bond creation when the Bond will mature.
         @return The maturity date timestamp.
     */
-    function maturityDate() external view returns (uint256);
+    function maturity() external view returns (uint256);
 
     /**
         @notice Allows the issuer to pay the bond by depositing payment token.
