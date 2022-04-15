@@ -6,20 +6,20 @@
 
 - Allowed addresses can create a bond and move to "Not fully paid and not matured"
 
-## Not fully paid and not matured
+## Not fully paid and not matured (Active)
 
 - When maturity date passes move to "Not fully paid and matured"
 - Anyone can fully pay and move to "Fully paid and not matured"
 
-## Fully paid and not matured
+## Fully paid and not matured (PaidEarly)
 
 - When maturity date passes move to "Fully paid and matured"
 
-## Not fully paid and matured
+## Not fully paid and matured (Defaulted)
 
 - Anyone can fully pay and move to "Not fully paid and matured"
 
-## Fully paid and matured
+## Fully paid and matured (Paid)
 
 - This state is terminal (no more transitions are possible)
 
