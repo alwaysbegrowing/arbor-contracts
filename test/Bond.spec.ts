@@ -253,40 +253,49 @@ describe("Bond", () => {
           });
 
           it("should withdraw zero payment when bond is not overpaid", async () => {
-            expect(await bond.amountOverPaid()).to.equal(0);
-            await paymentToken.transfer(bond.address, await bond.amountOwed());
-            expect(await bond.amountOverPaid()).to.equal(0);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
+            await paymentToken.transfer(
+              bond.address,
+              await bond.amountUnpaid()
+            );
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
           });
 
           it("should withdraw excess payment when bond is overpaid", async () => {
             await paymentToken.transfer(
               bond.address,
-              (await bond.amountOwed()).add(1)
+              (await bond.amountUnpaid()).add(1)
             );
-            expect(await bond.amountOverPaid()).to.equal(1);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(1);
             await bond.withdrawExcessPayment(owner.address);
-            expect(await bond.amountOverPaid()).to.equal(0);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
           });
           it("should withdraw excess payment when bonds are redeemed", async () => {
             const bonds = await bond.balanceOf(owner.address);
-            const fullPayment = await bond.amountOwed();
+            const fullPayment = await bond.amountUnpaid();
             await paymentToken.transfer(bond.address, fullPayment.mul(2));
-            expect(await bond.amountOverPaid()).to.equal(fullPayment);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(
+              fullPayment
+            );
             const [paymentOnRedeem] = await bond.previewRedeemAtMaturity(bonds);
             expect(paymentOnRedeem).to.equal(fullPayment);
             await bond.redeem(bonds);
 
-            expect(await bond.amountOverPaid()).to.equal(fullPayment);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(
+              fullPayment
+            );
             await bond.withdrawExcessPayment(owner.address);
-            expect(await bond.amountOverPaid()).to.equal(0);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
           });
           it("should have available overpayment when partially paid and all bonds are burnt", async () => {
             const bonds = await bond.balanceOf(owner.address);
-            const halfPayment = (await bond.amountOwed()).div(2);
+            const halfPayment = (await bond.amountUnpaid()).div(2);
             await paymentToken.transfer(bond.address, halfPayment);
-            expect(await bond.amountOverPaid()).to.equal(0);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
             await bond.burn(bonds);
-            expect(await bond.amountOverPaid()).to.equal(halfPayment);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(
+              halfPayment
+            );
           });
         });
         describe("convertible", async () => {
@@ -300,15 +309,19 @@ describe("Bond", () => {
           });
           it("should withdraw excess payment when bonds are converted", async () => {
             const halfBonds = (await bond.balanceOf(owner.address)).div(2);
-            const fullPayment = await bond.amountOwed();
+            const fullPayment = await bond.amountUnpaid();
             await paymentToken.transfer(bond.address, fullPayment);
-            expect(await bond.amountOverPaid()).to.equal(0);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
             await bond.convert(halfBonds);
-            expect(await bond.amountOverPaid()).to.equal(fullPayment.div(2));
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(
+              fullPayment.div(2)
+            );
             await bond.convert(halfBonds);
-            expect(await bond.amountOverPaid()).to.equal(fullPayment);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(
+              fullPayment
+            );
             await bond.withdrawExcessPayment(owner.address);
-            expect(await bond.amountOverPaid()).to.equal(0);
+            expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
           });
         });
       });
@@ -361,23 +374,23 @@ describe("Bond", () => {
           it("should return amount owed scaled to payment amount", async () => {
             const thirdSupply = config.maxSupply.div(3);
 
-            expect(await bond.amountOwed()).to.equal(config.maxSupply);
+            expect(await bond.amountUnpaid()).to.equal(config.maxSupply);
 
             await (await bond.pay(thirdSupply)).wait();
-            expect(await bond.amountOwed()).to.equal(
+            expect(await bond.amountUnpaid()).to.equal(
               config.maxSupply.sub(await bond.paymentBalance())
             );
 
             await (await bond.pay(thirdSupply)).wait();
-            expect(await bond.amountOwed()).to.equal(
+            expect(await bond.amountUnpaid()).to.equal(
               config.maxSupply.sub(await bond.paymentBalance())
             );
 
             await (await bond.pay(thirdSupply)).wait();
-            expect(await bond.amountOwed()).to.equal(BigNumber.from(2));
+            expect(await bond.amountUnpaid()).to.equal(BigNumber.from(2));
 
             await expect(bond.pay(2)).to.emit(bond, "Payment");
-            expect(await bond.amountOwed()).to.equal(ZERO);
+            expect(await bond.amountUnpaid()).to.equal(ZERO);
           });
         });
       });
@@ -406,14 +419,14 @@ describe("Bond", () => {
             });
 
             it("allows a partial withdraw", async () => {
-              const owed = await bond.amountOwed();
+              const owed = await bond.amountUnpaid();
               await paymentToken.approve(bond.address, owed);
               await bond.pay(owed);
 
               await expectTokenDelta(
                 async () =>
                   bond.withdrawExcessCollateral(
-                    (await bond.previewWithdraw()).div(2),
+                    (await bond.previewWithdrawExcessCollateral()).div(2),
                     owner.address
                   ),
                 collateralToken,
@@ -423,13 +436,13 @@ describe("Bond", () => {
               );
             });
             it("fails if requesting too much", async () => {
-              const owed = await bond.amountOwed();
+              const owed = await bond.amountUnpaid();
               await paymentToken.approve(bond.address, owed);
               await bond.pay(owed);
 
               await expect(
                 bond.withdrawExcessCollateral(
-                  (await bond.previewWithdraw()).add(1),
+                  (await bond.previewWithdrawExcessCollateral()).add(1),
                   owner.address
                 )
               ).to.be.revertedWith("NotEnoughCollateral");
@@ -456,7 +469,7 @@ describe("Bond", () => {
               await expectTokenDelta(
                 async () =>
                   bond.withdrawExcessCollateral(
-                    await bond.previewWithdraw(),
+                    await bond.previewWithdrawExcessCollateral(),
                     owner.address
                   ),
                 collateralToken,
@@ -522,14 +535,14 @@ describe("Bond", () => {
                 await paymentToken.approve(bond.address, targetPayment)
               ).wait();
               await (await bond.pay(targetPayment)).wait();
-              const amountOwed = await bond.amountOwed();
+              const amountUnpaid = await bond.amountUnpaid();
               await (
                 await bond.withdrawExcessCollateral(
-                  await bond.previewWithdraw(),
+                  await bond.previewWithdrawExcessCollateral(),
                   owner.address
                 )
               ).wait();
-              expect(await bond.amountOwed()).to.be.equal(amountOwed);
+              expect(await bond.amountUnpaid()).to.be.equal(amountUnpaid);
             });
 
             it("should withdraw zero collateral when zero amount are burned", async () => {
@@ -592,7 +605,7 @@ describe("Bond", () => {
               await expectTokenDelta(
                 async () =>
                   bond.withdrawExcessCollateral(
-                    await bond.previewWithdraw(),
+                    await bond.previewWithdrawExcessCollateral(),
                     owner.address
                   ),
                 collateralToken,
@@ -644,7 +657,7 @@ describe("Bond", () => {
                 bond.address,
                 utils.parseEther("1")
               );
-              expect(await bond.previewWithdraw()).to.equal(
+              expect(await bond.previewWithdrawExcessCollateral()).to.equal(
                 utils.parseEther("1")
               );
             });
@@ -683,7 +696,7 @@ describe("Bond", () => {
         });
         describe("PaidEarly state", async () => {
           it("should redeem for payment token when bond is PaidEarly", async () => {
-            await bond.pay(await bond.amountOwed());
+            await bond.pay(await bond.amountUnpaid());
             await previewRedeem({
               bond,
               sharesToRedeem: utils.parseUnits("1000", decimals),
@@ -702,7 +715,7 @@ describe("Bond", () => {
           });
 
           it("should revert if 0 bonds are passed in & PaidEarly", async () => {
-            await bond.pay(await bond.amountOwed());
+            await bond.pay(await bond.amountUnpaid());
             await previewRedeem({
               bond,
               sharesToRedeem: ZERO,
@@ -831,7 +844,7 @@ describe("Bond", () => {
         });
         describe("Active state", async () => {
           it("should redeem for zero tokens when bond is Active", async () => {
-            await bond.pay((await bond.amountOwed()).sub(1));
+            await bond.pay((await bond.amountUnpaid()).sub(1));
             await previewRedeem({
               bond,
               sharesToRedeem: ZERO,
@@ -904,10 +917,10 @@ describe("Bond", () => {
           });
 
           it("should lower amount owed when bonds are converted", async () => {
-            const amountOwed = await bond.amountOwed();
+            const amountUnpaid = await bond.amountUnpaid();
             await bond.convert(config.maxSupply.div(2));
-            expect(await bond.amountOwed()).to.be.equal(amountOwed.div(2));
-            expect(await bond.amountOwed()).to.be.equal(
+            expect(await bond.amountUnpaid()).to.be.equal(amountUnpaid.div(2));
+            expect(await bond.amountUnpaid()).to.be.equal(
               config.maxSupply.div(2)
             );
           });

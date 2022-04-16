@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import {IBond} from "./interfaces/IBond.sol";
 
-import {ERC20BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import {ERC20BurnableUpgradeable, IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -19,9 +19,11 @@ import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
     @notice The contract handles issuance, payment, conversion, and redemption.
     @dev External calls to tokens used for collateral and payment are used
         throughout to transfer and check balances. There is risk that these
-        are non-standard and should be carefully inspected before being trusted. 
-    @dev Does not inherit from ERC20Upgradeable or Initializable since
-        ERC20BurnableUpgradeable inherits from them.
+        are non-standard and should be carefully inspected before being trusted.
+        The contract does not inherit from ERC20Upgradeable or Initializable
+        since ERC20BurnableUpgradeable inherits from them. Additionally,
+        throughout the contract some state variables are redefined to save
+        an extra SLOAD.
 */
 contract Bond is
     IBond,
@@ -30,7 +32,6 @@ contract Bond is
     ReentrancyGuard
 {
     using SafeERC20 for IERC20Metadata;
-
     using FixedPointMathLib for uint256;
 
     /// @inheritdoc IBond
@@ -48,7 +49,11 @@ contract Bond is
     /// @inheritdoc IBond
     uint256 public convertibleRatio;
 
-    /// @dev Used to confirm the bond has not yet matured.
+    /**
+        @dev Confirms the Bond has not yet matured. This is used on the
+            `convert` function because bond shares are convertible only before
+            maturity has been reached.
+    */
     modifier beforeMaturity() {
         if (isMature()) {
             revert BondPastMaturity();
@@ -56,7 +61,11 @@ contract Bond is
         _;
     }
 
-    /// @dev Used to confirm that the bon is either mature or has been paid.
+    /**
+        @dev Confirms that the Bond is either mature or has been paid.
+            This is used in the `redeem` function because bond shares can be
+            redeemed when either the bond is fully paid or mature.
+    */
     modifier afterMaturityOrPaid() {
         if (!isMature() && !isFullyPaid()) {
             revert BondNotYetMaturedOrPaid();
@@ -84,6 +93,7 @@ contract Bond is
         collateralToken = _collateralToken;
         collateralRatio = _collateralRatio;
         convertibleRatio = _convertibleRatio;
+
         _mint(bondOwner, maxSupply);
     }
 
@@ -99,32 +109,19 @@ contract Bond is
 
         burn(bonds);
 
-        // Saves an extra SLOAD
-        address collateral = collateralToken;
+        address _collateralToken = collateralToken;
 
-        IERC20Metadata(collateral).safeTransfer(
+        IERC20Metadata(_collateralToken).safeTransfer(
             _msgSender(),
             convertibleTokensToSend
         );
 
-        emit Convert(_msgSender(), collateral, bonds, convertibleTokensToSend);
-    }
-
-    /// @inheritdoc IBond
-    function withdrawExcessCollateral(uint256 amount, address receiver)
-        external
-        onlyOwner
-    {
-        if (amount > previewWithdraw()) {
-            revert NotEnoughCollateral();
-        }
-
-        // Saves an extra SLOAD
-        address collateral = collateralToken;
-
-        IERC20Metadata(collateral).safeTransfer(receiver, amount);
-
-        emit CollateralWithdraw(_msgSender(), receiver, collateral, amount);
+        emit Convert(
+            _msgSender(),
+            _collateralToken,
+            bonds,
+            convertibleTokensToSend
+        );
     }
 
     /// @inheritdoc IBond
@@ -141,6 +138,7 @@ contract Bond is
             address(this),
             amount
         );
+
         emit Payment(_msgSender(), amount);
     }
 
@@ -161,29 +159,70 @@ contract Bond is
 
         burn(bonds);
 
-        // Saves an extra SLOAD
-        address payment = paymentToken;
-        address collateral = collateralToken;
+        address _paymentToken = paymentToken;
+        address _collateralToken = collateralToken;
 
         if (paymentTokensToSend != 0) {
-            IERC20Metadata(payment).safeTransfer(
+            IERC20Metadata(_paymentToken).safeTransfer(
                 _msgSender(),
                 paymentTokensToSend
             );
         }
+
         if (collateralTokensToSend != 0) {
-            IERC20Metadata(collateral).safeTransfer(
+            IERC20Metadata(_collateralToken).safeTransfer(
                 _msgSender(),
                 collateralTokensToSend
             );
         }
+
         emit Redeem(
             _msgSender(),
-            payment,
-            collateral,
+            _paymentToken,
+            _collateralToken,
             bonds,
             paymentTokensToSend,
             collateralTokensToSend
+        );
+    }
+
+    /// @inheritdoc IBond
+    function withdrawExcessCollateral(uint256 amount, address receiver)
+        external
+        onlyOwner
+    {
+        if (amount > previewWithdrawExcessCollateral()) {
+            revert NotEnoughCollateral();
+        }
+
+        address _collateralToken = collateralToken;
+
+        IERC20Metadata(_collateralToken).safeTransfer(receiver, amount);
+
+        emit CollateralWithdraw(
+            _msgSender(),
+            receiver,
+            _collateralToken,
+            amount
+        );
+    }
+
+    /// @inheritdoc IBond
+    function withdrawExcessPayment(address receiver) external onlyOwner {
+        uint256 overpayment = previewWithdrawExcessPayment();
+        if (overpayment <= 0) {
+            revert NoPaymentToWithdraw();
+        }
+
+        address _paymentToken = paymentToken;
+
+        IERC20Metadata(_paymentToken).safeTransfer(receiver, overpayment);
+
+        emit ExcessPaymentWithdraw(
+            _msgSender(),
+            receiver,
+            _paymentToken,
+            overpayment
         );
     }
 
@@ -192,8 +231,8 @@ contract Bond is
         external
         onlyOwner
     {
-        // Check the balances before and compare to after to protect
-        // against tokens that may proxy transfers through different addresses.
+        // To protect against tokens that may proxy transfers through different
+        // addresses, compare the balances before and after.
         uint256 paymentTokenBalanceBefore = IERC20Metadata(paymentToken)
             .balanceOf(address(this));
         uint256 collateralTokenBalanceBefore = IERC20Metadata(collateralToken)
@@ -233,12 +272,35 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function previewWithdraw() public view returns (uint256 collateralTokens) {
-        collateralTokens = previewWithdrawAfterPayment(0);
+    function previewRedeemAtMaturity(uint256 bonds)
+        public
+        view
+        returns (uint256 paymentTokensToSend, uint256 collateralTokensToSend)
+    {
+        uint256 bondSupply = totalSupply();
+        if (bondSupply == 0) {
+            return (0, 0);
+        }
+        uint256 paidAmount = isFullyPaid() ? bondSupply : paymentBalance();
+        paymentTokensToSend = bonds.mulDivDown(paidAmount, bondSupply);
+
+        uint256 nonPaidAmount = bondSupply - paidAmount;
+        collateralTokensToSend = collateralRatio.mulWadDown(
+            bonds.mulDivDown(nonPaidAmount, bondSupply)
+        );
     }
 
     /// @inheritdoc IBond
-    function previewWithdrawAfterPayment(uint256 payment)
+    function previewWithdrawExcessCollateral()
+        public
+        view
+        returns (uint256 collateralTokens)
+    {
+        collateralTokens = previewWithdrawExcessCollateralAfterPayment(0);
+    }
+
+    /// @inheritdoc IBond
+    function previewWithdrawExcessCollateralAfterPayment(uint256 payment)
         public
         view
         returns (uint256 collateralTokens)
@@ -264,54 +326,28 @@ contract Bond is
                 ? collateralTokensRequired // Defaulted
                 : _max(convertibleTokensRequired, collateralTokensRequired); // Active
         }
-        uint256 collBalance = collateralBalance();
-        if (totalRequiredCollateral >= collBalance) {
+        uint256 _collateralBalance = collateralBalance();
+        if (totalRequiredCollateral >= _collateralBalance) {
             return 0;
         }
 
-        collateralTokens = collBalance - totalRequiredCollateral;
+        collateralTokens = _collateralBalance - totalRequiredCollateral;
     }
 
     /// @inheritdoc IBond
-    function previewRedeemAtMaturity(uint256 bonds)
+    function previewWithdrawExcessPayment()
         public
         view
-        returns (uint256 paymentTokensToSend, uint256 collateralTokensToSend)
+        returns (uint256 paymentTokens)
     {
-        uint256 supply = totalSupply();
-        if (supply == 0) {
-            return (0, 0);
+        uint256 bondSupply = totalSupply();
+        uint256 _paymentBalance = paymentBalance();
+
+        if (bondSupply >= _paymentBalance) {
+            return 0;
         }
-        uint256 paidAmount = isFullyPaid() ? supply : paymentBalance();
-        paymentTokensToSend = bonds.mulDivDown(paidAmount, supply);
 
-        uint256 nonPaidAmount = supply - paidAmount;
-        collateralTokensToSend = collateralRatio.mulWadDown(
-            bonds.mulDivDown(nonPaidAmount, supply)
-        );
-    }
-
-    /// @inheritdoc IBond
-    function paymentBalance() public view returns (uint256 paymentTokens) {
-        paymentTokens = IERC20Metadata(paymentToken).balanceOf(address(this));
-    }
-
-    /// @inheritdoc IBond
-    function withdrawExcessPayment(address receiver) external onlyOwner {
-        uint256 overpayment = amountOverPaid();
-        if (overpayment <= 0) {
-            revert NoPaymentToWithdraw();
-        }
-        // Saves an extra SLOAD
-        address payment = paymentToken;
-
-        IERC20Metadata(payment).safeTransfer(receiver, overpayment);
-        emit ExcessPaymentWithdraw(
-            _msgSender(),
-            receiver,
-            payment,
-            overpayment
-        );
+        paymentTokens = _paymentBalance - bondSupply;
     }
 
     /// @inheritdoc IBond
@@ -326,8 +362,25 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function isFullyPaid() public view returns (bool isPaid) {
-        isPaid = paymentBalance() >= totalSupply();
+    function paymentBalance() public view returns (uint256 paymentTokens) {
+        paymentTokens = IERC20Metadata(paymentToken).balanceOf(address(this));
+    }
+
+    /// @inheritdoc IBond
+    function amountUnpaid() external view returns (uint256 paymentTokens) {
+        uint256 bondSupply = totalSupply();
+        uint256 _paymentBalance = paymentBalance();
+
+        if (bondSupply <= _paymentBalance) {
+            return 0;
+        }
+
+        paymentTokens = bondSupply - _paymentBalance;
+    }
+
+    /// @inheritdoc IBond
+    function isFullyPaid() public view returns (bool isBondPaid) {
+        isBondPaid = paymentBalance() >= totalSupply();
     }
 
     /// @inheritdoc IBond
@@ -335,26 +388,7 @@ contract Bond is
         isBondMature = block.timestamp >= maturity;
     }
 
-    /// @inheritdoc IBond
-    function amountOwed() external view returns (uint256 amountUnpaid) {
-        uint256 supply = totalSupply();
-        uint256 balance = paymentBalance();
-        if (supply <= balance) {
-            return 0;
-        }
-        amountUnpaid = supply - balance;
-    }
-
-    /// @inheritdoc IBond
-    function amountOverPaid() public view returns (uint256 overpayment) {
-        uint256 supply = totalSupply();
-        uint256 balance = paymentBalance();
-        if (supply >= balance) {
-            return 0;
-        }
-        overpayment = balance - supply;
-    }
-
+    /// @inheritdoc IERC20MetadataUpgradeable
     function decimals() public view override returns (uint8) {
         return IERC20Metadata(paymentToken).decimals();
     }

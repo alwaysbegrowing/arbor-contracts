@@ -4,10 +4,10 @@ pragma solidity 0.8.9;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 interface IBond {
-    /// @notice Operation restricted because the bond has matured.
+    /// @notice Operation restricted because the Bond has matured.
     error BondPastMaturity();
 
-    /// @notice Operation restricted because the bond has not matured or paid.
+    /// @notice Operation restricted because the Bond has not matured or paid.
     error BondNotYetMaturedOrPaid();
 
     /// @notice Attempted to pay after payment was met.
@@ -22,14 +22,14 @@ interface IBond {
     /// @notice Attempted to withdraw with no excess payment in the contract.
     error NoPaymentToWithdraw();
 
-    /// @notice Attempted to withdraw more collateral than avaliable
+    /// @notice Attempted to withdraw more collateral than available.
     error NotEnoughCollateral();
 
     /**
-        @notice Emitted when bond shares are converted by a lender.
+        @notice Emitted when bond shares are converted by a Bond holder.
         @param from The address converting their tokens.
         @param collateralToken The address of the collateralToken.
-        @param amountOfBondsConverted The number of burnt Bonds.
+        @param amountOfBondsConverted The number of burnt bond shares.
         @param amountOfCollateralTokens The number of collateralTokens received.
     */
     event Convert(
@@ -41,7 +41,7 @@ interface IBond {
 
     /**
         @notice Emitted when collateral is withdrawn.
-        @param from The address withdrawing the collateral.
+        @param from The address withdrawing the collateralTokens.
         @param receiver The address receiving the collateralTokens.
         @param token The address of the collateralToken.
         @param amount The number of collateralTokens withdrawn.
@@ -62,13 +62,14 @@ interface IBond {
     event Payment(address indexed from, uint256 amount);
 
     /**
-        @notice Emitted when a Bond is redeemed.
-        @param from The Bond holder whose Bonds are burnt.
+        @notice Emitted when a bond share is redeemed.
+        @param from The Bond holder whose bond shares are burnt.
         @param paymentToken The address of the paymentToken.
         @param collateralToken The address of the collateralToken.
-        @param amountOfBondsRedeemed The amount of Bonds burned for redemption.
-        @param amountOfPaymentTokensReceived The amount of paymentTokens.
-        @param amountOfCollateralTokens The amount of collateralTokens.
+        @param amountOfBondsRedeemed The number of bond shares burned for
+            redemption.
+        @param amountOfPaymentTokensReceived The number of paymentTokens.
+        @param amountOfCollateralTokens The number of collateralTokens.
     */
     event Redeem(
         address indexed from,
@@ -83,7 +84,7 @@ interface IBond {
         @notice Emitted when payment over the required amount is withdrawn.
         @param from The caller withdrawing the excess payment amount.
         @param receiver The address receiving the paymentTokens.
-        @param token The paymentToken being withdrawn.
+        @param token The address of the paymentToken being withdrawn.
         @param amount The amount of paymentToken withdrawn.
     */
     event ExcessPaymentWithdraw(
@@ -97,8 +98,8 @@ interface IBond {
         @notice Emitted when a token is swept by the contract owner.
         @param from The owner's address.
         @param receiver The address receiving the swept tokens.
-        @param token The token that was swept.
-        @param amount The amount that was swept.
+        @param token The address of the token that was swept.
+        @param amount The number of tokens swept.
     */
     event TokenSweep(
         address from,
@@ -108,20 +109,14 @@ interface IBond {
     );
 
     /**
-        @notice The amount that was overpaid and can be withdrawn.
-        @return overpayment Amount that was overpaid.
-    */
-    function amountOverPaid() external view returns (uint256 overpayment);
-
-    /**
         @notice The amount of paymentTokens required to fully pay the contract.
-        @return amountUnpaid The amount of paymentTokens.
+        @return paymentTokens The number of paymentTokens unpaid.
     */
-    function amountOwed() external view returns (uint256 amountUnpaid);
+    function amountUnpaid() external view returns (uint256 paymentTokens);
 
     /**
         @notice The external balance of the ERC20 collateral token.
-        @return collateralTokens The amount of collateralTokens in the contract.
+        @return collateralTokens The number of collateralTokens in the contract.
     */
     function collateralBalance()
         external
@@ -129,36 +124,37 @@ interface IBond {
         returns (uint256 collateralTokens);
 
     /**
-        @notice The ratio of collateralTokens per Bond.
-        @dev This amount is calculated as a deviation from 1-to-1 multiplied by
+        @notice The number of collateralTokens per Bond.
+        @dev This ratio is calculated as a deviation from 1-to-1 multiplied by
             the decimals of the collateralToken. See BondFactory's `CreateBond`.
-        @return The number of tokens backing a Bond.
+        @return The number of collateralTokens per Bond.
     */
     function collateralRatio() external view returns (uint256);
 
     /**
         @notice The ERC20 token used as collateral backing the bond.
-        @return The ERC20 token's address.
+        @return The collateralToken's address.
     */
     function collateralToken() external view returns (address);
 
     /**
         @notice For convertible Bonds (ones with a convertibilityRatio > 0),
-        the Bond holder may convert their bond to underlying collateral at the
-        convertibleRatio. The bond must also have not past maturity
-        for this to be possible.
+            the Bond holder may convert their bond to underlying collateral at
+            the convertibleRatio. The bond must also have not past maturity
+            for this to be possible.
+        @dev Emits `Convert` event.
         @param bonds The number of bonds which will be burnt and converted
             into the collateral at the convertibleRatio.
     */
     function convert(uint256 bonds) external;
 
     /**
-        @notice The ratio of convertibleTokens the bonds will convert into.
-        @dev This amount is calculated as a deviation from 1-to-1 multiplied by
+        @notice The number of convertibleTokens the bonds will convert into.
+        @dev This ratio is calculated as a deviation from 1-to-1 multiplied by
             the decimals of the collateralToken. See BondFactory's `CreateBond`.
             The "convertibleTokens" are a subset of the collateralTokens, based
             on this ratio. If this ratio is 0, the bond is not convertible.
-        @dev Number of tokens a Bond converts into.
+        @return The number of convertibleTokens per Bond.
     */
     function convertibleRatio() external view returns (uint256);
 
@@ -171,8 +167,8 @@ interface IBond {
         @param bondName Passed into the ERC20 token to define the name.
         @param bondSymbol Passed into the ERC20 token to define the symbol.
         @param owner Ownership of the created Bond is transferred to this
-            address by way of _transfeOwnership and tokens are minted to this address. See
-            `initialize` in `Bond`.
+            address by way of _transferOwnership and also the address that
+            tokens are minted to. See `initialize` in `Bond`.
         @param _maturity The timestamp at which the Bond will mature.
         @param _paymentToken The ERC20 token address the Bond is redeemable for.
         @param _collateralToken The ERC20 token address the Bond is backed by.
@@ -194,32 +190,32 @@ interface IBond {
     ) external;
 
     /**
-        @notice Checks if the balance of payment token covers the Bond supply.
-        @return isPaid Whether or not the Bond is fully paid.
+        @notice Checks if the balance of paymentToken covers the Bond supply.
+        @return isBondPaid Whether or not the Bond is fully paid.
     */
-    function isFullyPaid() external view returns (bool isPaid);
+    function isFullyPaid() external view returns (bool isBondPaid);
 
     /**
-        @notice Checks if the maturity date has passed.
-        @return isBondMature Whether or not the Bond has reached the maturity date.
+        @notice Checks if the maturity timestamp has passed.
+        @return isBondMature Whether or not the Bond has reached maturity.
     */
     function isMature() external view returns (bool isBondMature);
 
     /**
         @notice A date set at Bond creation when the Bond will mature.
-        @return The maturity date timestamp.
+        @return The maturity date as a timestamp.
     */
     function maturity() external view returns (uint256);
 
     /**
-        @notice Allows the issuer to pay the bond by depositing payment token.
-        @dev Emits Payment event.
+        @notice Allows the owner to pay the bond by depositing paymentTokens.
+        @dev Emits `Payment` event.
         @param amount The number of paymentTokens to deposit.
     */
     function pay(uint256 amount) external;
 
     /**
-        @notice Gets the external balance of the ERC20 payment token.
+        @notice Gets the external balance of the ERC20 paymentToken.
         @return paymentTokens The number of paymentTokens in the contract.
     */
     function paymentBalance() external view returns (uint256 paymentTokens);
@@ -235,8 +231,10 @@ interface IBond {
         @notice Before maturity, if the given bonds are converted, this would be
             the number of collateralTokens received. This function rounds down
             the number of returned collateral.
-        @param bonds The number of Bonds burnt and converted into collateral.
-        @return collateralTokens The number of collateralTokens the Bonds will be converted into.
+        @param bonds The number of bond shares burnt and converted into
+            collateralTokens.
+        @return collateralTokens The number of collateralTokens the Bonds would
+            be converted into.
     */
     function previewConvertBeforeMaturity(uint256 bonds)
         external
@@ -244,12 +242,14 @@ interface IBond {
         returns (uint256 collateralTokens);
 
     /**
-        @notice At maturity, if the given bonds are redeemed, this would be the
-            amount of collateralTokens and paymentTokens received. The number
-            of paymentTokens to receive is rounded down.
+        @notice At maturity, if the given bond shares are redeemed, this would
+            be the number of collateralTokens and paymentTokens received by the
+            bond holder. The number of paymentTokens to receive is rounded down.
         @param bonds The number of Bonds to burn and redeem for tokens.
-        @return paymentTokensToSend The number of paymentTokens to receive.
-        @return collateralTokensToSend The number of collateralTokens to receive.
+        @return paymentTokensToSend The number of paymentTokens that the bond
+            shares would be redeemed for.
+        @return collateralTokensToSend The number of collateralTokens that would
+            be redeemed for.
     */
     function previewRedeemAtMaturity(uint256 bonds)
         external
@@ -257,12 +257,12 @@ interface IBond {
         returns (uint256 paymentTokensToSend, uint256 collateralTokensToSend);
 
     /** 
-        @notice The amount of collateral that the issuer would be able to 
+        @notice The number of collateralTokens that the owner would be able to 
             withdraw from the contract. This function rounds up the number 
             of collateralTokens required in the contract and therefore may round
             down the amount received.
         @dev This function calculates the amount of collateralTokens that are
-            able to be withdrawn by the issuer. The amount of tokens can
+            able to be withdrawn by the owner. The amount of tokens can
             increase when Bonds are burnt and converted as well when payment is
             made. Each Bond is covered by a certain amount of collateral to
             the collateralRatio. In addition to covering the collateralRatio,
@@ -293,62 +293,77 @@ interface IBond {
             bond is NOT paid AND mature (Defaulted)
                 to cover collateralRatio: totalUncoveredSupply * collateralRatio
                 to cover convertibleRatio: 0
-        @param payment The amount of paymentToken to add when previewing a withdraw.
-        @return collateralTokens The number of collateralTokens received.
+        @param payment The number of paymentTokens to add when previewing a
+            withdraw.
+        @return collateralTokens The number of collateralTokens that would be
+            withdrawn.
      */
-    function previewWithdrawAfterPayment(uint256 payment)
+    function previewWithdrawExcessCollateralAfterPayment(uint256 payment)
         external
         view
         returns (uint256 collateralTokens);
 
     /**
-        @notice The amount of collateral that the issuer would be able to 
+        @notice The number of collateralTokens that the owner would be able to 
             withdraw from the contract. This does not take into account an
             amount of payment like `previewWithdrawAfterPayment` does. See that
             function for more information.
         @dev Calls `previewWithdrawAfterPayment` with a payment amount of 0.
         @return collateralTokens The number of collateralTokens that would be
-        received by the issuer.
+            withdrawn.
     */
-    function previewWithdraw() external view returns (uint256 collateralTokens);
+    function previewWithdrawExcessCollateral()
+        external
+        view
+        returns (uint256 collateralTokens);
 
     /**
-        @notice The Bond holder can burn Bonds in return for their portion of
-        paymentTokens and collateralTokens backing the Bonds. These portions of
-        tokens depends on the number of paymentTokens deposited. When the Bond
-        is fully paid, redemption will result in all paymentTokens. If the Bond
-        has reached maturity without being fully paid, a portion of the
-        collateralTokens will be availalbe.
+        @notice The number of excess paymentTokens that the owner would be able
+            to withdraw from the contract.
+        @return paymentTokens The number of paymentTokens that would be
+            withdrawn.
+    */
+    function previewWithdrawExcessPayment()
+        external
+        view
+        returns (uint256 paymentTokens);
+
+    /**
+        @notice The Bond holder can burn bond shares in return for their portion
+            of paymentTokens and collateralTokens backing the Bonds. These
+            portions of tokens depends on the number of paymentTokens deposited.
+            When the Bond is fully paid, redemption will result in all 
+            paymentTokens. If the Bond has reached maturity without being fully
+            paid, a portion of the collateralTokens will be available.
         @dev Emits Redeem event.
-        @param bonds The number of bonds to redeem and burn.
+        @param bonds The number of bond shares to redeem and burn.
     */
     function redeem(uint256 bonds) external;
 
     /**
-        @notice Sends tokens to the owner that are in this contract.
-        @dev The collateralToken and paymentToken, cannot be swept.
+        @notice Sends ERC20 tokens to the owner that are in this contract.
+        @dev The collateralToken and paymentToken cannot be swept. Emits 
+            `TokenSweep` event.
         @param token The ERC20 token to sweep and send to the owner.
         @param receiver The address that is transferred the swept token.
-
     */
     function sweep(IERC20Metadata token, address receiver) external;
 
     /**
-        @notice The Owner may withdraw excess collateral
-            from bond contract. The number of collateralTokens remaining in the
-            contract must be enough to cover the total supply of Bonds in
-            accordance to both the collateralRatio and convertibleRatio.
-        @param amount The amount of collateral to withdraw. Reverts if this number is greater than avaliable. 
-        @param receiver The address that is transferred the excess collateral.
+        @notice The Owner may withdraw excess collateral from the Bond contract.
+            The number of collateralTokens remaining in the contract must be
+            enough to cover the total supply of Bonds in accordance to both the collateralRatio and convertibleRatio.
+        @dev Emits `CollateralWithdraw` event.
+        @param amount The number of collateralTokens to withdraw. Reverts if
+            the amount is greater than available in the contract. 
+        @param receiver The address transferred the excess collateralTokens.
     */
     function withdrawExcessCollateral(uint256 amount, address receiver)
         external;
 
     /**
-        @notice The Owner can withdraw any overpaid
-            payment token in the contract.
-        @param receiver The address that is transferred the excess payment.
-
+        @notice The owner can withdraw any excess paymentToken in the contract.
+        @param receiver The address that is transferred the excess paymentToken.
     */
     function withdrawExcessPayment(address receiver) external;
 }

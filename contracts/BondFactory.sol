@@ -26,15 +26,16 @@ contract BondFactory is IBondFactory, AccessControl {
     /// @notice Max length of the Bond.
     uint256 internal constant MAX_TIME_TO_MATURITY = 3650 days;
 
-    /** @notice The max amount of decimals for the paymentToken and
-        collateralToken.
+    /**
+        @notice The max number of decimals for the paymentToken and
+            collateralToken.
     */
     uint8 internal constant MAX_DECIMALS = 18;
 
     /// @notice The role required to issue bonds.
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
-    /// @notice The role given to allowed tokens
+    /// @notice The role given to allowed tokens.
     bytes32 public constant ALLOWED_TOKEN = keccak256("ALLOWED_TOKEN");
 
     /// @inheritdoc IBondFactory
@@ -105,7 +106,6 @@ contract BondFactory is IBondFactory, AccessControl {
         if (paymentToken == collateralToken) {
             revert TokensMustBeDifferent();
         }
-
         if (collateralTokenAmount < convertibleTokenAmount) {
             revert CollateralTokenAmountLessThanConvertibleTokenAmount();
         }
@@ -174,9 +174,10 @@ contract BondFactory is IBondFactory, AccessControl {
             clone
         );
 
-        /**  
-        Check that the amount of collateral in the contract is the expected amount deposited. 
-            A token could take a fee upon transfer. If the collateralToken takes a fee than the transaction will be reverted. 
+        /*
+            Check that the amount of collateral in the contract is the expected
+            amount deposited. A token could take a fee upon transfer. If the
+            collateralToken takes a fee than the transaction will be reverted. 
         */
         if (collateralToDeposit != amountDeposited) {
             revert InvalidDeposit();

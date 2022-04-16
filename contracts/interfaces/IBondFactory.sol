@@ -18,19 +18,19 @@ interface IBondFactory {
 
     /**
         @notice Emitted when a new bond is created.
-        @param newBond The address of the newley deployed bond.
+        @param newBond The address of the newly deployed bond.
         @param name Passed into the ERC20 token to define the name.
         @param symbol Passed into the ERC20 token to define the symbol.
         @param owner Ownership of the created Bond is transferred to this
-            address by way of _transfeOwnership and tokens are minted to this address. See
-            `initialize` in `Bond`.
+            address by way of _transferOwnership and tokens are minted to this
+            address. See `initialize` in `Bond`.
         @param maturity The timestamp at which the Bond will mature.
         @param paymentToken The ERC20 token address the Bond is redeemable for.
         @param collateralToken The ERC20 token address the Bond is backed by.
         @param collateralTokenAmount The amount of collateral tokens per bond.
         @param convertibleTokenAmount The amount of convertible tokens per bond.
-        @param bonds The amount of bond shares to give to the owner during the one-time
-            mint during the `Bond`'s `initialize`.
+        @param bonds The amount of bond shares to give to the owner during the
+            one-time mint during the `Bond`'s `initialize`.
     */
     event BondCreated(
         address newBond,
@@ -76,7 +76,7 @@ interface IBondFactory {
             mint during the `Bond`'s `initialize`.
         @dev This uses a clone to save on deployment costs which adds a slight
             overhead when users interact with the bonds, but also saves on gas
-            during every deployment.
+            during every deployment. Emits `BondCreated` event.
         @return clone The address of the newly created Bond.
     */
     function createBond(
@@ -91,15 +91,19 @@ interface IBondFactory {
     ) external returns (address clone);
 
     /**  
-    @notice If enabled, issuance is restricted to those with ISSUER_ROLE.
-    @return isEnabled Whether or not the `ISSUER_ROLE` will be checked when creating new bonds.
+        @notice If enabled, issuance is restricted to those with ISSUER_ROLE.
+        @dev Emits `IssuerAllowListEnabled` event.
+        @return isEnabled Whether or not the `ISSUER_ROLE` will be checked when
+            creating new bonds.
     */
     function isIssuerAllowListEnabled() external view returns (bool isEnabled);
 
     /**  
-    @notice If enabled, usable tokens are restricted to those with the ALLOWED_TOKEN role.
-    @return isEnabled Whether or not the collateralToken and paymentToken are checked
-        for the `ALLOWED_TOKEN` role when creating new bonds.
+        @notice If enabled, tokens used as paymentToken and collateralToken are
+            restricted to those with the ALLOWED_TOKEN role.
+        @dev Emits `TokenAllowListEnabled` event.
+        @return isEnabled Whether or not the collateralToken and paymentToken
+            are checked for the `ALLOWED_TOKEN` role when creating new bonds.
     */
     function isTokenAllowListEnabled() external view returns (bool isEnabled);
 
@@ -107,7 +111,7 @@ interface IBondFactory {
         @notice Check if the address was created by this Bond factory.
         @dev This is used to check if a bond was issued by this contract
             on-chain. For example, if we want to make a new contract that
-            accepts any issued bonds and exchanges them for new Bonds, the
+            accepts any issued Bonds and exchanges them for new Bonds, the
             exchange contract would need a way to know that the Bonds are owned
             by this contract.
     */
@@ -115,15 +119,18 @@ interface IBondFactory {
 
     /**
         @notice Sets the state of bond restriction to allow-listed accounts.
-        @param _isIssuerAllowListEnabled If the issuer allow list should be enabled or not.
+        @param _isIssuerAllowListEnabled If the issuer allow list should be
+            enabled or not.
         @dev Must be called by the current owner.
     */
     function setIsIssuerAllowListEnabled(bool _isIssuerAllowListEnabled)
         external;
 
     /**
-        @notice Sets the state of token restriction to the list of allowed tokens.
-        @param _isTokenAllowListEnabled If the token allow list should be enabled or not.
+        @notice Sets the state of token restriction to the list of allowed
+            tokens.
+        @param _isTokenAllowListEnabled If the token allow list should be
+            enabled or not.
         @dev Must be called by the current owner.
     */
     function setIsTokenAllowListEnabled(bool _isTokenAllowListEnabled) external;
