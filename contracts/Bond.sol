@@ -309,13 +309,15 @@ contract Bond is
     {
         uint256 tokensCoveredByPayment = paymentBalance() + payment;
         uint256 collateralTokensRequired = 0;
-        uint256 supply = totalSupply();
-        if (tokensCoveredByPayment < supply) {
-            collateralTokensRequired = (supply - tokensCoveredByPayment)
+        uint256 bondSupply = totalSupply();
+        if (tokensCoveredByPayment < bondSupply) {
+            collateralTokensRequired = (bondSupply - tokensCoveredByPayment)
                 .mulWadUp(collateralRatio);
         }
 
-        uint256 convertibleTokensRequired = supply.mulWadUp(convertibleRatio);
+        uint256 convertibleTokensRequired = bondSupply.mulWadUp(
+            convertibleRatio
+        );
 
         uint256 totalRequiredCollateral;
 
