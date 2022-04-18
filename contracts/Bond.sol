@@ -67,7 +67,7 @@ contract Bond is
             redeemed when either the bond is fully paid or mature.
     */
     modifier afterMaturityOrPaid() {
-        if (!isMature() && amountUnpaid() > 0) {
+        if (!isMature() && amountUnpaid() != 0) {
             revert BondNotYetMaturedOrPaid();
         }
         _;
