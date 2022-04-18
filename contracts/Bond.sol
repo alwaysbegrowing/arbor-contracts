@@ -67,7 +67,7 @@ contract Bond is
             redeemed when either the bond is fully paid or mature.
     */
     modifier afterMaturityOrPaid() {
-        if (!isMature() && !isFullyPaid()) {
+        if (!isMature() && amountUnpaid() > 0) {
             revert BondNotYetMaturedOrPaid();
         }
         _;
@@ -126,7 +126,7 @@ contract Bond is
 
     /// @inheritdoc IBond
     function pay(uint256 amount) external nonReentrant {
-        if (isFullyPaid()) {
+        if (amountUnpaid() == 0) {
             revert PaymentAlreadyMet();
         }
         if (amount == 0) {
@@ -281,7 +281,9 @@ contract Bond is
         if (bondSupply == 0) {
             return (0, 0);
         }
-        uint256 paidAmount = isFullyPaid() ? bondSupply : paymentBalance();
+        uint256 paidAmount = amountUnpaid() == 0
+            ? bondSupply
+            : paymentBalance();
         paymentTokensToSend = bonds.mulDivDown(paidAmount, bondSupply);
 
         uint256 nonPaidAmount = bondSupply - paidAmount;
@@ -317,7 +319,7 @@ contract Bond is
 
         uint256 totalRequiredCollateral;
 
-        if (isFullyPaid()) {
+        if (amountUnpaid() == 0) {
             totalRequiredCollateral = isMature()
                 ? 0 // Paid
                 : convertibleTokensRequired; // PaidEarly
@@ -367,7 +369,7 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function amountUnpaid() external view returns (uint256 paymentTokens) {
+    function amountUnpaid() public view returns (uint256 paymentTokens) {
         uint256 bondSupply = totalSupply();
         uint256 _paymentBalance = paymentBalance();
 
@@ -376,11 +378,6 @@ contract Bond is
         }
 
         paymentTokens = bondSupply - _paymentBalance;
-    }
-
-    /// @inheritdoc IBond
-    function isFullyPaid() public view returns (bool isBondPaid) {
-        isBondPaid = paymentBalance() >= totalSupply();
     }
 
     /// @inheritdoc IBond

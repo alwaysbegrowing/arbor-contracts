@@ -751,40 +751,6 @@ This one-time setup initiated by the BondFactory initializes the Bond with the g
 
 
 
-### isFullyPaid
-
-
-```solidity
-function isFullyPaid() external view returns (bool isBondPaid)
-
-```
-
-Checks if the balance of paymentToken covers the Bond supply.
-
-
-
-
-
-#### Returns
-
-
-<table>
-
-  <tr>
-    <td>
-      bool
-    </td>
-    
-    <td>
-    Whether or not the Bond is fully paid.
-    </td>
-    
-  </tr>
-
-</table>
-
-
-
 ### isMature
 
 

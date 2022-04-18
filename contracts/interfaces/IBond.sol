@@ -190,12 +190,6 @@ interface IBond {
     ) external;
 
     /**
-        @notice Checks if the balance of paymentToken covers the Bond supply.
-        @return isBondPaid Whether or not the Bond is fully paid.
-    */
-    function isFullyPaid() external view returns (bool isBondPaid);
-
-    /**
         @notice Checks if the maturity timestamp has passed.
         @return isBondMature Whether or not the Bond has reached maturity.
     */
