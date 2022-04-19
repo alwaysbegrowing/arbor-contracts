@@ -153,8 +153,8 @@ contract BondFactory is IBondFactory, AccessControl {
             maturity,
             paymentToken,
             collateralToken,
-            collateralRatio,
-            convertibleRatio,
+            collateralTokenAmount,
+            convertibleTokenAmount,
             bonds
         );
     }

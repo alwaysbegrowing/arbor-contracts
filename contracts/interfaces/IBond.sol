@@ -162,11 +162,13 @@ interface IBond {
         @notice This one-time setup initiated by the BondFactory initializes the
             Bond with the given configuration.
         @dev New Bond contract deployed via clone. See `BondFactory`.
-        @dev Not calling __AccessControl_init or __ERC20Burnable_init here since
-            they currently generate an empty function.
+        @dev During initialization, __Ownable_init is not called because the
+            owner would be set to the BondFactory's Address. Additionally,
+            __ERC20Burnable_init is not called because it generates an empty
+            function.
         @param bondName Passed into the ERC20 token to define the name.
         @param bondSymbol Passed into the ERC20 token to define the symbol.
-        @param owner Ownership of the created Bond is transferred to this
+        @param bondOwner Ownership of the created Bond is transferred to this
             address by way of _transferOwnership and also the address that
             tokens are minted to. See `initialize` in `Bond`.
         @param _maturity The timestamp at which the Bond will mature.
@@ -180,7 +182,7 @@ interface IBond {
     function initialize(
         string memory bondName,
         string memory bondSymbol,
-        address owner,
+        address bondOwner,
         uint256 _maturity,
         address _paymentToken,
         address _collateralToken,
@@ -338,10 +340,10 @@ interface IBond {
         @notice Sends ERC20 tokens to the owner that are in this contract.
         @dev The collateralToken and paymentToken cannot be swept. Emits 
             `TokenSweep` event.
-        @param token The ERC20 token to sweep and send to the owner.
+        @param sweepingToken The ERC20 token to sweep and send to the receiver.
         @param receiver The address that is transferred the swept token.
     */
-    function sweep(IERC20Metadata token, address receiver) external;
+    function sweep(IERC20Metadata sweepingToken, address receiver) external;
 
     /**
         @notice The Owner may withdraw excess collateral from the Bond contract.
