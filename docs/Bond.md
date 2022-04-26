@@ -629,6 +629,8 @@ This one-time setup initiated by the BondFactory initializes the Bond with the g
   <tr>
     <td>address </td>
     <td>bondOwner</td>
+        <td>
+    Ownership of the created Bond is transferred to this address by way of _transferOwnership and also the address that tokens are minted to. See `initialize` in `Bond`.    </td>
       </tr>
   <tr>
     <td>uint256 </td>
@@ -885,7 +887,7 @@ At maturity, if the given bond shares are redeemed, this would be the number of 
 function previewWithdrawExcessCollateral() external view returns (uint256 collateralTokens)
 ```
 
-The number of collateralTokens that the owner would be able to  withdraw from the contract. This does not take into account an amount of payment like `previewWithdrawAfterPayment` does. See that function for more information.
+The number of collateralTokens that the owner would be able to  withdraw from the contract. This does not take into account an amount of payment like `previewWithdrawExcessCollateralAfterPayment` does. See that function for more information.
 
 
 #### Returns
@@ -996,6 +998,8 @@ Sends ERC20 tokens to the owner that are in this contract.
   <tr>
     <td>contract IERC20Metadata </td>
     <td>sweepingToken</td>
+        <td>
+    The ERC20 token to sweep and send to the receiver.    </td>
       </tr>
   <tr>
     <td>address </td>

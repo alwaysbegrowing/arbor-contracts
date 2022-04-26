@@ -405,7 +405,7 @@ function hasRole(bytes32 role, address account) external view returns (bool)
 function isBond(address) external view returns (bool)
 ```
 
-Check if the address was created by this Bond factory.
+Returns whether or not the given address key is a bond created by this Bond factory.
 
 #### Parameters
 

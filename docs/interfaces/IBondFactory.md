@@ -226,7 +226,7 @@ Creates a new Bond. The calculated ratios are rounded down.
 function isBond(address) external view returns (bool)
 ```
 
-Check if the address was created by this Bond factory.
+Returns whether or not the given address key is a bond created by this Bond factory.
 
 #### Parameters
 

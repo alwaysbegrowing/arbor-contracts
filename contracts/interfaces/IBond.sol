@@ -302,9 +302,10 @@ interface IBond {
     /**
         @notice The number of collateralTokens that the owner would be able to 
             withdraw from the contract. This does not take into account an
-            amount of payment like `previewWithdrawAfterPayment` does. See that
-            function for more information.
-        @dev Calls `previewWithdrawAfterPayment` with a payment amount of 0.
+            amount of payment like `previewWithdrawExcessCollateralAfterPayment`
+            does. See that function for more information.
+        @dev Calls `previewWithdrawExcessCollateralAfterPayment` with a payment
+            amount of 0.
         @return collateralTokens The number of collateralTokens that would be
             withdrawn.
     */

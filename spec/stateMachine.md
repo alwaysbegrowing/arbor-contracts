@@ -17,7 +17,7 @@
 
 ## Not fully paid and matured (Defaulted)
 
-- Anyone can fully pay and move to "Not fully paid and matured"
+- Anyone can fully pay and move to "Fully paid and matured"
 
 ## Fully paid and matured (Paid)
 

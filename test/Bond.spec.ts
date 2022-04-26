@@ -233,7 +233,9 @@ describe("Bond", () => {
             expect(await bond.owner()).to.be.equal(owner.address);
           });
 
-          it("should return configured public parameters");
+          it("should return configured public parameters", async () => {
+            expect(await bond.decimals()).to.equal(decimals);
+          });
 
           it("should have configured ERC20 attributes", async () => {
             expect(await bond.name()).to.be.equal("Bond");
@@ -252,13 +254,19 @@ describe("Bond", () => {
             );
           });
 
-          it("should withdraw zero payment when bond is not overpaid", async () => {
+          it("should preview zero payment when bond is not overpaid", async () => {
             expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
             await paymentToken.transfer(
               bond.address,
               await bond.amountUnpaid()
             );
             expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
+          });
+
+          it("fails to withdraw zero payment when bond is not overpaid", async () => {
+            await expect(
+              bond.withdrawExcessPayment(owner.address)
+            ).to.be.revertedWith("NoPaymentToWithdraw");
           });
 
           it("should withdraw excess payment when bond is overpaid", async () => {
@@ -322,6 +330,12 @@ describe("Bond", () => {
             );
             await bond.withdrawExcessPayment(owner.address);
             expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
+          });
+
+          it("fails to withdraw zero payment when bond is not overpaid", async () => {
+            await expect(
+              bond.withdrawExcessPayment(owner.address)
+            ).to.be.revertedWith("NoPaymentToWithdraw");
           });
         });
       });
@@ -924,6 +938,18 @@ describe("Bond", () => {
               config.maxSupply.div(2)
             );
           });
+
+          it("fails to convert zero bonds", async () => {
+            await expect(bond.convert(0)).to.be.revertedWith("ZeroAmount");
+          });
+
+          it("should fail to convert after maturity", async () => {
+            await ethers.provider.send("evm_mine", [config.maturity]);
+
+            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
+              "BondPastMaturity"
+            );
+          });
         });
         describe("non-convertible", async () => {
           beforeEach(async () => {
@@ -936,6 +962,18 @@ describe("Bond", () => {
               "ZeroAmount"
             );
           });
+
+          it("fails to convert zero bonds", async () => {
+            await expect(bond.convert(0)).to.be.revertedWith("ZeroAmount");
+          });
+
+          it("should fail to convert after maturity", async () => {
+            await ethers.provider.send("evm_mine", [config.maturity]);
+
+            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
+              "BondPastMaturity"
+            );
+          });
         });
         describe("uncollateralized", async () => {
           beforeEach(async () => {
@@ -946,6 +984,18 @@ describe("Bond", () => {
           it("should fail to convert if bond is uncollateralized and therefore unconvertible", async () => {
             await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
               "ZeroAmount"
+            );
+          });
+
+          it("fails to convert zero bonds", async () => {
+            await expect(bond.convert(0)).to.be.revertedWith("ZeroAmount");
+          });
+
+          it("should fail to convert after maturity", async () => {
+            await ethers.provider.send("evm_mine", [config.maturity]);
+
+            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
+              "BondPastMaturity"
             );
           });
         });

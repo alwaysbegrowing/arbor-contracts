@@ -382,7 +382,7 @@ The number of convertibleTokens the bonds will convert into.
 ### initialize
 
 ```solidity
-function initialize(string bondName, string bondSymbol, address owner, uint256 _maturity, address _paymentToken, address _collateralToken, uint256 _collateralRatio, uint256 _convertibleRatio, uint256 maxSupply) external nonpayable
+function initialize(string bondName, string bondSymbol, address bondOwner, uint256 _maturity, address _paymentToken, address _collateralToken, uint256 _collateralRatio, uint256 _convertibleRatio, uint256 maxSupply) external nonpayable
 ```
 
 This one-time setup initiated by the BondFactory initializes the Bond with the given configuration.
@@ -404,7 +404,7 @@ This one-time setup initiated by the BondFactory initializes the Bond with the g
       </tr>
   <tr>
     <td>address </td>
-    <td>owner</td>
+    <td>bondOwner</td>
         <td>
     Ownership of the created Bond is transferred to this address by way of _transferOwnership and also the address that tokens are minted to. See `initialize` in `Bond`.    </td>
       </tr>
@@ -625,7 +625,7 @@ At maturity, if the given bond shares are redeemed, this would be the number of 
 function previewWithdrawExcessCollateral() external view returns (uint256 collateralTokens)
 ```
 
-The number of collateralTokens that the owner would be able to  withdraw from the contract. This does not take into account an amount of payment like `previewWithdrawAfterPayment` does. See that function for more information.
+The number of collateralTokens that the owner would be able to  withdraw from the contract. This does not take into account an amount of payment like `previewWithdrawExcessCollateralAfterPayment` does. See that function for more information.
 
 
 #### Returns
@@ -715,7 +715,7 @@ The Bond holder can burn bond shares in return for their portion of paymentToken
 ### sweep
 
 ```solidity
-function sweep(contract IERC20Metadata token, address receiver) external nonpayable
+function sweep(contract IERC20Metadata sweepingToken, address receiver) external nonpayable
 ```
 
 Sends ERC20 tokens to the owner that are in this contract.
@@ -725,9 +725,9 @@ Sends ERC20 tokens to the owner that are in this contract.
 <table>
   <tr>
     <td>contract IERC20Metadata </td>
-    <td>token</td>
+    <td>sweepingToken</td>
         <td>
-    The ERC20 token to sweep and send to the owner.    </td>
+    The ERC20 token to sweep and send to the receiver.    </td>
       </tr>
   <tr>
     <td>address </td>

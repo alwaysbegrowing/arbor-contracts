@@ -63,7 +63,11 @@ describe("BondFactory", async () => {
       params.convertibleTokenAmount || BondConfig.convertibleTokenAmount;
     const testMaxSupply = params.maxSupply || BondConfig.maxSupply;
 
-    await collateralToken.approve(
+    const collateralTokenFactory = await ethers.getContractFactory("TestERC20");
+    const collateralTokenContract =
+      collateralTokenFactory.attach(testCollateralToken);
+
+    await collateralTokenContract.approve(
       factory.address,
       BondConfig.collateralTokenAmount
     );
@@ -90,6 +94,15 @@ describe("BondFactory", async () => {
       await expect(createBond(factory)).to.emit(factory, "BondCreated");
     });
 
+    it("fails if there are no bonds to mint", async () => {
+      await factory.grantRole(ISSUER_ROLE, owner.address);
+      await expect(
+        createBond(factory, {
+          maxSupply: ZERO,
+        })
+      ).to.be.revertedWith("ZeroBondsToMint");
+    });
+
     it("fails if collateralToken == paymentToken", async () => {
       await factory.grantRole(ISSUER_ROLE, owner.address);
       await expect(
@@ -98,6 +111,17 @@ describe("BondFactory", async () => {
           paymentToken: paymentToken.address,
         })
       ).to.be.revertedWith("TokensMustBeDifferent");
+    });
+
+    it("fails on a fee-taking collateralToken", async () => {
+      await factory.grantRole(ISSUER_ROLE, owner.address);
+      const { attackingToken } = await (await tokenFixture([18])).tokens[0];
+      await factory.grantRole(ALLOWED_TOKEN, attackingToken.address);
+      await expect(
+        createBond(factory, {
+          collateralToken: attackingToken.address,
+        })
+      ).to.be.revertedWith("InvalidDeposit");
     });
 
     it("should revert on less collateral than convertible ratio", async () => {
