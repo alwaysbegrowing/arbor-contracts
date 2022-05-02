@@ -1,18 +1,27 @@
-import { BigNumber, BigNumberish, ContractTransaction, Event } from "ethers";
-import { use, expect } from "chai";
+import {
+  BigNumber,
+  constants,
+  Contract,
+  ContractReceipt,
+  ContractTransaction,
+  Event,
+} from "ethers";
+import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Bond, TestERC20 } from "../typechain";
+import { Bond, BondFactory, TestERC20 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { WAD } from "./constants";
+import { BondConfigType } from "./interfaces";
+import { parseUnits } from "ethers/lib/utils";
 export const addDaysToNow = (days: number = 0) => {
   return BigNumber.from(
     Math.floor(new Date().getTime() / 1000) + days * 24 * 60 * 60
   );
 };
 
-export async function increaseTime(duration: number): Promise<void> {
-  ethers.provider.send("evm_increaseTime", [duration]);
-  ethers.provider.send("evm_mine", []);
+export async function setNextBlockTimestamp(timestamp: number): Promise<void> {
+  await ethers.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+  await ethers.provider.send("evm_mine", []);
 }
 
 export async function mineBlock(): Promise<void> {
@@ -43,11 +52,16 @@ export async function getEventArgumentsFromLoop(
   return {};
 }
 
-export const getBondContract = async (tx: Promise<any>): Promise<Bond> => {
+export const getBondContract = async (
+  txPromise: Promise<ContractTransaction>
+): Promise<Bond> => {
   const [owner] = await ethers.getSigners();
-
+  const tx = await txPromise;
+  if (process.env.LOG_GAS_USAGE) {
+    logGasOptions(tx);
+  }
   const [newBondAddress] = await getEventArgumentsFromTransaction(
-    await tx,
+    tx,
     "BondCreated"
   );
 
@@ -82,16 +96,6 @@ declare global {
       revertedWithArgs(errorName: string, ...args: any): Promise<void>;
     }
   }
-}
-export async function useCustomErrorMatcher() {
-  use(function (chai) {
-    chai.Assertion.addMethod("revertedWithArgs", function (errorName, ...args) {
-      const expected = `${errorName}(${args
-        .map((arg) => JSON.stringify(arg))
-        .join(", ")})`;
-      new chai.Assertion(this._obj).to.be.revertedWith(expected);
-    });
-  });
 }
 
 export const payAndWithdraw = async ({
@@ -181,4 +185,217 @@ export const previewRedeem = async ({
   );
   expect(paymentToken).to.equal(paymentTokenToSend);
   expect(collateralToken).to.equal(collateralTokenToSend);
+};
+
+export const getBondInfo = async (
+  paymentToken: TestERC20,
+  collateralToken: TestERC20,
+  config: BondConfigType
+): Promise<{ bondName: string; bondSymbol: string }> => {
+  const collateralTokenSymbol = await collateralToken.symbol();
+  const paymentTokenSymbol = await paymentToken.symbol();
+  const isConvertible = config.convertibleTokenAmount.gt(0);
+  const productNameShort = isConvertible ? "CONVERT" : "SIMPLE";
+  const productNameLong = `${isConvertible ? "Convertible" : "Simple"} Bond`;
+  const maturityDate = new Date(Number(config.maturity) * 1000)
+    .toLocaleString("en-gb", {
+      day: "2-digit",
+      year: "numeric",
+      month: "short",
+    })
+    .toUpperCase()
+    .replace(/ /g, "");
+  // This call value will be calculated on the front-end with acutal prices
+  const callAmount =
+    config.convertibleTokenAmount.toString().slice(0, 2) +
+    "-" +
+    config.maxSupply.toString().slice(0, 2);
+  const bondName = `${getDAONameFromSymbol(
+    collateralTokenSymbol
+  )} ${productNameLong}`;
+  const bondSymbol = `${collateralTokenSymbol.toUpperCase()} ${productNameShort} ${maturityDate} 25C ${paymentTokenSymbol.toUpperCase()}`;
+
+  return {
+    bondName,
+    bondSymbol,
+  };
+};
+
+export const createBond = async (
+  config: BondConfigType,
+  factory: BondFactory,
+  paymentTokenContract: TestERC20,
+  collateralTokenContract: TestERC20
+) => {
+  const paymentToken = paymentTokenContract.address;
+  const collateralToken = collateralTokenContract.address;
+  const { bondName, bondSymbol } = await getBondInfo(
+    paymentTokenContract,
+    collateralTokenContract,
+    config
+  );
+  const bond = await getBondContract(
+    factory.createBond(
+      bondName,
+      bondSymbol,
+      config.maturity,
+      paymentToken,
+      collateralToken,
+      config.collateralTokenAmount,
+      config.convertibleTokenAmount,
+      config.maxSupply
+    )
+  );
+  return await bond;
+};
+
+export const initiateAuction = async (
+  auction: Contract,
+  owner: SignerWithAddress,
+  bond: Bond,
+  borrowToken: TestERC20,
+  auctionParams?: any
+) => {
+  const auctioningToken = auctionParams?.auctioningToken || bond.address;
+  const biddingToken = auctionParams?.biddingToken || borrowToken.address;
+  // one day from today
+  const orderCancellationEndDate =
+    auctionParams?.orderCancellationEndDate ||
+    Math.round(
+      new Date(new Date().setDate(new Date().getDate() + 1)).getTime() / 1000
+    );
+  // one week from today
+  const auctionEndDate =
+    auctionParams?.auctionEndDate ||
+    Math.round(
+      new Date(new Date().setDate(new Date().getDate() + 7)).getTime() / 1000
+    );
+  const tokenBalance = await bond.balanceOf(owner.address);
+  const auctionedSellAmount = tokenBalance;
+  const minBuyAmount = auctionedSellAmount.mul(8).div(10);
+  const minimumBiddingAmountPerOrder = parseUnits((1_000).toString(), 6);
+  const minFundingThreshold = auctionedSellAmount.div(4);
+  const isAtomicClosureAllowed = false;
+  const accessManagerContract = constants.AddressZero;
+  const accessManagerContractData = constants.HashZero;
+  const approveTx = await bond
+    .connect(owner)
+    .approve(auction.address, constants.MaxUint256);
+  await approveTx.wait();
+
+  const initiateAuctionTx = await auction
+    .connect(owner)
+    .initiateAuction(
+      auctioningToken,
+      biddingToken,
+      orderCancellationEndDate,
+      auctionEndDate,
+      auctionedSellAmount,
+      minBuyAmount,
+      minimumBiddingAmountPerOrder,
+      minFundingThreshold,
+      isAtomicClosureAllowed,
+      accessManagerContract,
+      accessManagerContractData
+    );
+  return initiateAuctionTx;
+};
+
+export const placeManyOrders = async ({
+  signer,
+  auction,
+  auctionId,
+  auctionData,
+  biddingToken,
+  auctioningToken,
+  sellAmount,
+  minBuyAmount,
+  nrOfOrders,
+}: {
+  signer: SignerWithAddress;
+  auction: Contract;
+  auctionId: string;
+  auctionData: any;
+  biddingToken: TestERC20;
+  auctioningToken: TestERC20;
+  sellAmount: string;
+  minBuyAmount: string;
+  nrOfOrders: number;
+}) => {
+  const minBuyAmountInAtoms = ethers.utils.parseUnits(
+    minBuyAmount,
+    await biddingToken.decimals()
+  );
+  const sellAmountsInAtoms = ethers.utils.parseUnits(
+    sellAmount,
+    await auctioningToken.decimals()
+  );
+
+  const orderBlockSize = 50;
+  if (nrOfOrders % orderBlockSize !== 0) {
+    throw new Error("nrOfOrders must be a multiple of orderBlockSize");
+  }
+  for (let i = 0; i < nrOfOrders / orderBlockSize; i += 1) {
+    const minBuyAmounts = [];
+    for (let j = 0; j < orderBlockSize; j++) {
+      minBuyAmounts.push(
+        minBuyAmountInAtoms.sub(
+          BigNumber.from(i * orderBlockSize + j).mul(
+            minBuyAmountInAtoms.div(nrOfOrders).div(10)
+          )
+        )
+      );
+    }
+
+    const queueStartElement =
+      "0x0000000000000000000000000000000000000000000000000000000000000001";
+    await waitUntilMined(
+      await auction
+        .connect(signer)
+        .placeSellOrders(
+          auctionId,
+          minBuyAmounts,
+          Array(orderBlockSize).fill(sellAmountsInAtoms),
+          Array(orderBlockSize).fill(queueStartElement),
+          "0x"
+        )
+    );
+  }
+};
+
+export const waitUntilMined = async (
+  tx: ContractTransaction
+): Promise<ContractReceipt> => {
+  logGasOptions(tx);
+  const receipt = await tx.wait();
+  if (process.env.LOG_GAS_USAGE) {
+    console.log(`⛏️ Transaction mined.
+gas used:${receipt.gasUsed}
+`);
+  }
+  return receipt;
+};
+
+export const logGasOptions = ({
+  nonce,
+  gasPrice,
+  maxFeePerGas,
+  maxPriorityFeePerGas,
+}: ContractTransaction) => {
+  if (process.env.LOG_GAS_USAGE) {
+    console.log(`📒 Transaction sent.
+  nonce: ${nonce}
+  gas price: ${gasPrice}
+  max fee: ${maxFeePerGas}
+  max priority fee: ${maxPriorityFeePerGas}
+`);
+  }
+};
+
+export const getDAONameFromSymbol = (tokenSymbol: string): string => {
+  return (
+    {
+      uni: "Uniswap",
+    }[tokenSymbol.toLowerCase()] || tokenSymbol
+  );
 };

@@ -30,3 +30,10 @@ export type BondWithTokens = {
   paymentToken: TestERC20;
   collateralToken: TestERC20;
 };
+
+export type TokenDeploymentArguments = {
+  name: string;
+  symbol: string;
+  mintAmount: BigNumber;
+  decimals: number;
+};

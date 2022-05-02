@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 
-import { HardhatUserConfig, task } from "hardhat/config";
+import { HardhatUserConfig } from "hardhat/config";
 import "@typechain/hardhat"; // used to create types found in ./typechain
 import "@nomiclabs/hardhat-waffle"; // integrates waffle into the hre
 import "hardhat-gas-reporter"; // outputs gas usage by contract and method call when testing
@@ -12,22 +12,9 @@ import "@primitivefi/hardhat-dodoc"; // generates docs on compile
 import "hardhat-storage-layout"; // exports storage layout of contracts
 
 import "./tasks/storageLayout.ts"; // add 'storage-layout' task
-import "./tasks/rinkebyIntegration.ts"; // add 'integration' task
+import "./tasks/settleAuction.ts"; // add 'settle-auction' task
 
 dotenv.config();
-
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
-
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
-
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
   solidity: "0.8.9",
@@ -47,13 +34,29 @@ const config: HardhatUserConfig = {
   networks: {
     rinkeby: {
       live: true,
+      mining: {
+        auto: false,
+        interval: 10,
+      },
       url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    mumbai: {
+      live: true,
+      gasPrice: 35000000000,
+      url: process.env.POLYGON_ALCHEMY_URL,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     hardhat: {
       mining: {
-        auto: true,
+        auto: false,
+        interval: 10,
+      },
+      forking: {
+        blockNumber: 10453255,
+        url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
       },
     },
   },
