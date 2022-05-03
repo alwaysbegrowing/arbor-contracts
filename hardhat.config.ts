@@ -38,6 +38,7 @@ const config: HardhatUserConfig = {
         auto: false,
         interval: 10,
       },
+      gasMultiplier: 2,
       url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
