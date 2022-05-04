@@ -8,12 +8,12 @@
 
 ## Not fully paid and not matured (Active)
 
-- When maturity date passes move to "Not fully paid and matured"
+- When maturity date plus the grace period passes, move to "Not fully paid and matured"
 - Anyone can fully pay and move to "Fully paid and not matured"
 
 ## Fully paid and not matured (PaidEarly)
 
-- When maturity date passes move to "Fully paid and matured"
+- When maturity date passes, move to "Fully paid and matured"
 
 ## Not fully paid and matured (Defaulted)
 

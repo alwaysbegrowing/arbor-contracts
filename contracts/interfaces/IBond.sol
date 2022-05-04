@@ -7,8 +7,11 @@ interface IBond {
     /// @notice Operation restricted because the Bond has matured.
     error BondPastMaturity();
 
-    /// @notice Operation restricted because the Bond has not matured or paid.
-    error BondNotYetMaturedOrPaid();
+    /**
+        @notice Bond redemption is impossible because the grace period has not
+            yet passed or the bond has not been fully paid.
+    */
+    error BondBeforeGracePeriodOrPaid();
 
     /// @notice Attempted to pay after payment was met.
     error PaymentAlreadyMet();
@@ -202,6 +205,17 @@ interface IBond {
         @return The maturity date as a timestamp.
     */
     function maturity() external view returns (uint256);
+
+    /**
+        @notice One week after the maturity date. Bond collateral can be 
+            redeemed after this date.
+        @return gracePeriodEndTimestamp The grace period end date as 
+            a timestamp. This is always one week after the maturity date
+    */
+    function gracePeriodEnd()
+        external
+        view
+        returns (uint256 gracePeriodEndTimestamp);
 
     /**
         @notice Allows the owner to pay the bond by depositing paymentTokens.

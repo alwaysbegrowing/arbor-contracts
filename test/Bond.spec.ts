@@ -739,9 +739,26 @@ describe("Bond", () => {
             await expect(bond.redeem(ZERO)).to.be.revertedWith("ZeroAmount");
           });
         });
-        describe("Defaulted state", async () => {
+
+        describe("Defaulted state (during grace period)", async () => {
           beforeEach(async () => {
+            // Skip to maturity as this is the start of the grace period
             await ethers.provider.send("evm_mine", [config.maturity]);
+          });
+
+          it("fails when trying to redeem", async () => {
+            await expect(bond.redeem(1)).to.be.revertedWith(
+              "BondBeforeGracePeriodOrPaid"
+            );
+          });
+        });
+        describe("Defaulted state (after grace period)", async () => {
+          beforeEach(async () => {
+            const gracePeriodEnd = await (
+              await bond.gracePeriodEnd()
+            ).toNumber();
+            // The grace period is considered over at the timestamp and onward
+            await ethers.provider.send("evm_mine", [gracePeriodEnd]);
           });
 
           it("should not be possible to redeem zero bonds", async () => {
@@ -867,7 +884,7 @@ describe("Bond", () => {
             });
 
             await expect(bond.redeem(ZERO)).to.be.revertedWith(
-              "BondNotYetMaturedOrPaid"
+              "BondBeforeGracePeriodOrPaid"
             );
           });
 
