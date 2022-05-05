@@ -1,5 +1,5 @@
 import { BigNumber, utils } from "ethers";
-import { BondConfigType } from "./interfaces";
+import { BondConfigType, BondDeploymentConfiguration } from "./interfaces";
 
 export const TEN_MINUTES_FROM_NOW_IN_SECONDS = Math.round(
   new Date(new Date().setMinutes(new Date().getMinutes() + 10)).getTime() / 1000
@@ -65,71 +65,96 @@ export const MaliciousBondConfig: BondConfigType = {
   maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
-export const deploymentBonds = [
+export const deploymentBonds: BondDeploymentConfiguration[] = [
   {
     // This bond has a short maturity and a full FIFTY_MILLION
     // Since we pay TWENTY_FIVE_MILLION, this bond will "Default"
-    config: {
+    bondConfig: {
       ...NonConvertibleBondConfig,
       maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
       maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
-    auctionOptions: {},
+    auctionConfig: {
+      minFundingThreshold: utils.parseUnits(TWENTY_FIVE_MILLION, 6),
+    },
+    biddingConfig: {},
   },
   {
     // This will be an "Active" convertible bond
-    config: {
+    bondConfig: {
       ...ConvertibleBondConfig,
       maturity: ONE_DAY_FROM_NOW_IN_SECONDS,
       maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
-    auctionOptions: {},
+    auctionConfig: {},
+    biddingConfig: {},
   },
   {
     // This will be an "Active" Un-Collateralized bond
-    config: {
+    bondConfig: {
       ...UncollateralizedBondConfig,
       maturity: ONE_MONTH_FROM_NOW_IN_SECONDS,
       maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
-    auctionOptions: {
+    auctionConfig: {
       // Whose auction will not be cancellable
       orderCancellationEndDate: TEN_MINUTES_FROM_NOW_IN_SECONDS,
+    },
+    biddingConfig: {
+      sellAmount: (9_000).toString(),
+      minBuyAmount: (10_000).toString(),
     },
   },
   {
     // This will be an "Active" Non-Convertible bond
-    config: {
+    bondConfig: {
       ...NonConvertibleBondConfig,
       maturity: ONE_YEAR_FROM_NOW_IN_SECONDS,
       maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
-    auctionOptions: {
+    auctionConfig: {
       // Whose auction will be ended
       auctionEndDate: TEN_MINUTES_FROM_NOW_IN_SECONDS,
       orderCancellationEndDate: TEN_MINUTES_FROM_NOW_IN_SECONDS,
+      minFundingThreshold: ZERO,
+    },
+    biddingConfig: {
+      sellAmount: (18_000).toString(),
+      minBuyAmount: (20_000).toString(),
     },
   },
   {
     // This will be a "Paid" convertible bond
-    config: {
+    bondConfig: {
       ...ConvertibleBondConfig,
       // Make bond mature
       maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
       // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
       maxSupply: utils.parseUnits(TWENTY_FIVE_MILLION.toString(), 6),
     },
-    auctionOptions: {},
+    auctionConfig: {},
+    biddingConfig: {
+      sellAmount: (90_000).toString(),
+      minBuyAmount: (100_000).toString(),
+    },
   },
   {
     // This will be a "PaidEarly" Non-Convertible bond
-    config: {
-      ...NonConvertibleBondConfig,
+    bondConfig: {
+      ...ConvertibleBondConfig,
       maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
       // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
       maxSupply: utils.parseUnits(TWENTY_FIVE_MILLION.toString(), 6),
     },
-    auctionOptions: {},
+    auctionConfig: {
+      // Whose auction will be ongoing
+      auctionEndDate: ONE_MONTH_FROM_NOW_IN_SECONDS,
+      orderCancellationEndDate: ONE_MONTH_FROM_NOW_IN_SECONDS,
+    },
+    biddingConfig: {
+      sellAmount: (900_000).toString(),
+      minBuyAmount: (1_000_000).toString(),
+    },
   },
 ];
 

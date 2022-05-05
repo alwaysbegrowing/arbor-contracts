@@ -33,16 +33,12 @@ module.exports = async function ({
   )) as TestERC20;
 
   for (let i = 0; i < deploymentBonds.length; i++) {
-    const {
-      config,
-    }: {
-      config: BondConfigType;
-    } = deploymentBonds[i];
+    const { bondConfig } = deploymentBonds[i];
     let bondAddress: string;
     const { bondSymbol } = await getBondInfo(
       paymentTokenContract,
       collateralTokenContract,
-      config
+      bondConfig
     );
     try {
       const foundBond = await get(bondSymbol);
@@ -55,7 +51,7 @@ module.exports = async function ({
     } catch (e) {
       console.log(`Could not find a bond ${bondSymbol}. Creating.`);
       const { address } = await createBond(
-        config,
+        bondConfig,
         factory,
         paymentTokenContract,
         collateralTokenContract

@@ -24,15 +24,11 @@ module.exports = async function ({
   )) as TestERC20;
 
   for (let i = 0; i < deploymentBonds.length; i++) {
-    const {
-      config,
-    }: {
-      config: BondConfigType;
-    } = deploymentBonds[i];
+    const { bondConfig } = deploymentBonds[i];
     const { bondSymbol } = await getBondInfo(
       paymentToken,
       collateralToken,
-      config
+      bondConfig
     );
     const { address } = await deployments.get(bondSymbol);
     const bond = (await ethers.getContractAt("Bond", address)) as Bond;
@@ -60,7 +56,7 @@ Executing bond actions.
       },
       {
         actionName: "convert",
-        action: () => bond.convert(config.maxSupply.div(4)),
+        action: () => bond.convert(bondConfig.maxSupply.div(4)),
         conditions: [
           async () => (await bond.previewConvertBeforeMaturity(1)).gt(0),
         ],

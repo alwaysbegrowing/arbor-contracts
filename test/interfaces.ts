@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish } from "ethers";
+import { BigNumber, BigNumberish, BytesLike, Contract } from "ethers";
 import { Bond, TestERC20 } from "../typechain";
 
 export type BondConfigType = {
@@ -37,3 +37,29 @@ export type TokenDeploymentArguments = {
   mintAmount: BigNumber;
   decimals: number;
 };
+
+export interface InitiateAuctionParameters {
+  auctioningToken?: Contract;
+  biddingToken?: Contract;
+  orderCancellationEndDate?: BigNumberish;
+  auctionEndDate?: BigNumberish;
+  auctionedSellAmount?: BigNumberish;
+  minBuyAmount?: BigNumberish;
+  minimumBiddingAmountPerOrder?: BigNumberish;
+  minFundingThreshold?: BigNumberish;
+  isAtomicClosureAllowed?: boolean;
+  allowListManager?: BytesLike;
+  allowListData?: BytesLike;
+}
+
+export interface AuctionBid {
+  sellAmount?: string;
+  minBuyAmount?: string;
+  nrOfOrders?: number;
+}
+
+export interface BondDeploymentConfiguration {
+  bondConfig: BondConfigType;
+  auctionConfig: InitiateAuctionParameters;
+  biddingConfig: AuctionBid;
+}

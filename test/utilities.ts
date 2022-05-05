@@ -11,7 +11,7 @@ import { ethers } from "hardhat";
 import { Bond, BondFactory, TestERC20 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { WAD } from "./constants";
-import { BondConfigType } from "./interfaces";
+import { BondConfigType, InitiateAuctionParameters } from "./interfaces";
 import { parseUnits } from "ethers/lib/utils";
 export const addDaysToNow = (days: number = 0) => {
   return BigNumber.from(
@@ -254,10 +254,12 @@ export const initiateAuction = async (
   owner: SignerWithAddress,
   bond: Bond,
   borrowToken: TestERC20,
-  auctionParams?: any
+  auctionParams?: InitiateAuctionParameters
 ) => {
-  const auctioningToken = auctionParams?.auctioningToken || bond.address;
-  const biddingToken = auctionParams?.biddingToken || borrowToken.address;
+  const auctioningToken =
+    auctionParams?.auctioningToken?.address || bond.address;
+  const biddingToken =
+    auctionParams?.biddingToken?.address || borrowToken.address;
   // one day from today
   const orderCancellationEndDate =
     auctionParams?.orderCancellationEndDate ||
@@ -271,13 +273,21 @@ export const initiateAuction = async (
       new Date(new Date().setDate(new Date().getDate() + 7)).getTime() / 1000
     );
   const tokenBalance = await bond.balanceOf(owner.address);
-  const auctionedSellAmount = tokenBalance;
-  const minBuyAmount = auctionedSellAmount.mul(8).div(10);
-  const minimumBiddingAmountPerOrder = parseUnits((1_000).toString(), 6);
-  const minFundingThreshold = auctionedSellAmount.div(4);
-  const isAtomicClosureAllowed = false;
-  const accessManagerContract = constants.AddressZero;
-  const accessManagerContractData = constants.HashZero;
+  const auctionedSellAmount =
+    auctionParams?.auctionedSellAmount || tokenBalance;
+  const minBuyAmount =
+    auctionParams?.minBuyAmount ||
+    BigNumber.from(auctionedSellAmount).mul(8).div(10);
+  const minimumBiddingAmountPerOrder =
+    auctionParams?.minimumBiddingAmountPerOrder ||
+    parseUnits((1_000).toString(), 6);
+  const minFundingThreshold =
+    auctionParams?.minFundingThreshold ||
+    BigNumber.from(auctionedSellAmount).div(8);
+  const isAtomicClosureAllowed = auctionParams?.isAtomicClosureAllowed || false;
+  const allowListManager =
+    auctionParams?.allowListManager || constants.AddressZero;
+  const allowListData = auctionParams?.allowListData || constants.HashZero;
   const approveTx = await bond
     .connect(owner)
     .approve(auction.address, constants.MaxUint256);
@@ -295,8 +305,8 @@ export const initiateAuction = async (
       minimumBiddingAmountPerOrder,
       minFundingThreshold,
       isAtomicClosureAllowed,
-      accessManagerContract,
-      accessManagerContractData
+      allowListManager,
+      allowListData
     );
   return initiateAuctionTx;
 };
