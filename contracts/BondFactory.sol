@@ -39,9 +39,6 @@ contract BondFactory is IBondFactory, AccessControl {
     bytes32 public constant ALLOWED_TOKEN = keccak256("ALLOWED_TOKEN");
 
     /// @inheritdoc IBondFactory
-    address public immutable tokenImplementation;
-
-    /// @inheritdoc IBondFactory
     mapping(address => bool) public isBond;
 
     /// @inheritdoc IBondFactory
@@ -68,7 +65,6 @@ contract BondFactory is IBondFactory, AccessControl {
         is enabled or not at any time.
     */
     constructor() {
-        tokenImplementation = address(new Bond());
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
@@ -126,14 +122,12 @@ contract BondFactory is IBondFactory, AccessControl {
             _checkRole(ALLOWED_TOKEN, collateralToken);
         }
 
-        clone = Clones.clone(tokenImplementation);
-
         isBond[clone] = true;
         uint256 collateralRatio = collateralTokenAmount.divWadDown(bonds);
         uint256 convertibleRatio = convertibleTokenAmount.divWadDown(bonds);
         _deposit(_msgSender(), clone, collateralToken, collateralTokenAmount);
 
-        Bond(clone).initialize(
+        new Bond(
             name,
             symbol,
             _msgSender(),

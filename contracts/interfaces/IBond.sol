@@ -182,17 +182,17 @@ interface IBond {
         @param maxSupply The amount of Bonds given to the owner during the one-
             time mint during this initialization.
     */
-    function initialize(
-        string memory bondName,
-        string memory bondSymbol,
-        address bondOwner,
-        uint256 _maturity,
-        address _paymentToken,
-        address _collateralToken,
-        uint256 _collateralRatio,
-        uint256 _convertibleRatio,
-        uint256 maxSupply
-    ) external;
+    // function initialize(
+    //     string memory bondName,
+    //     string memory bondSymbol,
+    //     address bondOwner,
+    //     uint256 _maturity,
+    //     address _paymentToken,
+    //     address _collateralToken,
+    //     uint256 _collateralRatio,
+    //     uint256 _convertibleRatio,
+    //     uint256 maxSupply
+    // ) external;
 
     /**
         @notice Checks if the maturity timestamp has passed.

@@ -13,6 +13,7 @@ import "hardhat-storage-layout"; // exports storage layout of contracts
 
 import "./tasks/storageLayout.ts"; // add 'storage-layout' task
 import "./tasks/settleAuction.ts"; // add 'settle-auction' task
+import "hardhat-contract-sizer";
 
 dotenv.config();
 

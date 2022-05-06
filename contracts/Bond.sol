@@ -3,8 +3,9 @@ pragma solidity 0.8.9;
 
 import {IBond} from "./interfaces/IBond.sol";
 
-import {ERC20BurnableUpgradeable, IERC20MetadataUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -25,12 +26,7 @@ import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
         throughout the contract some state variables are redefined to save
         an extra SLOAD.
 */
-contract Bond is
-    IBond,
-    OwnableUpgradeable,
-    ERC20BurnableUpgradeable,
-    ReentrancyGuard
-{
+contract Bond is IBond, Ownable, ERC20Burnable, ReentrancyGuard {
     using SafeERC20 for IERC20Metadata;
     using FixedPointMathLib for uint256;
 
@@ -82,8 +78,7 @@ contract Bond is
         }
     }
 
-    /// @inheritdoc IBond
-    function initialize(
+    constructor(
         string memory bondName,
         string memory bondSymbol,
         address bondOwner,
@@ -93,8 +88,8 @@ contract Bond is
         uint256 _collateralRatio,
         uint256 _convertibleRatio,
         uint256 maxSupply
-    ) external initializer {
-        __ERC20_init(bondName, bondSymbol);
+    ) ERC20(bondName, bondSymbol) {
+        // __ERC20_init(bondName, bondSymbol);
         _transferOwnership(bondOwner);
 
         maturity = _maturity;
@@ -409,7 +404,7 @@ contract Bond is
         isBondMature = block.timestamp >= maturity;
     }
 
-    /// @inheritdoc IERC20MetadataUpgradeable
+    /// @inheritdoc IERC20Metadata
     function decimals() public view override returns (uint8) {
         return IERC20Metadata(paymentToken).decimals();
     }

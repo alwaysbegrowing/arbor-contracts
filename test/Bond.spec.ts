@@ -201,23 +201,23 @@ describe("Bond", () => {
             bond = bondWithTokens.nonConvertible.bond;
             config = bondWithTokens.nonConvertible.config;
           });
-          it("should disallow calling initialize again", async () => {
-            await expect(
-              bond.initialize(
-                "Bond",
-                "LUG",
-                owner.address,
-                config.maturity,
-                paymentToken.address,
-                collateralToken.address,
-                utils.parseUnits(".25", decimals),
-                utils.parseUnits(".5", decimals),
-                config.maxSupply
-              )
-            ).to.be.revertedWith(
-              "Initializable: contract is already initialized"
-            );
-          });
+          // it("should disallow calling initialize again", async () => {
+          //   await expect(
+          //     bond.initialize(
+          //       "Bond",
+          //       "LUG",
+          //       owner.address,
+          //       config.maturity,
+          //       paymentToken.address,
+          //       collateralToken.address,
+          //       utils.parseUnits(".25", decimals),
+          //       utils.parseUnits(".5", decimals),
+          //       config.maxSupply
+          //     )
+          //   ).to.be.revertedWith(
+          //     "Initializable: contract is already initialized"
+          //   );
+          // });
 
           it("should verifiable as bond by Factory.isBond", async () => {
             expect(await factory.isBond(bond.address)).to.be.equal(true);
@@ -462,7 +462,7 @@ describe("Bond", () => {
               ).to.be.revertedWith("NotEnoughCollateral");
             });
 
-            it("should make excess collateral available to withdraw when maturity is reached", async () => {});
+            it("should make excess collateral available to withdraw when maturity is reached", async () => { });
           });
         });
         describe("PaidEarly state", async () => {

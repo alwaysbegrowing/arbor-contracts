@@ -135,11 +135,4 @@ interface IBondFactory {
         @dev Must be called by the current owner.
     */
     function setIsTokenAllowListEnabled(bool _isTokenAllowListEnabled) external;
-
-    /**
-        @notice Address where the bond implementation contract is stored.
-        @dev This is needed since we are using a clone proxy.
-        @return The implementation address.
-    */
-    function tokenImplementation() external view returns (address);
 }
