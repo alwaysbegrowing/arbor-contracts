@@ -29,7 +29,9 @@ export const ELEVEN_YEARS_FROM_NOW_IN_SECONDS = Math.round(
 
 export const ONE = utils.parseUnits("1", 18);
 export const WAD = utils.parseUnits("1", 18);
-
+export const SQRT_MAX_UINT256 = BigNumber.from(
+  "340282366920938463463374607431768211456"
+);
 export const ZERO = BigNumber.from(0);
 export const FIFTY_MILLION = 50000000;
 export const TWENTY_FIVE_MILLION = (25000000).toString();

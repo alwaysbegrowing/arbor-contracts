@@ -94,6 +94,11 @@ contract Bond is
         uint256 _convertibleRatio,
         uint256 maxSupply
     ) external initializer {
+        // Safety checks: Ensure multiplication can not overflow uint256.
+        maxSupply * maxSupply;
+        maxSupply * _collateralRatio;
+        maxSupply * _convertibleRatio;
+
         __ERC20_init(bondName, bondSymbol);
         _transferOwnership(bondOwner);
 

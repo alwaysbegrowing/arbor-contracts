@@ -9,6 +9,7 @@ import {
   THREE_YEARS_FROM_NOW_IN_SECONDS,
   ELEVEN_YEARS_FROM_NOW_IN_SECONDS,
   ZERO,
+  SQRT_MAX_UINT256,
 } from "./constants";
 
 const { ethers } = require("hardhat");
@@ -101,6 +102,20 @@ describe("BondFactory", async () => {
           maxSupply: ZERO,
         })
       ).to.be.revertedWith("ZeroBondsToMint");
+    });
+
+    it("fails if bonds would overflow", async () => {
+      await factory.grantRole(ISSUER_ROLE, owner.address);
+      await expect(
+        createBond(factory, {
+          maxSupply: SQRT_MAX_UINT256.sub(1),
+        })
+      ).to.not.be.reverted;
+      await expect(
+        createBond(factory, {
+          maxSupply: SQRT_MAX_UINT256,
+        })
+      ).to.be.revertedWith("overflow");
     });
 
     it("fails if collateralToken == paymentToken", async () => {
