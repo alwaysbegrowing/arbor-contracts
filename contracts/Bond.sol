@@ -347,8 +347,10 @@ contract Bond is
         returns (uint256 collateralTokens)
     {
         uint256 tokensCoveredByPayment = paymentBalance() + payment;
-        uint256 collateralTokensRequired = 0;
         uint256 bondSupply = totalSupply();
+
+        uint256 collateralTokensRequired;
+
         if (tokensCoveredByPayment < bondSupply) {
             collateralTokensRequired = (bondSupply - tokensCoveredByPayment)
                 .mulWadUp(collateralRatio);
