@@ -9,9 +9,9 @@ interface IBond {
 
     /**
         @notice Bond redemption is impossible because the grace period has not
-            yet passed or the bond has not been fully paid.
+            yet passed and the bond has not been fully paid.
     */
-    error BondBeforeGracePeriodOrPaid();
+    error BondBeforeGracePeriodAndNotPaid();
 
     /// @notice Attempted to pay after payment was met.
     error PaymentAlreadyMet();

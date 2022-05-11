@@ -78,7 +78,7 @@ contract Bond is
         if (isAfterGracePeriod() || amountUnpaid() == 0) {
             _;
         } else {
-            revert BondBeforeGracePeriodOrPaid();
+            revert BondBeforeGracePeriodAndNotPaid();
         }
     }
 
