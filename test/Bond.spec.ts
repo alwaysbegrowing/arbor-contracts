@@ -20,6 +20,7 @@ import {
   NonConvertibleBondConfig,
   ConvertibleBondConfig,
   UncollateralizedBondConfig,
+  MaliciousBondConfig,
 } from "./constants";
 
 // https://ethereum-waffle.readthedocs.io/en/latest/fixtures.html
@@ -100,6 +101,7 @@ describe("Bond", () => {
 
           await factory.grantRole(allowedToken, paymentToken.address);
           await factory.grantRole(allowedToken, collateralToken.address);
+          await factory.grantRole(allowedToken, attackingToken.address);
 
           await collateralToken.approve(
             factory.address,
@@ -155,6 +157,21 @@ describe("Bond", () => {
                 )
               ),
               config: UncollateralizedBondConfig,
+            },
+            malicious: {
+              bond: await getBondContract(
+                factory.createBond(
+                  "Bond",
+                  "LUG",
+                  MaliciousBondConfig.maturity,
+                  attackingToken.address,
+                  collateralToken.address,
+                  MaliciousBondConfig.collateralTokenAmount,
+                  MaliciousBondConfig.convertibleTokenAmount,
+                  MaliciousBondConfig.maxSupply
+                )
+              ),
+              config: MaliciousBondConfig,
             },
           };
         }
@@ -368,6 +385,7 @@ describe("Bond", () => {
             config = bondWithTokens.nonConvertible.config;
             await paymentToken.approve(bond.address, config.maxSupply);
           });
+
           it("should accept partial payment", async () => {
             const halfSupplyMinusOne = config.maxSupply
               .div(2)
@@ -426,6 +444,20 @@ describe("Bond", () => {
 
             await expect(bond.pay(2)).to.emit(bond, "Payment");
             expect(await bond.amountUnpaid()).to.equal(ZERO);
+          });
+        });
+        describe("attacking", async () => {
+          beforeEach(async () => {
+            bond = bondWithTokens.malicious.bond;
+            config = bondWithTokens.malicious.config;
+            await attackingToken.approve(bond.address, config.maxSupply);
+          });
+
+          it("records the actual amount transferred", async () => {
+            // The attacking token has a trasnferFrom function that always
+            // transfers 0 tokens. The bond should have nothing paid after pay.
+            await (await bond.connect(attacker).pay(config.maxSupply)).wait();
+            expect(await bond.amountUnpaid()).to.equal(config.maxSupply);
           });
         });
       });

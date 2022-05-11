@@ -155,13 +155,19 @@ contract Bond is
             revert ZeroAmount();
         }
 
+        uint256 balanceBefore = IERC20Metadata(paymentToken).balanceOf(
+            address(this)
+        );
         IERC20Metadata(paymentToken).safeTransferFrom(
             _msgSender(),
             address(this),
             amount
         );
+        uint256 balanceAfter = IERC20Metadata(paymentToken).balanceOf(
+            address(this)
+        );
 
-        emit Payment(_msgSender(), amount);
+        emit Payment(_msgSender(), balanceAfter - balanceBefore);
     }
 
     /// @inheritdoc IBond
