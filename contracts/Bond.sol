@@ -267,6 +267,10 @@ contract Bond is
 
         uint256 sweepingTokenBalance = sweepingToken.balanceOf(address(this));
 
+        if (sweepingTokenBalance == 0) {
+            revert ZeroAmount();
+        }
+
         sweepingToken.safeTransfer(receiver, sweepingTokenBalance);
 
         uint256 paymentTokenBalanceAfter = IERC20Metadata(paymentToken)

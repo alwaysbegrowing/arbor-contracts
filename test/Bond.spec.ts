@@ -1026,6 +1026,12 @@ describe("Bond", () => {
             collateralToken.transfer(bond.address, utils.parseEther("1"));
           });
 
+          it("fails to sweep a token with no balance", async () => {
+            await expect(
+              bond.sweep(attackingToken.address, owner.address)
+            ).to.be.revertedWith("ZeroAmount");
+          });
+
           it("should remove a token from the contract", async () => {
             await attackingToken.connect(attacker).transfer(bond.address, 1000);
             await expect(
