@@ -82,6 +82,14 @@ contract Bond is
         }
     }
 
+    constructor() {
+        /*
+        Since the constructor is executed only when creating the
+        implementation contract, prevent its re-initialization.
+    */
+        _disableInitializers();
+    }
+
     /// @inheritdoc IBond
     function initialize(
         string memory bondName,

@@ -201,6 +201,27 @@ describe("Bond", () => {
             bond = bondWithTokens.nonConvertible.bond;
             config = bondWithTokens.nonConvertible.config;
           });
+          it("reverts when trying to initalize implementation contract", async () => {
+            const tokenImplementation = await ethers.getContractAt(
+              "Bond",
+              await factory.tokenImplementation()
+            );
+            await expect(
+              tokenImplementation.initialize(
+                "Bond",
+                "LUG",
+                owner.address,
+                config.maturity,
+                paymentToken.address,
+                collateralToken.address,
+                utils.parseUnits(".25", decimals),
+                utils.parseUnits(".5", decimals),
+                config.maxSupply
+              )
+            ).to.be.revertedWith(
+              "Initializable: contract is already initialized"
+            );
+          });
           it("should disallow calling initialize again", async () => {
             await expect(
               bond.initialize(
