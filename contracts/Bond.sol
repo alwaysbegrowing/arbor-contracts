@@ -147,7 +147,7 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function pay(uint256 amount) external nonReentrant {
+    function pay(uint256 amount) external {
         if (amountUnpaid() == 0) {
             revert PaymentAlreadyMet();
         }
@@ -224,6 +224,7 @@ contract Bond is
     /// @inheritdoc IBond
     function withdrawExcessCollateral(uint256 amount, address receiver)
         external
+        nonReentrant
         onlyOwner
     {
         if (amount > previewWithdrawExcessCollateral()) {
@@ -243,7 +244,11 @@ contract Bond is
     }
 
     /// @inheritdoc IBond
-    function withdrawExcessPayment(address receiver) external onlyOwner {
+    function withdrawExcessPayment(address receiver)
+        external
+        nonReentrant
+        onlyOwner
+    {
         uint256 overpayment = previewWithdrawExcessPayment();
         if (overpayment <= 0) {
             revert NoPaymentToWithdraw();
