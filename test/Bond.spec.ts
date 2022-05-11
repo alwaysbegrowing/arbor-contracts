@@ -1046,6 +1046,20 @@ describe("Bond", () => {
           });
         });
       });
+      describe("burn", async () => {
+        describe("non convertible", async () => {
+          beforeEach(async () => {
+            bond = bondWithTokens.nonConvertible.bond;
+            config = bondWithTokens.nonConvertible.config;
+          });
+
+          it("fails when a non-owner tries to burn bonds", async () => {
+            await expect(
+              bond.connect(bondHolder).burn(config.maxSupply)
+            ).to.be.revertedWith("Ownable: caller is not the owner");
+          });
+        });
+      });
     });
   });
 });
