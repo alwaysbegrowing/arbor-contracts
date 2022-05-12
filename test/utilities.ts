@@ -206,14 +206,12 @@ export const getBondInfo = async (
     .toUpperCase()
     .replace(/ /g, "");
   // This call value will be calculated on the front-end with acutal prices
-  const callAmount =
-    config.convertibleTokenAmount.toString().slice(0, 2) +
-    "-" +
-    config.maxSupply.toString().slice(0, 2);
   const bondName = `${getDAONameFromSymbol(
     collateralTokenSymbol
   )} ${productNameLong}`;
-  const bondSymbol = `${collateralTokenSymbol.toUpperCase()} ${productNameShort} ${maturityDate} 25C ${paymentTokenSymbol.toUpperCase()}`;
+  const bondSymbol = `${collateralTokenSymbol.toUpperCase()} ${productNameShort} ${maturityDate}${
+    isConvertible ? " 25C" : ""
+  } ${paymentTokenSymbol.toUpperCase()}`;
 
   return {
     bondName,

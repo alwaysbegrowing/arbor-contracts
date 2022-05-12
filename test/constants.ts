@@ -67,35 +67,37 @@ export const MaliciousBondConfig: BondConfigType = {
   maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
 };
 
-export const deploymentBonds: BondDeploymentConfiguration[] = [
-  {
-    // This bond has a short maturity and a full FIFTY_MILLION
-    // Since we pay TWENTY_FIVE_MILLION, this bond will "Default"
-    bondConfig: {
-      ...NonConvertibleBondConfig,
-      maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
-      maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
-    },
-    auctionConfig: {
-      minFundingThreshold: utils.parseUnits(TWENTY_FIVE_MILLION, 6),
-    },
-    biddingConfig: {},
+const SHORT_MATURITY_NON_CONVERTIBLE: BondDeploymentConfiguration = {
+  // This bond has a short maturity and a full FIFTY_MILLION
+  // Since we pay TWENTY_FIVE_MILLION, this bond will "Default"
+  bondConfig: {
+    ...NonConvertibleBondConfig,
+    maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
+    maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
   },
-  {
-    // This will be an "Active" convertible bond
-    bondConfig: {
-      ...ConvertibleBondConfig,
-      maturity: ONE_DAY_FROM_NOW_IN_SECONDS,
-      maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
-    },
-    auctionConfig: {},
-    biddingConfig: {},
+  auctionConfig: {
+    minFundingThreshold: utils.parseUnits(TWENTY_FIVE_MILLION, 6),
   },
+  biddingConfig: {},
+};
+
+const SHORT_MATURITY_CONVERTIBLE: BondDeploymentConfiguration = {
+  // This will be an "Active" convertible bond
+  bondConfig: {
+    ...ConvertibleBondConfig,
+    maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
+    maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
+  },
+  auctionConfig: {},
+  biddingConfig: {},
+};
+
+const SHORT_MATURITY_UNCOLLATERALIZED_SHORT_ORDER_CANCELLATION: BondDeploymentConfiguration =
   {
     // This will be an "Active" Un-Collateralized bond
     bondConfig: {
       ...UncollateralizedBondConfig,
-      maturity: ONE_MONTH_FROM_NOW_IN_SECONDS,
+      maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
       maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
     auctionConfig: {
@@ -106,7 +108,9 @@ export const deploymentBonds: BondDeploymentConfiguration[] = [
       sellAmount: (9_000).toString(),
       minBuyAmount: (10_000).toString(),
     },
-  },
+  };
+
+const LONG_MATURITY_NON_CONVERTIBLE_SHORT_AUCTION_END: BondDeploymentConfiguration =
   {
     // This will be an "Active" Non-Convertible bond
     bondConfig: {
@@ -124,40 +128,84 @@ export const deploymentBonds: BondDeploymentConfiguration[] = [
       sellAmount: (18_000).toString(),
       minBuyAmount: (20_000).toString(),
     },
-  },
+  };
+
+const LONG_MATURITY_NON_CONVERTIBLE_SHORT_AUCTION_END_TWO_YEARS: BondDeploymentConfiguration =
   {
-    // This will be a "Paid" convertible bond
+    // This will be an "Active" Non-Convertible bond
     bondConfig: {
-      ...ConvertibleBondConfig,
-      // Make bond mature
-      maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
-      // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
-      maxSupply: utils.parseUnits(TWENTY_FIVE_MILLION.toString(), 6),
-    },
-    auctionConfig: {},
-    biddingConfig: {
-      sellAmount: (90_000).toString(),
-      minBuyAmount: (100_000).toString(),
-    },
-  },
-  {
-    // This will be a "PaidEarly" Non-Convertible bond
-    bondConfig: {
-      ...ConvertibleBondConfig,
-      maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
-      // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
-      maxSupply: utils.parseUnits(TWENTY_FIVE_MILLION.toString(), 6),
+      ...NonConvertibleBondConfig,
+      maturity: TWO_YEARS_FROM_NOW_IN_SECONDS,
+      maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
     auctionConfig: {
-      // Whose auction will be ongoing
-      auctionEndDate: ONE_MONTH_FROM_NOW_IN_SECONDS,
-      orderCancellationEndDate: ONE_MONTH_FROM_NOW_IN_SECONDS,
+      // Whose auction will be ended
+      auctionEndDate: TEN_MINUTES_FROM_NOW_IN_SECONDS,
+      orderCancellationEndDate: TEN_MINUTES_FROM_NOW_IN_SECONDS,
+      minFundingThreshold: ZERO,
     },
     biddingConfig: {
-      sellAmount: (900_000).toString(),
-      minBuyAmount: (1_000_000).toString(),
+      sellAmount: (18_000).toString(),
+      minBuyAmount: (20_000).toString(),
     },
+  };
+
+const LONG_MATURITY_CONVERTIBLE: BondDeploymentConfiguration = {
+  // This will be a "Paid" convertible bond
+  bondConfig: {
+    ...ConvertibleBondConfig,
+    // Make bond mature
+    maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
+    // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
+    maxSupply: utils.parseUnits(TWENTY_FIVE_MILLION.toString(), 6),
   },
+  auctionConfig: {},
+  biddingConfig: {
+    sellAmount: (90_000).toString(),
+    minBuyAmount: (100_000).toString(),
+  },
+};
+
+const LONG_MATURITY_CONVERTIBLE_LONG_AUCTION_CANCELLATION = {
+  // This will be a "PaidEarly" Convertible bond
+  bondConfig: {
+    ...ConvertibleBondConfig,
+    maturity: ONE_YEAR_FROM_NOW_IN_SECONDS,
+    // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
+  },
+  auctionConfig: {
+    // Whose auction will be ongoing
+    auctionEndDate: ONE_MONTH_FROM_NOW_IN_SECONDS,
+    orderCancellationEndDate: ONE_MONTH_FROM_NOW_IN_SECONDS,
+  },
+  biddingConfig: {
+    sellAmount: (900_000).toString(),
+    minBuyAmount: (1_000_000).toString(),
+  },
+};
+
+const LONG_MATURITY_CONVERTIBLE_PAID_EARLY_LONG_AUCTION_CANCELLATION = {
+  // This will be a "PaidEarly" Convertible bond
+  bondConfig: {
+    ...ConvertibleBondConfig,
+    maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
+    // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
+    maxSupply: utils.parseUnits(TWENTY_FIVE_MILLION.toString(), 6),
+  },
+  auctionConfig: {
+    // Whose auction will be ongoing
+    auctionEndDate: ONE_MONTH_FROM_NOW_IN_SECONDS,
+    orderCancellationEndDate: ONE_MONTH_FROM_NOW_IN_SECONDS,
+  },
+  biddingConfig: {
+    sellAmount: (900_000).toString(),
+    minBuyAmount: (1_000_000).toString(),
+  },
+};
+
+export const deploymentBonds: BondDeploymentConfiguration[] = [
+  LONG_MATURITY_NON_CONVERTIBLE_SHORT_AUCTION_END,
+  LONG_MATURITY_NON_CONVERTIBLE_SHORT_AUCTION_END_TWO_YEARS,
 ];
 
 const easyAuction = require("../contracts/external/EasyAuction");

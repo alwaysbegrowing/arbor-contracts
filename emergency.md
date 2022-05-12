@@ -15,8 +15,8 @@ For the purposes of this document, an emergency situation is defined to be:
 This is a non exhaustive list of possible emergency scenarios:
 
 1. Bug/Exploit in Bond code that can cause a loss of funds for users
-4. Potential exploit discovered by team or bounty program researcher
-5. Active exploit / hack in progress discovered by unknown party
+2. Potential exploit discovered by team or bounty program researcher
+3. Active exploit / hack in progress discovered by unknown party
 
 ## Roles
 
@@ -35,7 +35,7 @@ A contributor may be assigned up to three of these roles concurrently.
 
 Facilitates the emergency handling and ensures the process described in this document is followed, engaging with the correct stakeholders and teams in order for the necessary decisions to be made quickly. A suitable Facilitator is any person familiar with the process and is confident that they can drive the team to follow through. It's expected that the person assigned to this role has relevant experience either from having worked real scenarios or through drill training.
 
-### Multi-sig Herder @bookland, backup @jordan 
+### Multi-sig Herder @bookland, backup @jordan
 
 Responsible for ensuring that different Porter teams' Multi-sig wallets (i.e. bookland.porterfinance.eth, jordan.porterfinance.eth, namaskar.porterfinance.eth) are able to execute transactions in a timely manner during the emergency.
 
@@ -50,7 +50,7 @@ In charge of coordinating quick changes to management and strategist roles durin
 
 - Prepare and Execute Strategist Multi-sig transactions and operations
 - Update issuer list
-- Update allow list 
+- Update allow list
 
 ### Core Dev Lead (Guardian) @namaskar, backup @bookland
 
@@ -68,7 +68,7 @@ Coordinates quick changes to UI and Websites as required, including but not limi
 - Display alerts and banners
 - Other UI related work
 
-### Ops @jordan backup @bookland 
+### Ops @jordan backup @bookland
 
 In charge of coordinating comms and operations assistance as required:
 
@@ -97,21 +97,21 @@ The primary objective is minimized the loss of funds, in particular for Porter's
 4. Once the issue has been confirmed as valid, the next stop is to take immediate corrective action to prevent further loss of funds. If root cause requires further research, the team must err on the side of caution and take emergency preventive actions while the situation continues to be assessed. A few questions to guide the decisions of the team:
    - Disable createBonds for the affected contracts? Should createBond, convert, redeem, withdraw, pay be removed from the UI?
    - Are multiple Team members able to confirm the corrective actions will stop the immediate risk through local hardhat fork testing? Strategist and Core Dev main roles in particular to confirm this step.
-6. Once corrective measures are in place and there is confirmation by multiple sources that funds are no longer at risk, the next objective is to identify the root cause. A few questions/actions during this step that can help the team make decisions:
+5. Once corrective measures are in place and there is confirmation by multiple sources that funds are no longer at risk, the next objective is to identify the root cause. A few questions/actions during this step that can help the team make decisions:
    - What communications should be made public at this point in time?
    - Can research among members of the War Room be divided? This step can be open for team members to do live debug sessions sharing screens to help identify the problem using the sample transactions.
-7. Once the cause is identified, the team can brainstorm to come up with the most suitable remediation plan and its code implementation (if required). A few questions that can help during this time:
+6. Once the cause is identified, the team can brainstorm to come up with the most suitable remediation plan and its code implementation (if required). A few questions that can help during this time:
    - In case there are many possible solutions can the team prioritize by weighing each option by time to implement and minimization of losses?
    - Can the possible solutions be tested and compared to confirm the end state fixes the issue?
    - Is there agreement in the War Room about the best solution? If not, can the objections be identified and a path for how to reach consensus on the approach be worked out, prioritizing the minimization of losses?
    - If a solution will take longer than a few hours, are there any further communications and preventive actions needed while the fix is developed?
    - Does the solution require a longer term plan? Is there identified owners for the tasks/steps for the plan's execution?
-8. Once a solution has been implemented, the team will confirm the solution resolves the issue and minimizes the loss of funds. Possible actions needed during this step:
+7. Once a solution has been implemented, the team will confirm the solution resolves the issue and minimizes the loss of funds. Possible actions needed during this step:
    - Run in hardhat fork simulations of end state to confirm the proposed solution(s)
    - Coordinate signatures from multi-sig signers and execution
    - Enable UI changes to normalize operations as needed
-9. Assign a lead to prepare a [disclosure](https://github.com/yearn/yearn-security) (should it be required), preparing a timeline of the events that took place.
-10. The team agrees when the War Room can be dismantled. The Facilitator breaks down the War Room and sets reminders if it takes longer than a few hours for members to reconvene.
+8. Assign a lead to prepare a [disclosure](https://github.com/yearn/yearn-security) (should it be required), preparing a timeline of the events that took place.
+9. The team agrees when the War Room can be dismantled. The Facilitator breaks down the War Room and sets reminders if it takes longer than a few hours for members to reconvene.
 
 ### Emergency Checklist
 
@@ -141,14 +141,14 @@ This checklist should be complemented with the [steps](#emergency-steps)
 
 List of tools and alternatives in case primary tools are not available during an incident.
 
-| Description         | Primary                                        |                               Secondary                                |
-| ------------------- | ---------------------------------------------- | :--------------------------------------------------------------------: |
-| Code Sharing        | Github                                         | [HackMd](https://hackmd.io/), [CodeShare](https://codeshare.io/) |
-| Communications\*    | Discord                                        |                                Telegram                                 |
-| Transaction Details | [Etherscan](https://etherscan.io/)             |                    [EthTxInfo](https://ethtx.info/)                    |
-| Debugging           | Hardhat                                        |                    [Tenderly](https://tenderly.co/)                    |
-| Transaction Builder | [gnosis-safe](https://gnosis-safe.io/app/eth:0xe5a154e2f4b5E394EBb01631d270eCC88Ad7e050/home) |              _Backup if gnosis safe Api is not working?_               |
-| Screen Sharing\*    | Discord                                       |                            Google Hangouts                             |
+| Description         | Primary                                                                                       |                            Secondary                             |
+| ------------------- | --------------------------------------------------------------------------------------------- | :--------------------------------------------------------------: |
+| Code Sharing        | Github                                                                                        | [HackMd](https://hackmd.io/), [CodeShare](https://codeshare.io/) |
+| Communications\*    | Discord                                                                                       |                             Telegram                             |
+| Transaction Details | [Etherscan](https://etherscan.io/)                                                            |                 [EthTxInfo](https://ethtx.info/)                 |
+| Debugging           | Hardhat                                                                                       |                 [Tenderly](https://tenderly.co/)                 |
+| Transaction Builder | [gnosis-safe](https://gnosis-safe.io/app/eth:0xe5a154e2f4b5E394EBb01631d270eCC88Ad7e050/home) |           _Backup if gnosis safe Api is not working?_            |
+| Screen Sharing\*    | Discord                                                                                       |                         Google Hangouts                          |
 
 **Facilitator is responsible to ensure no unauthorized persons enter the War Room or join these tools via invite links that leak.**
 

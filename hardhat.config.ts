@@ -38,15 +38,17 @@ const config: HardhatUserConfig = {
         auto: false,
         interval: 10,
       },
+      url: process.env.RINKEBY_RPC_URL,
       gasMultiplier: 2,
-      url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+      gasPrice: 4_000_000_000,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     mumbai: {
       live: true,
       gasPrice: 35000000000,
-      url: process.env.POLYGON_ALCHEMY_URL,
+      url: process.env.POLYGON_RPC_URL,
+      gasMultiplier: 2,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -57,7 +59,7 @@ const config: HardhatUserConfig = {
       },
       forking: {
         blockNumber: 10453255,
-        url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+        url: process.env.RINKEBY_RPC_URL || "",
       },
     },
   },
