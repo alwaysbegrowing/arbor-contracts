@@ -444,11 +444,6 @@ contract Bond is
         return IERC20Metadata(paymentToken).decimals();
     }
 
-    /// @inheritdoc ERC20BurnableUpgradeable
-    function burn(uint256 amount) public override onlyOwner {
-        return super.burn(amount);
-    }
-
     /**
         @notice Checks if the grace period timestamp has passed.
         @return isGracePeriodOver Whether or not the Bond is past the
