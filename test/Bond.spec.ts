@@ -962,6 +962,7 @@ describe("Bond", () => {
               bond.address,
               config.collateralTokenAmount
             );
+            bond.transfer(bondHolder.address, config.maxSupply);
           });
 
           it("previews convert zero converted", async () => {
@@ -989,10 +990,10 @@ describe("Bond", () => {
               amountOfBondsConverted,
               amountOfCollateralTokens,
             } = await getEventArgumentsFromTransaction(
-              await bond.convert(config.maxSupply),
+              await bond.connect(bondHolder).convert(config.maxSupply),
               "Convert"
             );
-            expect(from).to.equal(owner.address);
+            expect(from).to.equal(bondHolder.address);
             expect(convertedCollateralToken).to.equal(collateralToken.address);
             expect(amountOfBondsConverted).to.equal(config.maxSupply);
             expect(amountOfCollateralTokens).to.equal(

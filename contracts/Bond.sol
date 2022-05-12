@@ -129,7 +129,7 @@ contract Bond is
             revert ZeroAmount();
         }
 
-        burn(bonds);
+        _burn(_msgSender(), bonds);
 
         address _collateralToken = collateralToken;
 
@@ -198,7 +198,7 @@ contract Bond is
             revert ZeroAmount();
         }
 
-        burn(bonds);
+        _burn(_msgSender(), bonds);
 
         address _paymentToken = paymentToken;
         address _collateralToken = collateralToken;
@@ -446,7 +446,7 @@ contract Bond is
 
     /// @inheritdoc ERC20BurnableUpgradeable
     function burn(uint256 amount) public override onlyOwner {
-        return super.burn(amount);
+        return _burn(_msgSender(), amount);
     }
 
     /**
