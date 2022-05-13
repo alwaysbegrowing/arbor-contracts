@@ -1079,29 +1079,48 @@ describe("Bond", () => {
             collateralToken.transfer(bond.address, utils.parseEther("1"));
           });
 
-          it("fails to sweep a token with no balance", async () => {
+          it("sweeps ERC20 token out of bond contract", async () => {
+            await attackingToken.connect(attacker).transfer(bond.address, 1000);
+            const balanceBefore = await attackingToken.balanceOf(
+              attacker.address
+            );
+            await expect(
+              bond.sweep(attackingToken.address, attacker.address)
+            ).to.emit(bond, "TokenSweep");
+            const balanceAfter = await attackingToken.balanceOf(
+              attacker.address
+            );
+
+            expect(balanceAfter.sub(balanceBefore)).to.be.equal(1000);
+          });
+
+          it("reverts when sweeping a token that has no balance", async () => {
             await expect(
               bond.sweep(attackingToken.address, owner.address)
             ).to.be.revertedWith("ZeroAmount");
           });
 
-          it("should remove a token from the contract", async () => {
-            await attackingToken.connect(attacker).transfer(bond.address, 1000);
+          it("reverts if called by non-owner", async () => {
             await expect(
-              bond.sweep(attackingToken.address, owner.address)
-            ).to.emit(bond, "TokenSweep");
-            expect(await attackingToken.balanceOf(owner.address)).to.be.equal(
-              1000
-            );
+              bond
+                .connect(attacker)
+                .sweep(attackingToken.address, owner.address)
+            ).to.be.revertedWith("Ownable: caller is not the owner");
           });
 
-          it("should disallow removal of collateralToken and paymentToken", async () => {
+          it("reverts when trying to sweep paymentTokens or collateralTokens", async () => {
             await expect(
               bond.sweep(paymentToken.address, owner.address)
             ).to.be.revertedWith("SweepDisallowedForToken");
             await expect(
               bond.sweep(collateralToken.address, owner.address)
             ).to.be.revertedWith("SweepDisallowedForToken");
+          });
+
+          it("reverts when sweeping a token that has no balance", async () => {
+            await expect(
+              bond.sweep(attackingToken.address, owner.address)
+            ).to.be.revertedWith("ZeroAmount");
           });
         });
       });
