@@ -129,7 +129,7 @@ contract Bond is
             revert ZeroAmount();
         }
 
-        burn(bonds);
+        _burn(_msgSender(), bonds);
 
         address _collateralToken = collateralToken;
 
@@ -198,7 +198,7 @@ contract Bond is
             revert ZeroAmount();
         }
 
-        burn(bonds);
+        _burn(_msgSender(), bonds);
 
         address _paymentToken = paymentToken;
         address _collateralToken = collateralToken;
