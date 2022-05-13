@@ -38,7 +38,7 @@ const config: HardhatUserConfig = {
         auto: false,
         interval: 10,
       },
-      url: process.env.RINKEBY_RPC_URL,
+      url: process.env.RINKEBY_RPC_URL || "",
       gasMultiplier: 2,
       gasPrice: 4_000_000_000,
       accounts:
@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
     mumbai: {
       live: true,
       gasPrice: 35000000000,
-      url: process.env.POLYGON_RPC_URL,
+      url: process.env.POLYGON_RPC_URL || "",
       gasMultiplier: 2,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
@@ -57,10 +57,10 @@ const config: HardhatUserConfig = {
         auto: true,
         interval: 10,
       },
-      forking: {
-        blockNumber: 10453255,
-        url: process.env.RINKEBY_RPC_URL || "",
-      },
+      // forking: {
+      //   blockNumber: 10453255,
+      //   url: process.env.RINKEBY_RPC_URL || "",
+      // },
     },
   },
   gasReporter: {

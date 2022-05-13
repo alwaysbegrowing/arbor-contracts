@@ -2,6 +2,7 @@
   "name": "hardhat-project",
   "scripts": {
     "prepare": "husky install",
+    "postinstall": "npx hardhat typechain",
     "echidna": "export TERMINFO=/usr/share/terminfo && hardhat compile && echidna-test . --contract TestBond --config ./echidna.config.yaml"
   },
   "devDependencies": {

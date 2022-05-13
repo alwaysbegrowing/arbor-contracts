@@ -1,4 +1,4 @@
-import { BigNumber, utils, BytesLike } from "ethers";
+import { BigNumber, utils } from "ethers";
 import { expect } from "chai";
 import { TestERC20, Bond, BondFactory } from "../typechain";
 import {

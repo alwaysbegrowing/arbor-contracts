@@ -1,6 +1,5 @@
 import { task } from "hardhat/config";
 import { easyAuctionAbi, rinkebyGnosis } from "../test/constants";
-import { Bond } from "../typechain";
 
 task("settle-auction", "Settles auction if it can be settled.")
   .addParam("auctionId", "The ID of the auction to settle.")
@@ -13,10 +12,7 @@ task("settle-auction", "Settles auction if it can be settled.")
       console.log(auctionEndDate);
       await (await auction.settleAuction(auctionId)).wait();
 
-      const bond = (await ethers.getContractAt(
-        "Bond",
-        auctioningToken
-      )) as Bond;
+      const bond = await ethers.getContractAt("Bond", auctioningToken);
 
       console.log(`
 Settling auction for ${await bond.symbol()}.
