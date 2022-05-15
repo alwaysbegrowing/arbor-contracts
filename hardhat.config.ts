@@ -32,6 +32,10 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL || "",
+      gasPrice: 15000000000, // 15 gwei
+    },
     rinkeby: {
       live: true,
       mining: {
