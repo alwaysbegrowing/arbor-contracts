@@ -270,9 +270,9 @@ export const initiateAuction = async (
     Math.round(
       new Date(new Date().setDate(new Date().getDate() + 7)).getTime() / 1000
     );
-  const tokenBalance = await bond.balanceOf(owner.address);
+  const amountToSend = (await bond.balanceOf(owner.address)).div(2);
   const auctionedSellAmount =
-    auctionParams?.auctionedSellAmount || tokenBalance;
+    auctionParams?.auctionedSellAmount || amountToSend;
   const minBuyAmount =
     auctionParams?.minBuyAmount ||
     BigNumber.from(auctionedSellAmount).mul(8).div(10);

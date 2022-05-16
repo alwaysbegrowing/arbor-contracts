@@ -12,6 +12,7 @@ module.exports = async function ({
     from: deployer,
     log: true,
     autoMine: true,
+    waitConfirmations: 1,
   });
 };
 
