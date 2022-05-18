@@ -13,6 +13,16 @@
 
 Please report any security issues to security@porter.finance
 
+# Contracts:
+
+## Mainnet
+
+BondFactory: https://etherscan.io/address/0x778e0bf89a5f3cac5333a0613691390d41f35227
+
+## Rinkeby
+
+BondFactory:
+
 # V1
 
 Smart Contracts powering the Porter protocol.
