@@ -94,7 +94,10 @@ auctionEndDate: ${auctionEndDate}
       });
     } catch (e) {
       console.log(e);
-      console.log(`Failed to create auction for ${address}.`);
+      console.log(
+        `Failed to create auction for ${address}.
+Are you on the network corresponding to the auction address?`
+      );
     }
   }
 };

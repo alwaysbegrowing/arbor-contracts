@@ -108,76 +108,48 @@ describe("Bond", () => {
             ethers.constants.MaxUint256
           );
 
+          const getConfig = async (
+            configWithDecimals: (decimals: number) => BondConfigType,
+            decimals: number,
+            paymentTokenOverride: string = paymentToken.address
+          ) => {
+            const config = configWithDecimals(decimals);
+            return {
+              config,
+              bond: await getBondContract(
+                factory.createBond(
+                  "Bond",
+                  "LUG",
+                  config.maturity,
+                  paymentTokenOverride, // Malicious config uses the attacking token!
+                  collateralToken.address,
+                  config.collateralTokenAmount,
+                  config.convertibleTokenAmount,
+                  config.maxSupply
+                )
+              ),
+            };
+          };
           return {
             decimals,
             attackingToken,
             paymentToken,
             collateralToken,
-            nonConvertible: {
-              bond: await getBondContract(
-                factory.createBond(
-                  "Bond",
-                  "LUG",
-                  NonConvertibleBondConfig.maturity,
-                  paymentToken.address,
-                  collateralToken.address,
-                  NonConvertibleBondConfig.collateralTokenAmount,
-                  NonConvertibleBondConfig.convertibleTokenAmount,
-                  NonConvertibleBondConfig.maxSupply
-                )
-              ),
-              config: NonConvertibleBondConfig,
-            },
-            convertible: {
-              bond: await getBondContract(
-                factory.createBond(
-                  "Bond",
-                  "LUG",
-                  ConvertibleBondConfig.maturity,
-                  paymentToken.address,
-                  collateralToken.address,
-                  ConvertibleBondConfig.collateralTokenAmount,
-                  ConvertibleBondConfig.convertibleTokenAmount,
-                  ConvertibleBondConfig.maxSupply
-                )
-              ),
-              config: ConvertibleBondConfig,
-            },
-            uncollateralized: {
-              bond: await getBondContract(
-                factory.createBond(
-                  "Bond",
-                  "LUG",
-                  UncollateralizedBondConfig.maturity,
-                  paymentToken.address,
-                  collateralToken.address,
-                  UncollateralizedBondConfig.collateralTokenAmount,
-                  UncollateralizedBondConfig.convertibleTokenAmount,
-                  UncollateralizedBondConfig.maxSupply
-                )
-              ),
-              config: UncollateralizedBondConfig,
-            },
-            malicious: {
-              bond: await getBondContract(
-                factory.createBond(
-                  "Bond",
-                  "LUG",
-                  MaliciousBondConfig.maturity,
-                  attackingToken.address,
-                  collateralToken.address,
-                  MaliciousBondConfig.collateralTokenAmount,
-                  MaliciousBondConfig.convertibleTokenAmount,
-                  MaliciousBondConfig.maxSupply
-                )
-              ),
-              config: MaliciousBondConfig,
-            },
+            nonConvertible: await getConfig(NonConvertibleBondConfig, decimals),
+            convertible: await getConfig(ConvertibleBondConfig, decimals),
+            uncollateralized: await getConfig(
+              UncollateralizedBondConfig,
+              decimals
+            ),
+            malicious: await getConfig(
+              MaliciousBondConfig,
+              decimals,
+              attackingToken.address
+            ),
           };
         }
       })
     );
-
     return {
       bonds,
       factory,
@@ -218,7 +190,7 @@ describe("Bond", () => {
             bond = bondWithTokens.nonConvertible.bond;
             config = bondWithTokens.nonConvertible.config;
           });
-          it("reverts when trying to initalize implementation contract", async () => {
+          it("reverts when trying to initialize implementation contract", async () => {
             const tokenImplementation = await ethers.getContractAt(
               "Bond",
               await factory.tokenImplementation()
@@ -333,6 +305,7 @@ describe("Bond", () => {
             await bond.withdrawExcessPayment(owner.address);
             expect(await bond.previewWithdrawExcessPayment()).to.equal(0);
           });
+
           it("should have available overpayment when partially paid and all bonds are burnt", async () => {
             const bonds = await bond.balanceOf(owner.address);
             const halfPayment = (await bond.amountUnpaid()).div(2);
@@ -342,6 +315,12 @@ describe("Bond", () => {
             expect(await bond.previewWithdrawExcessPayment()).to.equal(
               halfPayment
             );
+          });
+
+          it("fails to withdraw when called by non-owner", async () => {
+            await expect(
+              bond.connect(bondHolder).withdrawExcessPayment(owner.address)
+            ).to.be.revertedWith("Ownable: caller is not the owner");
           });
         });
         describe("convertible", async () => {
@@ -413,6 +392,16 @@ describe("Bond", () => {
             await expect(bond.pay(config.maxSupply)).to.emit(bond, "Payment");
           });
 
+          it("should accept payment by non-owner", async () => {
+            await paymentToken.transfer(bondHolder.address, config.maxSupply);
+            await paymentToken
+              .connect(bondHolder)
+              .approve(bond.address, config.maxSupply);
+            await expect(
+              bond.connect(bondHolder).pay(config.maxSupply)
+            ).to.emit(bond, "Payment");
+          });
+
           it("should fail if already paid", async () => {
             await bond.pay(config.maxSupply);
             await expect(bond.pay(config.maxSupply)).to.be.revertedWith(
@@ -450,7 +439,9 @@ describe("Bond", () => {
           beforeEach(async () => {
             bond = bondWithTokens.malicious.bond;
             config = bondWithTokens.malicious.config;
-            await attackingToken.approve(bond.address, config.maxSupply);
+            await attackingToken
+              .connect(attacker)
+              .approve(bond.address, config.maxSupply);
           });
 
           it("records the actual amount transferred", async () => {
@@ -502,6 +493,7 @@ describe("Bond", () => {
                 config.collateralTokenAmount.div(2)
               );
             });
+
             it("fails if requesting too much", async () => {
               const owed = await bond.amountUnpaid();
               await paymentToken.approve(bond.address, owed);
@@ -515,7 +507,16 @@ describe("Bond", () => {
               ).to.be.revertedWith("NotEnoughCollateral");
             });
 
-            it("should make excess collateral available to withdraw when maturity is reached", async () => {});
+            it("fails to withdraw when called by non-owner", async () => {
+              await expect(
+                bond
+                  .connect(bondHolder)
+                  .withdrawExcessCollateral(
+                    await bond.previewWithdrawExcessCollateral(),
+                    owner.address
+                  )
+              ).to.be.revertedWith("Ownable: caller is not the owner");
+            });
           });
         });
         describe("PaidEarly state", async () => {
@@ -695,6 +696,17 @@ describe("Bond", () => {
                   config.convertibleTokenAmount
                 ),
               });
+
+              it("fails to withdraw when called by non-owner", async () => {
+                await expect(
+                  bond
+                    .connect(bondHolder)
+                    .withdrawExcessCollateral(
+                      await bond.previewWithdrawExcessCollateral(),
+                      owner.address
+                    )
+                ).to.be.revertedWith("Ownable: caller is not the owner");
+              });
             });
           });
           describe("uncollateralized", async () => {
@@ -742,11 +754,12 @@ describe("Bond", () => {
           it("should redeem for payment token", async () => {
             await bond.pay(config.maxSupply);
             await ethers.provider.send("evm_mine", [config.maturity]);
-
+            const sharesToRedeem = utils.parseUnits("333", decimals);
+            await bond.transfer(bondHolder.address, sharesToRedeem);
             await previewRedeem({
               bond,
-              sharesToRedeem: utils.parseUnits("333", decimals),
-              paymentTokenToSend: utils.parseUnits("333", decimals),
+              sharesToRedeem,
+              paymentTokenToSend: sharesToRedeem,
               collateralTokenToSend: ZERO,
             });
 
@@ -755,8 +768,8 @@ describe("Bond", () => {
               bondHolder,
               paymentToken,
               collateralToken,
-              sharesToRedeem: utils.parseUnits("333", decimals),
-              paymentTokenToSend: utils.parseUnits("333", decimals),
+              sharesToRedeem,
+              paymentTokenToSend: sharesToRedeem,
               collateralTokenToSend: ZERO,
             });
           });
@@ -764,19 +777,21 @@ describe("Bond", () => {
         describe("PaidEarly state", async () => {
           it("should redeem for payment token when bond is PaidEarly", async () => {
             await bond.pay(await bond.amountUnpaid());
+            const sharesToRedeem = utils.parseUnits("1000", decimals);
+            await bond.transfer(bondHolder.address, sharesToRedeem);
             await previewRedeem({
               bond,
-              sharesToRedeem: utils.parseUnits("1000", decimals),
-              paymentTokenToSend: utils.parseUnits("1000", decimals),
+              sharesToRedeem: sharesToRedeem,
+              paymentTokenToSend: sharesToRedeem,
               collateralTokenToSend: ZERO,
             });
             await redeemAndCheckTokens({
               bond,
-              bondHolder: owner,
+              bondHolder,
               paymentToken,
               collateralToken,
-              sharesToRedeem: utils.parseUnits("1000", decimals),
-              paymentTokenToSend: utils.parseUnits("1000", decimals),
+              sharesToRedeem: sharesToRedeem,
+              paymentTokenToSend: sharesToRedeem,
               collateralTokenToSend: ZERO,
             });
           });
@@ -840,7 +855,7 @@ describe("Bond", () => {
 
             await redeemAndCheckTokens({
               bond,
-              bondHolder,
+              bondHolder: owner,
               paymentToken,
               collateralToken,
               sharesToRedeem,
@@ -902,24 +917,26 @@ describe("Bond", () => {
               ).to.be.revertedWith("ZeroAmount");
             });
 
-            it("should allow withdraw of payment token when bond is partially paid and Defaulted", async () => {
-              const paymentAmount = utils.parseUnits("4000", decimals);
-              await bond.pay(paymentAmount);
+            it("redeems correct amount of tokens when partially paid", async () => {
+              const amountUnpaid = (await bond.amountUnpaid()).div(2);
 
-              const portionOfTotalBonds = utils
-                .parseUnits("4000", decimals)
+              await bond.pay(amountUnpaid);
+
+              const portionOfTotalBonds = amountUnpaid
                 .mul(ONE)
                 .div(config.maxSupply);
               const portionOfPaymentAmount = portionOfTotalBonds
-                .mul(paymentAmount)
+                .mul(amountUnpaid)
                 .div(ONE);
+              const sharesToRedeem = amountUnpaid;
 
+              await bond.transfer(bondHolder.address, sharesToRedeem);
               await redeemAndCheckTokens({
                 bond,
                 bondHolder,
                 paymentToken,
                 collateralToken,
-                sharesToRedeem: utils.parseUnits("4000", decimals),
+                sharesToRedeem,
                 paymentTokenToSend: portionOfPaymentAmount,
                 collateralTokenToSend: ZERO,
               });
@@ -936,9 +953,9 @@ describe("Bond", () => {
               collateralTokenToSend: ZERO,
             });
 
-            await expect(bond.redeem(ZERO)).to.be.revertedWith(
-              "BondBeforeGracePeriodAndNotPaid"
-            );
+            await expect(
+              bond.connect(bondHolder).redeem(ZERO)
+            ).to.be.revertedWith("BondBeforeGracePeriodAndNotPaid");
           });
 
           it("returns 0 if all bonds are burned", async () => {
@@ -962,6 +979,7 @@ describe("Bond", () => {
               bond.address,
               config.collateralTokenAmount
             );
+            await bond.transfer(bondHolder.address, config.maxSupply);
           });
 
           it("previews convert zero converted", async () => {
@@ -989,10 +1007,10 @@ describe("Bond", () => {
               amountOfBondsConverted,
               amountOfCollateralTokens,
             } = await getEventArgumentsFromTransaction(
-              await bond.convert(config.maxSupply),
+              await bond.connect(bondHolder).convert(config.maxSupply),
               "Convert"
             );
-            expect(from).to.equal(owner.address);
+            expect(from).to.equal(bondHolder.address);
             expect(convertedCollateralToken).to.equal(collateralToken.address);
             expect(amountOfBondsConverted).to.equal(config.maxSupply);
             expect(amountOfCollateralTokens).to.equal(
@@ -1002,7 +1020,7 @@ describe("Bond", () => {
 
           it("should lower amount owed when bonds are converted", async () => {
             const amountUnpaid = await bond.amountUnpaid();
-            await bond.convert(config.maxSupply.div(2));
+            await bond.connect(bondHolder).convert(config.maxSupply.div(2));
             expect(await bond.amountUnpaid()).to.be.equal(amountUnpaid.div(2));
             expect(await bond.amountUnpaid()).to.be.equal(
               config.maxSupply.div(2)
@@ -1010,63 +1028,71 @@ describe("Bond", () => {
           });
 
           it("fails to convert zero bonds", async () => {
-            await expect(bond.convert(0)).to.be.revertedWith("ZeroAmount");
+            await expect(
+              bond.connect(bondHolder).convert(0)
+            ).to.be.revertedWith("ZeroAmount");
           });
 
           it("should fail to convert after maturity", async () => {
             await ethers.provider.send("evm_mine", [config.maturity]);
 
-            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
-              "BondPastMaturity"
-            );
+            await expect(
+              bond.connect(bondHolder).convert(config.maxSupply)
+            ).to.be.revertedWith("BondPastMaturity");
           });
         });
         describe("non-convertible", async () => {
           beforeEach(async () => {
             bond = bondWithTokens.nonConvertible.bond;
             config = bondWithTokens.nonConvertible.config;
+            await bond.transfer(bondHolder.address, config.maxSupply);
           });
 
           it("should fail to convert if bond is not convertible", async () => {
-            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
-              "ZeroAmount"
-            );
+            await expect(
+              bond.connect(bondHolder).convert(config.maxSupply)
+            ).to.be.revertedWith("ZeroAmount");
           });
 
           it("fails to convert zero bonds", async () => {
-            await expect(bond.convert(0)).to.be.revertedWith("ZeroAmount");
+            await expect(
+              bond.connect(bondHolder).convert(0)
+            ).to.be.revertedWith("ZeroAmount");
           });
 
           it("should fail to convert after maturity", async () => {
             await ethers.provider.send("evm_mine", [config.maturity]);
 
-            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
-              "BondPastMaturity"
-            );
+            await expect(
+              bond.connect(bondHolder).convert(config.maxSupply)
+            ).to.be.revertedWith("BondPastMaturity");
           });
         });
         describe("uncollateralized", async () => {
           beforeEach(async () => {
             bond = bondWithTokens.uncollateralized.bond;
             config = bondWithTokens.uncollateralized.config;
+            await bond.transfer(bondHolder.address, config.maxSupply);
           });
 
           it("should fail to convert if bond is uncollateralized and therefore unconvertible", async () => {
-            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
-              "ZeroAmount"
-            );
+            await expect(
+              bond.connect(bondHolder).convert(config.maxSupply)
+            ).to.be.revertedWith("ZeroAmount");
           });
 
           it("fails to convert zero bonds", async () => {
-            await expect(bond.convert(0)).to.be.revertedWith("ZeroAmount");
+            await expect(
+              bond.connect(bondHolder).convert(0)
+            ).to.be.revertedWith("ZeroAmount");
           });
 
           it("should fail to convert after maturity", async () => {
             await ethers.provider.send("evm_mine", [config.maturity]);
 
-            await expect(bond.convert(config.maxSupply)).to.be.revertedWith(
-              "BondPastMaturity"
-            );
+            await expect(
+              bond.connect(bondHolder).convert(config.maxSupply)
+            ).to.be.revertedWith("BondPastMaturity");
           });
         });
       });

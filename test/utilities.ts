@@ -64,7 +64,6 @@ export const getBondContract = async (
     tx,
     "BondCreated"
   );
-
   return (await ethers.getContractAt("Bond", newBondAddress, owner)) as Bond;
 };
 
@@ -148,15 +147,19 @@ export const redeemAndCheckTokens = async ({
   paymentTokenToSend: BigNumber;
   collateralTokenToSend: BigNumber;
 }) => {
-  const redeemTransaction = bond.connect(bondHolder).redeem(sharesToRedeem);
-  expect(redeemTransaction).to.changeTokenBalance(
-    collateralTokenToSend,
-    bondHolder,
+  const collateralBalanceBefore = await collateralToken.balanceOf(
+    bondHolder.address
+  );
+  const paymentBalanceBefore = await paymentToken.balanceOf(bondHolder.address);
+  await bond.connect(bondHolder).redeem(sharesToRedeem);
+  const collateralBalanceAfter = await collateralToken.balanceOf(
+    bondHolder.address
+  );
+  const paymentBalanceAfter = await paymentToken.balanceOf(bondHolder.address);
+  expect(collateralBalanceAfter.sub(collateralBalanceBefore).abs()).to.equal(
     collateralTokenToSend
   );
-  expect(redeemTransaction).to.changeTokenBalance(
-    paymentTokenToSend,
-    bondHolder,
+  expect(paymentBalanceAfter.sub(paymentBalanceBefore).abs()).to.equal(
     paymentTokenToSend
   );
 };

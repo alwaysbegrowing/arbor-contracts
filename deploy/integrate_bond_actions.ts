@@ -88,7 +88,7 @@ Executing bond actions.
             process.env.BOND_BENEFICIARY || "",
             bondConfig.maxSupply.div(2)
           ),
-        conditions: [async () => process.env.BOND_BENEFICIARY != null],
+        conditions: [async () => process.env.BOND_BENEFICIARY != ""],
       },
     ];
 
