@@ -10,7 +10,10 @@ import {
   ELEVEN_YEARS_FROM_NOW_IN_SECONDS,
   ZERO,
   SQRT_MAX_UINT256,
+  ONE,
 } from "./constants";
+import { getContractAddress } from "ethers/lib/utils";
+import { getEventArgumentsFromTransaction } from "./utilities";
 
 const { ethers } = require("hardhat");
 
@@ -178,6 +181,39 @@ describe("BondFactory", async () => {
       await expect(
         createBond(factory, { paymentToken: bigPaymentToken.address })
       ).to.be.revertedWith("TooManyDecimals()");
+    });
+
+    it("allows bond creation with tokens in the newly deployed contract", async () => {
+      await factory.grantRole(ISSUER_ROLE, owner.address);
+
+      const transactionCount = await factory.provider.getTransactionCount(
+        factory.address
+      );
+
+      // get the next bond address
+      const futureAddress = getContractAddress({
+        from: factory.address,
+        nonce: transactionCount,
+      });
+
+      // transfer collateral tokens to the bond before it is created
+      await expect(collateralToken.transfer(futureAddress, ONE)).to.not.be
+        .reverted;
+      expect(await collateralToken.balanceOf(futureAddress)).to.not.be.equal(
+        ZERO
+      );
+
+      // create a new bond that will not be reverted
+      const { newBond } = await getEventArgumentsFromTransaction(
+        await createBond(factory, {}),
+        "BondCreated"
+      );
+
+      // sanity check - did the address get predicted and are the tokens there
+      expect(newBond).to.equal(futureAddress);
+      expect(await collateralToken.balanceOf(newBond)).to.be.equal(
+        BondConfig.collateralTokenAmount.add(ONE)
+      );
     });
 
     describe("invalid maturity dates", async () => {

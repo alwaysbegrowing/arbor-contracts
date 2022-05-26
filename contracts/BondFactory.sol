@@ -89,9 +89,9 @@ contract BondFactory is IBondFactory, AccessControl {
 
     /*
         When deployed, the deployer will be granted the DEFAULT_ADMIN_ROLE. This
-        gives the ability the ability to call `grantRole` to grant access to
-        the ISSUER_ROLE as well as the ability to toggle if the allow list
-        is enabled or not at any time.
+        gives the ability to call `grantRole` to grant access to the ISSUER_ROLE
+        as well as the ability to toggle if the allow list is enabled or not at
+        any time.
     */
     constructor() {
         tokenImplementation = address(new Bond());
@@ -196,16 +196,20 @@ contract BondFactory is IBondFactory, AccessControl {
             clone,
             collateralToDeposit
         );
-        uint256 amountDeposited = IERC20Metadata(collateralToken).balanceOf(
-            clone
-        );
+        uint256 collateralInContract = IERC20Metadata(collateralToken)
+            .balanceOf(clone);
 
         /*
-            Check that the amount of collateral in the contract is the expected
-            amount deposited. A token could take a fee upon transfer. If the
-            collateralToken takes a fee than the transaction will be reverted. 
+            For a valid deposit, the balance of collateralToken in the clone
+            at initialization must be at least the collateralToDeposit. This
+            ensures that the bonds minted are all at least backed by the 
+            appropriate collateral ratio. There is a chance the bond already has
+            been given some amount of the tokens due to deterministic contract
+            creation. This check therefore allows an excess of tokens, but in
+            the case of a token taking a fee, will disallow creation if there
+            is an insufficient amount.
         */
-        if (collateralToDeposit != amountDeposited) {
+        if (collateralToDeposit > collateralInContract) {
             revert InvalidDeposit();
         }
     }
