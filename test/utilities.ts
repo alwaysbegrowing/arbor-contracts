@@ -28,6 +28,12 @@ export async function mineBlock(): Promise<void> {
   ethers.provider.send("evm_mine", []);
 }
 
+export async function mineToGracePeriod(bond: Bond): Promise<void> {
+  const gracePeriodEnd = await (await bond.gracePeriodEnd()).toNumber();
+  // The grace period is considered over at the timestamp and onward
+  await ethers.provider.send("evm_mine", [gracePeriodEnd]);
+}
+
 export async function getEventArgumentsFromTransaction(
   tx: ContractTransaction,
   eventName: string
@@ -102,15 +108,23 @@ export const payAndWithdraw = async ({
   bond,
   paymentTokenAmount,
   collateralToReceive,
+  receiver,
 }: {
   paymentToken: TestERC20;
   bond: Bond;
   paymentTokenAmount: BigNumber;
   collateralToReceive: BigNumber;
+  receiver: SignerWithAddress;
 }) => {
+  const collateralBalanceBefore = await bond.collateralBalance();
   await paymentToken.approve(bond.address, paymentTokenAmount);
   await (await bond.pay(paymentTokenAmount)).wait();
   expect(await bond.previewWithdrawExcessCollateral()).to.equal(
+    collateralToReceive
+  );
+  await bond.withdrawExcessCollateral(collateralToReceive, receiver.address);
+  const collateralBalanceAfter = await bond.collateralBalance();
+  expect(collateralBalanceBefore.sub(collateralBalanceAfter)).to.equal(
     collateralToReceive
   );
 };

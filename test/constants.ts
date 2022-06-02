@@ -1,6 +1,8 @@
 import { BigNumber, utils } from "ethers";
 import { BondConfigType, BondDeploymentConfiguration } from "./interfaces";
 
+export const GRACE_PERIOD = 7 * 24 * 60 * 60; // 7 days * 24 hours * 60 minutes * 60 seconds
+
 export const TEN_MINUTES_FROM_NOW_IN_SECONDS = Math.round(
   new Date(new Date().setMinutes(new Date().getMinutes() + 10)).getTime() / 1000
 );
