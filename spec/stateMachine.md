@@ -2,6 +2,25 @@
 
 # Bond
 
+```mermaid
+stateDiagram-v2
+    active: Active
+    paidEarly: Paid Early
+    defaulted: Defaulted
+    paid: Paid
+
+    [*] --> active: Create Bond
+
+    active --> defaulted: Maturity Date Passes
+    active --> active: Pay
+    active --> paidEarly: Fully Pay
+    paidEarly --> paid: Maturity Date Passes
+    defaulted --> paid: Fully Pay
+    defaulted --> defaulted: Pay
+
+    paid --> [*]
+```
+
 ## Not created
 
 - Allowed addresses can create a bond and move to "Not fully paid and not matured"

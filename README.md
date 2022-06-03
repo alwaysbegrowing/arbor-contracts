@@ -2,7 +2,9 @@
 [![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/159949612-a695787d-d1d4-4311-90f6-2142aa334e2d.png)](https://porter.finance/#gh-light-mode-only)
 
 <table align="center">
- <td><a href="https://porter.finance">app</a></td>
+ <td><a href="https://app.porter.finance">app</a></td>
+ <td><a href="https://rinkeby.porter.finance">testnet</a></td>
+ <td><a href="https://porter.finance">landing</a></td>
  <td><a href="https://docs.porter.finance">docs</a></td>
  <td><a href="https://discord.gg/porter">discord</a></td>
  <td><a href="https://blog.porter.finance">blog</a></td>
@@ -13,19 +15,41 @@
 
 Please report any security issues to security@porter.finance
 
-# Contracts:
-
-## Mainnet
-
-BondFactory: https://etherscan.io/address/0x9f20521ef789fd2020e708390b1e6c701d8218ba
-
-## Rinkeby
-
-BondFactory: [0x0ae42cF40Fb46A926e2dcCE92b2Fe785d2D1E0A0](https://rinkeby.etherscan.io/address/0x0ae42cF40Fb46A926e2dcCE92b2Fe785d2D1E0A0)
-
 # V1
 
 Smart Contracts powering the Porter protocol.
+
+## Contracts
+
+<table>
+  <tr>
+    <th></th>
+    <th>mainnet</th>
+    <th>rinkeby</th>
+  </tr>
+  <tr>
+    <td>BondFactory</td>
+    <td><a href="https://etherscan.io/address/0x9f20521ef789fd2020e708390b1e6c701d8218ba">0x9f20521ef789fd2020e708390b1e6c701d8218ba</a></td>
+    <td><a href="https://rinkeby.etherscan.io/address/0x0ae42cF40Fb46A926e2dcCE92b2Fe785d2D1E0A0">0x0ae42cF40Fb46A926e2dcCE92b2Fe785d2D1E0A0</a></td>
+  </tr>
+  <tr>
+    <td>Bond Implementation</td>
+    <td><a href="https://etherscan.io/address/0x79537dcba69fea2b8dc8292b3726195fe947e332">0x79537dcba69fea2b8dc8292b3726195fe947e332</a></td>
+    <td><a href="https://rinkeby.etherscan.io/address/0xebc0d87f2fb27c967a3cb0e36f279579b0116261">0xebc0d87f2fb27c967a3cb0e36f279579b0116261</a></td>
+  </tr>
+</table>
+
+## What does it do? How does it work?
+
+The Porter V1 protocol allows a borrower to create a Bond. Each minted bond share has some amount of collateral backing and will be redeemable 1 share for 1 stablecoin at maturity. To incentivize lenders, the bond shares will be sold at a discount either OTC or through an auction.
+
+For more information on this process, the [documentation site](https://docs.porter.finance) gives an overview of **what** the protocol does and some of the concepts like zero coupon bonds and the difference between "Simple" and "Convert" Bond types. For **how** the protocol works, check out the [spec](/spec/):
+
+- [overview](/spec/overview.md) — An overview of the Bond and BondFactory as well as what actions Borrowers and Lenders can perform.
+  - [bond](/spec/bond.md) — More detailed look at the Bond actions and design decisions.
+- [architecture](/spec/architecture.md) — A technical document explaining how the Contracts interact and the lifecycle from deployment, creating a bond, and actions performed on that bond.
+- [permissions](/spec/permissions.md) — The trust model and implementation of that model.
+- [state machine](/spec/stateMachine.md) — The Bond represented as distinct states.
 
 ## Development
 
@@ -50,7 +74,7 @@ Note: The deploy script will run with the `npx hardhat node` as well as the `npx
 
 ### Verification
 
-Verify deployed contracts with `hardhat-etherscan`.
+The deployment script will automatically verify the BondFactory, Implementation contract, and TestERC20 token. To verify a contract not deployed within that script, use the `hardhat-etherscan` task.
 
 ```
 npx hardhat verify <address>
