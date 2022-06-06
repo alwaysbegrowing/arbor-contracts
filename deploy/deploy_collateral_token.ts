@@ -1,3 +1,4 @@
+import { network } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TokenDeploymentArguments } from "../test/interfaces";
 import { waitUntilMined } from "../test/utilities";
@@ -7,6 +8,7 @@ module.exports = async function ({
   deployments,
   getNamedAccounts,
   ethers,
+  run,
 }: HardhatRuntimeEnvironment) {
   const DECIMALS = 18;
   const tokenDeploymentArguments: TokenDeploymentArguments = {
@@ -19,6 +21,13 @@ module.exports = async function ({
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
+
+  const args = [
+    tokenDeploymentArguments.name,
+    tokenDeploymentArguments.symbol,
+    tokenDeploymentArguments.mintAmount,
+    tokenDeploymentArguments.decimals,
+  ];
   const { address } = await deploy("CollateralToken", {
     contract: "TestERC20",
     from: deployer,
@@ -52,6 +61,9 @@ module.exports = async function ({
         )
       );
     }
+  }
+  if (network.live) {
+    await run("verify:verify", { address, constructorArguments: args });
   }
 };
 

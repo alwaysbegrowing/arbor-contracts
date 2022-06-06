@@ -39,39 +39,41 @@ export const TWO_AND_A_HALF_MILLION = (2500000).toString();
 export const TEN_MILLION = (10000000).toString();
 // The config objects are used as anchors to test against
 
-export const NonConvertibleBondConfig: BondConfigType = {
-  collateralTokenAmount: utils.parseUnits(TEN_MILLION, 18),
+export const NonConvertibleBondConfig = (decimals: number): BondConfigType => ({
+  collateralTokenAmount: utils.parseUnits((10_000_000).toString(), decimals),
   convertibleTokenAmount: ZERO,
   maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
-  maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
-};
+  maxSupply: utils.parseUnits((50_000_000).toString(), decimals),
+});
 
-export const ConvertibleBondConfig: BondConfigType = {
-  collateralTokenAmount: utils.parseUnits(TEN_MILLION, 18),
-  convertibleTokenAmount: utils.parseUnits(TWO_AND_A_HALF_MILLION, 18),
+export const ConvertibleBondConfig = (decimals: number): BondConfigType => ({
+  collateralTokenAmount: utils.parseUnits((50_000_000).toString(), decimals),
+  convertibleTokenAmount: utils.parseUnits((25_000_000).toString(), decimals),
   maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
-  maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
-};
+  maxSupply: utils.parseUnits((50_000_000).toString(), decimals),
+});
 
-export const UncollateralizedBondConfig: BondConfigType = {
+export const UncollateralizedBondConfig = (
+  decimals: number
+): BondConfigType => ({
   collateralTokenAmount: ZERO,
   convertibleTokenAmount: ZERO,
   maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
-  maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
-};
+  maxSupply: utils.parseUnits((50_000_000).toString(), decimals),
+});
 
-export const MaliciousBondConfig: BondConfigType = {
-  collateralTokenAmount: utils.parseUnits(TEN_MILLION, 18),
-  convertibleTokenAmount: utils.parseUnits(TWO_AND_A_HALF_MILLION, 18),
+export const MaliciousBondConfig = (decimals: number): BondConfigType => ({
+  collateralTokenAmount: utils.parseUnits((50_000_000).toString(), decimals),
+  convertibleTokenAmount: utils.parseUnits((20_000_000).toString(), decimals),
   maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
-  maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 18),
-};
+  maxSupply: utils.parseUnits((50_000_000).toString(), decimals),
+});
 
 const SHORT_MATURITY_NON_CONVERTIBLE: BondDeploymentConfiguration = {
   // This bond has a short maturity and a full FIFTY_MILLION
   // Since we pay TWENTY_FIVE_MILLION, this bond will "Default"
   bondConfig: {
-    ...NonConvertibleBondConfig,
+    ...NonConvertibleBondConfig(6),
     maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
     maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
   },
@@ -84,7 +86,7 @@ const SHORT_MATURITY_NON_CONVERTIBLE: BondDeploymentConfiguration = {
 const SHORT_MATURITY_CONVERTIBLE: BondDeploymentConfiguration = {
   // This will be an "Active" convertible bond
   bondConfig: {
-    ...ConvertibleBondConfig,
+    ...ConvertibleBondConfig(6),
     maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
     maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
   },
@@ -96,7 +98,7 @@ const SHORT_MATURITY_UNCOLLATERALIZED_SHORT_ORDER_CANCELLATION: BondDeploymentCo
   {
     // This will be an "Active" Un-Collateralized bond
     bondConfig: {
-      ...UncollateralizedBondConfig,
+      ...UncollateralizedBondConfig(6),
       maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
       maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
@@ -114,7 +116,7 @@ const LONG_MATURITY_NON_CONVERTIBLE_SHORT_AUCTION_END: BondDeploymentConfigurati
   {
     // This will be an "Active" Non-Convertible bond
     bondConfig: {
-      ...NonConvertibleBondConfig,
+      ...NonConvertibleBondConfig(6),
       maturity: ONE_YEAR_FROM_NOW_IN_SECONDS,
       maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
@@ -134,7 +136,7 @@ const LONG_MATURITY_NON_CONVERTIBLE_SHORT_AUCTION_END_TWO_YEARS: BondDeploymentC
   {
     // This will be an "Active" Non-Convertible bond
     bondConfig: {
-      ...NonConvertibleBondConfig,
+      ...NonConvertibleBondConfig(6),
       maturity: TWO_YEARS_FROM_NOW_IN_SECONDS,
       maxSupply: utils.parseUnits(FIFTY_MILLION.toString(), 6),
     },
@@ -153,7 +155,7 @@ const LONG_MATURITY_NON_CONVERTIBLE_SHORT_AUCTION_END_TWO_YEARS: BondDeploymentC
 const LONG_MATURITY_CONVERTIBLE: BondDeploymentConfiguration = {
   // This will be a "Paid" convertible bond
   bondConfig: {
-    ...ConvertibleBondConfig,
+    ...ConvertibleBondConfig(6),
     // Make bond mature
     maturity: TEN_MINUTES_FROM_NOW_IN_SECONDS,
     // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
@@ -169,7 +171,7 @@ const LONG_MATURITY_CONVERTIBLE: BondDeploymentConfiguration = {
 const LONG_MATURITY_CONVERTIBLE_LONG_AUCTION_CANCELLATION = {
   // This will be a "PaidEarly" Convertible bond
   bondConfig: {
-    ...ConvertibleBondConfig,
+    ...ConvertibleBondConfig(18),
     maturity: ONE_YEAR_FROM_NOW_IN_SECONDS,
     // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
   },
@@ -187,7 +189,7 @@ const LONG_MATURITY_CONVERTIBLE_LONG_AUCTION_CANCELLATION = {
 const LONG_MATURITY_CONVERTIBLE_PAID_EARLY_LONG_AUCTION_CANCELLATION = {
   // This will be a "PaidEarly" Convertible bond
   bondConfig: {
-    ...ConvertibleBondConfig,
+    ...ConvertibleBondConfig(6),
     maturity: THREE_YEARS_FROM_NOW_IN_SECONDS,
     // Make bond paid off (we are paying TWENTY_FIVE_MILLION in deploy)
     maxSupply: utils.parseUnits(TWENTY_FIVE_MILLION.toString(), 6),

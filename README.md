@@ -17,11 +17,11 @@ Please report any security issues to security@porter.finance
 
 ## Mainnet
 
-BondFactory: https://etherscan.io/address/0x778e0bf89a5f3cac5333a0613691390d41f35227
+BondFactory: https://etherscan.io/address/0x9f20521ef789fd2020e708390b1e6c701d8218ba
 
 ## Rinkeby
 
-BondFactory:
+BondFactory: [0x0ae42cF40Fb46A926e2dcCE92b2Fe785d2D1E0A0](https://rinkeby.etherscan.io/address/0x0ae42cF40Fb46A926e2dcCE92b2Fe785d2D1E0A0)
 
 # V1
 
