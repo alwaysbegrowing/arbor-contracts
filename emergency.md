@@ -20,31 +20,31 @@ This is a non exhaustive list of possible emergency scenarios:
 
 ## Roles
 
-In the event of an emergency situation, the following roles should be assigned to Porter contributors working to resolve the situation:
+In the event of an emergency situation, the following roles should be assigned to Porter team working to resolve the situation. Preferred assignees are left to right.
 
-- Facilitator
-- Multi-sig Herder
-- Strategist Lead
-- Core Dev Lead (Guardian)
-- Web Lead
-- Ops
+- Facilitator (@RusseII, @jordanalexandermeyer)
+- Multi-sig Herder (@RusseII, @Geczy, @jordanalexandermeyer)
+- Strategist Lead (@RusseII, @jordanalexandermeyer)
+- Core Dev Lead (@Namaskar-1F64F, @RusseII)
+- Web Lead (@Geczy, @Namaskar-1F64F, @RusseII)
+- Ops (@jordanalexandermeyer, @RusseII)
 
 A contributor may be assigned up to three of these roles concurrently.
 
-### Facilitator @bookland, backup @jordan
+### Facilitator
 
 Facilitates the emergency handling and ensures the process described in this document is followed, engaging with the correct stakeholders and teams in order for the necessary decisions to be made quickly. A suitable Facilitator is any person familiar with the process and is confident that they can drive the team to follow through. It's expected that the person assigned to this role has relevant experience either from having worked real scenarios or through drill training.
 
-### Multi-sig Herder @bookland, backup @jordan
+### Multi-sig Herder
 
-Responsible for ensuring that different Porter teams' Multi-sig wallets (i.e. bookland.porterfinance.eth, jordan.porterfinance.eth, namaskar.porterfinance.eth) are able to execute transactions in a timely manner during the emergency.
+The entire team needs contacted if there is an issue. This person is responsible for gathering all individuals into our war room, and ensuring that different Porter teams' Multi-sig wallets (i.e. bookland.porterfinance.eth, jordan.porterfinance.eth, namaskar.porterfinance.eth) are able to execute transactions in a timely manner during the emergency.
 
 Main responsibilities:
 
-- Help clear the queue of any pending operations once the War Room starts
+- Reach out to entire team via the emergency contacts list in our warroom discord https://discord.com/channels/903094151002857492/973335497126604860/973337055327322122
 - Coordinate required signers so they can respond quickly to queued transactions
 
-### Strategist Lead @bookland backup: @jordan
+### Strategist Lead
 
 In charge of coordinating quick changes to management and strategist roles during the emergency, including but not limited to:
 
@@ -52,15 +52,15 @@ In charge of coordinating quick changes to management and strategist roles durin
 - Update issuer list
 - Update allow list
 
-### Core Dev Lead (Guardian) @namaskar, backup @bookland
+### Core Dev Lead
 
 Coordinates quick changes to Governance and Guardian roles during the emergency, including but not limited to:
 
-- Prepare and Execute Core Dev Multi-sig transactions and operations
-- Revoke a Strategy
-- Set vault in emergency shutdown mode
+- Any smart contract changes
+- Any graph changes
+- Any backend changes
 
-### Web Lead @luckyrobot, backup @namaskar, @bookland
+### Web Lead
 
 Coordinates quick changes to UI and Websites as required, including but not limited to:
 
@@ -68,7 +68,7 @@ Coordinates quick changes to UI and Websites as required, including but not limi
 - Display alerts and banners
 - Other UI related work
 
-### Ops @jordan backup @bookland
+### Ops
 
 In charge of coordinating comms and operations assistance as required:
 
@@ -122,7 +122,7 @@ This checklist should be complemented with the [steps](#emergency-steps)
 - [ ] Add Strategist or other Expert (or their backup) to the War Room
 - [ ] Clear related Multi-sig queues
 - [ ] Disable createBond and/or redeem/convert/withdraw/pay as needed in the web UI
-- [ ] Confirm and identify Issue
+- [ ] Confirm and identify issue
 - [ ] Take immediate corrective/preventive actions in order to prevent (further) loss of funds
 - [ ] Communicate the current situation internally and externally (as appropriate)
 - [ ] Determine the root cause
