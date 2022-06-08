@@ -19,14 +19,22 @@ module.exports = async function ({
 
   if (network.live) {
     // Verify the factory contract
-    await run("verify:verify", {
-      address,
-    });
+    try {
+      await run("verify:verify", {
+        address,
+      });
+    } catch (error) {
+      console.log("Already verified BondFactory?");
+    }
 
     // Verify the bond implementation contract
     const factory = await ethers.getContractAt("BondFactory", address);
     const tokenImplementation = await factory.tokenImplementation();
-    await run("verify:verify", { address: tokenImplementation });
+    try {
+      await run("verify:verify", { address: tokenImplementation });
+    } catch (error) {
+      console.log("Already verified Bond Implementation?");
+    }
   }
 };
 

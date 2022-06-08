@@ -1,6 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Bond, BondFactory, TestERC20 } from "../typechain";
-import { BondConfigType } from "../test/interfaces";
 import { createBond, getBondInfo } from "../test/utilities";
 import { deploymentBonds } from "../test/constants";
 

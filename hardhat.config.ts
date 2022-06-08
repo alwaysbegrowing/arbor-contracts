@@ -30,6 +30,11 @@ const config: HardhatUserConfig = {
       1: process.env.MAINNET_DEPLOYER_ADDRESS || "",
       4: process.env.RINKEBY_DEPLOYER_ADDRESS || "",
     },
+    bondHolder: {
+      default: 1,
+      0: process.env.RINKEBY_BOND_HOLDER_ADDRESS || "",
+      4: process.env.RINKEBY_BOND_HOLDER_ADDRESS || "",
+    },
   },
   networks: {
     mainnet: {
@@ -50,8 +55,12 @@ const config: HardhatUserConfig = {
       gasMultiplier: 2,
       gasPrice: 4_000_000_000,
       accounts:
-        process.env.RINKEBY_DEPLOYER_PRIVATE_KEY !== undefined
-          ? [process.env.RINKEBY_DEPLOYER_PRIVATE_KEY]
+        process.env.RINKEBY_DEPLOYER_PRIVATE_KEY !== undefined &&
+        process.env.RINKEBY_BOND_HOLDER_PRIVATE_KEY !== undefined
+          ? [
+              process.env.RINKEBY_DEPLOYER_PRIVATE_KEY,
+              process.env.RINKEBY_BOND_HOLDER_PRIVATE_KEY,
+            ]
           : [],
     },
     hardhat: {
@@ -60,7 +69,7 @@ const config: HardhatUserConfig = {
         interval: 10,
       },
       // forking: {
-      //   blockNumber: 10453255,
+      //   blockNumber: 10815591,
       //   url: process.env.RINKEBY_RPC_URL || "",
       // },
     },

@@ -213,11 +213,8 @@ Emitted when a token is swept by the contract owner.
 
 ## Errors
 
-
 ### BondBeforeGracePeriodAndNotPaid
-
 * Bond redemption is impossible because the grace period has not yet passed and the bond has not been fully paid.
-
 
 
 

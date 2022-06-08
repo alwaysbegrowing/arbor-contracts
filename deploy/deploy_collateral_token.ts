@@ -63,7 +63,11 @@ module.exports = async function ({
     }
   }
   if (network.live) {
-    await run("verify:verify", { address, constructorArguments: args });
+    try {
+      await run("verify:verify", { address, constructorArguments: args });
+    } catch (error) {
+      console.log("TestERC20 already verified?");
+    }
   }
 };
 

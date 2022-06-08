@@ -11,7 +11,7 @@ import { ethers } from "hardhat";
 import { Bond, BondFactory, TestERC20 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { WAD } from "./constants";
-import { BondConfigType, InitiateAuctionParameters } from "./interfaces";
+import { BondConfigType, InitiateAuctionParameters, Order } from "./interfaces";
 import { parseUnits } from "ethers/lib/utils";
 export const addDaysToNow = (days: number = 0) => {
   return BigNumber.from(
@@ -373,6 +373,15 @@ export const placeManyOrders = async ({
     );
   }
 };
+
+export function encodeOrder(order: Order): string {
+  return (
+    "0x" +
+    order.userId.toHexString().slice(2).padStart(16, "0") +
+    order.buyAmount.toHexString().slice(2).padStart(24, "0") +
+    order.sellAmount.toHexString().slice(2).padStart(24, "0")
+  );
+}
 
 export const waitUntilMined = async (
   tx: ContractTransaction
