@@ -17,7 +17,7 @@ module.exports = async function ({
     waitConfirmations: 1,
   });
 
-  if (network.live) {
+  if (network.live && network.name !== "rinkeby") {
     // Verify the factory contract
     try {
       await run("verify:verify", {

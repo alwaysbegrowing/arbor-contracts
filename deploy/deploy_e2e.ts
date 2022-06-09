@@ -144,7 +144,14 @@ module.exports = async function ({
       auctionConfig
     )
   );
-  const auctionId = await auction.auctionCounter();
+
+  let auctionId = "0";
+  try {
+    auctionId = await auction.auctionCounter();
+  } catch (error) {
+    console.log("Error with auction, are you on rinkeby or forking hardhat?");
+  }
+
   const auctionData = await auction.auctionData(auctionId);
   const {
     auctioningToken,
@@ -191,6 +198,11 @@ module.exports = async function ({
     await bond.connect(bondHolderSigner).convert((250_000).toString())
   ).wait();
   console.log("Bond Holder converted 1/4 remaining bonds");
+
+  const amountUnpaid = await bond.amountUnpaid();
+  await (await paymentTokenContract.approve(bond.address, amountUnpaid)).wait();
+  await (await bond.pay(amountUnpaid)).wait();
+  console.log("Pay off the bond");
 
   if (network.live) {
     console.log("Waiting for auction to end and bond to mature...");

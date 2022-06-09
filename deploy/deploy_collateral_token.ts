@@ -62,7 +62,7 @@ module.exports = async function ({
       );
     }
   }
-  if (network.live) {
+  if (network.live && network.name !== "rinkeby") {
     try {
       await run("verify:verify", { address, constructorArguments: args });
     } catch (error) {
