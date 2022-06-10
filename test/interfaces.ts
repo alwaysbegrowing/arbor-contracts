@@ -63,3 +63,9 @@ export interface BondDeploymentConfiguration {
   auctionConfig: InitiateAuctionParameters;
   biddingConfig: AuctionBid;
 }
+
+export interface Order {
+  sellAmount: BigNumber;
+  buyAmount: BigNumber;
+  userId: BigNumber;
+}

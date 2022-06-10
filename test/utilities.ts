@@ -11,7 +11,7 @@ import { ethers } from "hardhat";
 import { Bond, BondFactory, TestERC20 } from "../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { WAD } from "./constants";
-import { BondConfigType, InitiateAuctionParameters } from "./interfaces";
+import { BondConfigType, InitiateAuctionParameters, Order } from "./interfaces";
 import { parseUnits } from "ethers/lib/utils";
 export const addDaysToNow = (days: number = 0) => {
   return BigNumber.from(
@@ -287,9 +287,9 @@ export const initiateAuction = async (
     Math.round(
       new Date(new Date().setDate(new Date().getDate() + 7)).getTime() / 1000
     );
-  const tokenBalance = await bond.balanceOf(owner.address);
+  const amountToSend = (await bond.balanceOf(owner.address)).div(2);
   const auctionedSellAmount =
-    auctionParams?.auctionedSellAmount || tokenBalance;
+    auctionParams?.auctionedSellAmount || amountToSend;
   const minBuyAmount =
     auctionParams?.minBuyAmount ||
     BigNumber.from(auctionedSellAmount).mul(8).div(10);
@@ -387,6 +387,15 @@ export const placeManyOrders = async ({
     );
   }
 };
+
+export function encodeOrder(order: Order): string {
+  return (
+    "0x" +
+    order.userId.toHexString().slice(2).padStart(16, "0") +
+    order.buyAmount.toHexString().slice(2).padStart(24, "0") +
+    order.sellAmount.toHexString().slice(2).padStart(24, "0")
+  );
+}
 
 export const waitUntilMined = async (
   tx: ContractTransaction

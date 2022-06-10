@@ -27,14 +27,23 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
       default: 0,
-      1: 0,
+      1: process.env.MAINNET_DEPLOYER_ADDRESS || "",
       4: process.env.RINKEBY_DEPLOYER_ADDRESS || "",
+    },
+    bondHolder: {
+      default: 1,
+      0: process.env.RINKEBY_BOND_HOLDER_ADDRESS || "",
+      4: process.env.RINKEBY_BOND_HOLDER_ADDRESS || "",
     },
   },
   networks: {
     mainnet: {
       url: process.env.MAINNET_RPC_URL || "",
       gasPrice: 15000000000, // 15 gwei
+      accounts:
+        process.env.MAINNET_DEPLOYER_PRIVATE_KEY !== undefined
+          ? [process.env.MAINNET_DEPLOYER_PRIVATE_KEY]
+          : [],
     },
     rinkeby: {
       live: true,
@@ -46,23 +55,20 @@ const config: HardhatUserConfig = {
       gasMultiplier: 2,
       gasPrice: 4_000_000_000,
       accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    mumbai: {
-      live: true,
-      gasPrice: 35000000000,
-      url: process.env.POLYGON_RPC_URL || "",
-      gasMultiplier: 2,
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+        process.env.RINKEBY_DEPLOYER_PRIVATE_KEY !== undefined &&
+        process.env.RINKEBY_BOND_HOLDER_PRIVATE_KEY !== undefined
+          ? [
+              process.env.RINKEBY_DEPLOYER_PRIVATE_KEY,
+              process.env.RINKEBY_BOND_HOLDER_PRIVATE_KEY,
+            ]
+          : [],
     },
     hardhat: {
       mining: {
         auto: true,
-        interval: 10,
       },
       // forking: {
-      //   blockNumber: 10453255,
+      //   blockNumber: 10815591,
       //   url: process.env.RINKEBY_RPC_URL || "",
       // },
     },
