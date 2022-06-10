@@ -10,6 +10,7 @@ import "hardhat-deploy"; // runs scripts in the ./deploy folder
 import "@nomiclabs/hardhat-etherscan"; // adds 'verify' task
 import "@primitivefi/hardhat-dodoc"; // generates docs on compile
 import "hardhat-storage-layout"; // exports storage layout of contracts
+import "hardhat-ethernal"; // view transactions on ethernal explorer
 
 import "./tasks/storageLayout.ts"; // add 'storage-layout' task
 import "./tasks/settleAuction.ts"; // add 'settle-auction' task
@@ -66,10 +67,10 @@ const config: HardhatUserConfig = {
     hardhat: {
       mining: {
         auto: true,
-        interval: 10,
       },
       // forking: {
-      //   blockNumber: 10815591,
+      //   // use npx hardhat node --no-deploy to skip deployments on pinned blocks
+      //   blockNumber: 10816628,
       //   url: process.env.RINKEBY_RPC_URL || "",
       // },
     },
