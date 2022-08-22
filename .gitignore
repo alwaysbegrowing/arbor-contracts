@@ -18,7 +18,6 @@ artifacts
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 **/.history
-deployments
 
 # crytic and echidna
 crytic-export/ 
