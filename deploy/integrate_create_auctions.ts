@@ -1,9 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import {
-  deploymentBonds,
-  easyAuctionAbi,
-  rinkebyGnosis,
-} from "../test/constants";
+import { addresses, deploymentBonds, easyAuctionAbi } from "../test/constants";
 import { Bond, TestERC20 } from "../typechain";
 import {
   getBondInfo,
@@ -38,7 +34,10 @@ module.exports = async function ({
     );
     const { address } = await deployments.get(bondSymbol);
     const bond = (await ethers.getContractAt("Bond", address)) as Bond;
-    const auction = await ethers.getContractAt(easyAuctionAbi, rinkebyGnosis);
+    const auction = await ethers.getContractAt(
+      easyAuctionAbi,
+      addresses.EasyAuction.goerli
+    );
     const signer = await ethers.getSigner(deployer);
     try {
       if ((await paymentToken.allowance(deployer, auction.address)).eq(0)) {

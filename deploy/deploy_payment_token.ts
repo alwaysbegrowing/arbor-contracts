@@ -7,36 +7,47 @@ module.exports = async function ({
   deployments,
   getNamedAccounts,
   ethers,
+  run,
 }: HardhatRuntimeEnvironment) {
-  const DECIMALS = 6;
+  const decimals = 6;
+  const mintAmount = ethers.utils.parseUnits("50000000", decimals + 2);
   const tokenDeploymentArguments: TokenDeploymentArguments = {
     name: "USD Coin",
     symbol: "USDC",
-    mintAmount: ethers.utils.parseUnits("50000000", DECIMALS + 2),
-    decimals: DECIMALS,
+    mintAmount,
+    decimals,
   };
 
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
+
+  const args = [
+    tokenDeploymentArguments.name,
+    tokenDeploymentArguments.symbol,
+    tokenDeploymentArguments.mintAmount,
+    tokenDeploymentArguments.decimals,
+  ];
+
   const { address } = await deploy("PaymentToken", {
     contract: "TestERC20",
     from: deployer,
     log: true,
     autoMine: true,
     waitConfirmations: 1,
-    args: [
-      tokenDeploymentArguments.name,
-      tokenDeploymentArguments.symbol,
-      tokenDeploymentArguments.mintAmount,
-      tokenDeploymentArguments.decimals,
-    ],
+    args,
   });
 
   const paymentToken = (await ethers.getContractAt(
     "TestERC20",
     address
   )) as TestERC20;
+
+  try {
+    await run("verify:verify", { address, constructorArguments: args });
+  } catch (error) {
+    console.log("TestERC20 already verified?");
+  }
 
   if (process.env.DEPLOYMENT_BENEFICIARIES) {
     console.log(`Transferring payment tokens to beneficiaries.`);
@@ -50,7 +61,7 @@ module.exports = async function ({
       await waitUntilMined(
         await paymentToken.transfer(
           beneficiary,
-          ethers.utils.parseUnits((500_000).toString(), DECIMALS)
+          mintAmount.div(beneficiaries.length)
         )
       );
     }
