@@ -37,7 +37,7 @@ Facilitates the emergency handling and ensures the process described in this do
 
 ### Multi-sig Herder
 
-The entire team needs contacted if there is an issue. This person is responsible for gathering all individuals into our war room, and ensuring that different Arbor teams' Multi-sig wallets (i.e. bookland.arborfinance.eth, jordan.arborfinance.eth, namaskar.arborfinance.eth) are able to execute transactions in a timely manner during the emergency.
+The entire team needs contacted if there is an issue. This person is responsible for gathering all individuals into our war room, and ensuring that different Arbor teams' Multi-sig wallets (i.e. bookland.arborfinance.eth, luckyrobot.arborfinance.eth, namaskar.arborfinance.eth) are able to execute transactions in a timely manner during the emergency.
 
 Main responsibilities:
 
