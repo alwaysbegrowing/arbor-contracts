@@ -1,16 +1,16 @@
-# Emergency Procedures for Porter Finance
+# Emergency Procedures for Arbor Finance
 
 ## TL;DR: [Emergency Checklist](#emergency-checklist)
 
 ## Introduction
 
-This document details the procedures and guidelines that should take place in the event of an emergency situation. Its purpose is to minimize the risk for loss of funds for Porters's users, Treasury, and Smart Contracts.
+This document details the procedures and guidelines that should take place in the event of an emergency situation. Its purpose is to minimize the risk for loss of funds for Arbor's users, Treasury, and Smart Contracts.
 
 ## Definitions and Examples of Emergencies
 
 For the purposes of this document, an emergency situation is defined to be:
 
-**_Any situation that may lead to a considerable amount of loss of funds for Porter users, Porter's Treasury, or Smart Contracts deployed by Porter._**
+**_Any situation that may lead to a considerable amount of loss of funds for Arbor users, Arbor's Treasury, or Smart Contracts deployed by Arbor._**
 
 This is a non exhaustive list of possible emergency scenarios:
 
@@ -20,14 +20,14 @@ This is a non exhaustive list of possible emergency scenarios:
 
 ## Roles
 
-In the event of an emergency situation, the following roles should be assigned to Porter team working to resolve the situation. Preferred assignees are left to right.
+In the event of an emergency situation, the following roles should be assigned to Arbor team working to resolve the situation. Preferred assignees are left to right.
 
-- Facilitator (@RusseII, @jordanalexandermeyer)
-- Multi-sig Herder (@RusseII, @Geczy, @jordanalexandermeyer)
-- Strategist Lead (@RusseII, @jordanalexandermeyer)
+- Facilitator (@RusseII, @Namaskar-1F64F)
+- Multi-sig Herder (@RusseII, @Geczy)
+- Strategist Lead (@RusseII, @Namaskar-1F64F)
 - Core Dev Lead (@Namaskar-1F64F, @RusseII)
 - Web Lead (@Geczy, @Namaskar-1F64F, @RusseII)
-- Ops (@jordanalexandermeyer, @RusseII)
+- Ops (@Geczy, @RusseII)
 
 A contributor may be assigned up to three of these roles concurrently.
 
@@ -37,11 +37,11 @@ Facilitates the emergency handling and ensures the process described in this do
 
 ### Multi-sig Herder
 
-The entire team needs contacted if there is an issue. This person is responsible for gathering all individuals into our war room, and ensuring that different Porter teams' Multi-sig wallets (i.e. bookland.porterfinance.eth, jordan.porterfinance.eth, namaskar.porterfinance.eth) are able to execute transactions in a timely manner during the emergency.
+The entire team needs contacted if there is an issue. This person is responsible for gathering all individuals into our war room, and ensuring that different Arbor teams' Multi-sig wallets (i.e. bookland.arborfinance.eth, jordan.arborfinance.eth, namaskar.arborfinance.eth) are able to execute transactions in a timely manner during the emergency.
 
 Main responsibilities:
 
-- Reach out to entire team via the emergency contacts list in our warroom discord https://discord.com/channels/903094151002857492/973335497126604860/973337055327322122
+- Reach out to entire team via the emergency contacts list in our war-room discord https://discord.com/channels/903094151002857492/973335497126604860/973337055327322122
 - Coordinate required signers so they can respond quickly to queued transactions
 
 ### Strategist Lead
@@ -82,7 +82,7 @@ _Also see [Check list](#Emergency-checklist) and [Tools](#tools)._
 
 This acts as a guideline to follow when an incident is reported requiring immediate attention.
 
-The primary objective is minimized the loss of funds, in particular for Porter's users. All decisions made should be driven by this goal.
+The primary objective is minimized the loss of funds, in particular for Arbor's users. All decisions made should be driven by this goal.
 
 1. Open a private chat room (War Room) with a voice channel and invite only the team members that are online that can cover the [roles described above](#Roles). The War Room is limited to members that act in the capacities of the designated roles, as well as additional persons that can provide critical insight into the circumstances of the issue and how it can best be resolved.
 2. All the information that is gathered during the War Room should be considered private to the chat and not to be shared with third parties. Relevant data should be pinned and updated by the Facilitator for the team to have handy.
@@ -154,7 +154,7 @@ List of tools and alternatives in case primary tools are not available during an
 
 ## Incident Post Mortem
 
-A Post Mortem should be conducted after an incident to gather data and feedback from War Room participants in order to produce actionable improvements for Porter processes such as this one.
+A Post Mortem should be conducted after an incident to gather data and feedback from War Room participants in order to produce actionable improvements for Arbor processes such as this one.
 
 Following the dissolution of a War Room, the Facilitator should ideally conduct an immediate informal debrief to gather initial notes before they are forgotten by participants.
 

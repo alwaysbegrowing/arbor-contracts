@@ -1,5 +1,5 @@
 {
-  "name": "hardhat-project",
+  "name": "arbor-contracts",
   "scripts": {
     "prepare": "husky install",
     "postinstall": "npx hardhat typechain",

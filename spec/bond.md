@@ -1,6 +1,6 @@
 ## Bond
 
-A new `Bond` contract is created for each [borrower](https://docs.porter.finance/portal/participants/borrowers). They implement the standard EIP-20/ERC20 token methods as well as Porter specific methods. Each `BondToken` represents a [zero coupon bond](https://docs.porter.finance/portal/intro-to-bonds/zero-coupon-bonds) that can be purchased by [lenders](https://docs.porter.finance/portal/participants/lenders).
+A new `Bond` contract is created for each [borrower](https://docs.arbor.garden/portal/participants/borrowers). They implement the standard EIP-20/ERC20 token methods as well as Arbor specific methods. Each `BondToken` represents a [zero coupon bond](https://docs.arbor.garden/portal/intro-to-bonds/zero-coupon-bonds) that can be purchased by [lenders](https://docs.arbor.garden/portal/participants/lenders).
 
 `Bond`s support the following functionality:
 
@@ -43,8 +43,6 @@ Bond shares can be redeemed for a pro rata amount of the collateral + payment in
 # Design Decisions
 
 ## Use clone factory instead of normal factory for creating new Bonds
-
-- https://github.com/porter-finance/v1-core/issues/15
 
 ## Upgradability strategy
 

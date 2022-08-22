@@ -1,27 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-/*                   **********                            ******
- ***               *************        **                ********
- ****             ********.******      ****              **********
- *****           ********::********   *******           ************
- *******        ******R-:  :********* *********        **************
- ********     *****E-.     :********************      ****************      **
- *********  ****T-.        :**********************   ******************   *****
- *************R-          .-E:********************* ******************** *******
- **********O-          .-C**. :-.V******************------------.***************
- *******P-          .-N****:.     .1-***************\\ Bonds For \------.*******
- ******-.        .-A*******:.        .-**************\\---------.  DAOs |*******
- ******-.     .-N**********:.        .-***************\\******** \------.*******
- ******-.  .-I*****************::    .-****************\\***********************
- ******-.-F***********************::-.-*****************\\**********************
- ******.:***************************:.*******************\\*********************
- *********************************************************\\********************
- **   Porter allows DAOs and other on-chain entities to borrow stablecoins    **
+/*                   
+ *******************************************************************************
+ **   Arbor allows DAOs and other on-chain entities to borrow stablecoins     **
  **   using their tokens as collateral with fixed rates and no liquidations.  **
  **                                                                           **
- **  For more information about Porter Finance, visit https://porter.finance  **
+ **    For more information about Arbor Finance, visit https://arbor.garden   **
  **                                                                           **
- **             Authors: Bookland Jordan Luckyrobot Namaskar                  **
+ **                 Authors: Bookland Luckyrobot Namaskar                     **
  *******************************************************************************
  */
 
@@ -40,7 +26,7 @@ import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
 
 /**
     @title Bond
-    @author Porter Finance
+    @author Arbor Finance
     @notice A custom ERC20 token that can be used to issue bonds.
     @notice The contract handles issuance, payment, conversion, and redemption.
     @dev External calls to tokens used for collateral and payment are used
