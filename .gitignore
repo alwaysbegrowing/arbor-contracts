@@ -22,3 +22,5 @@ artifacts
 # crytic and echidna
 crytic-export/ 
 corpus
+
+deployments/*/solcInputs/
