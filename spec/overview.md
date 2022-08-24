@@ -39,7 +39,7 @@ The `BondFactory` facilitates the creation of new bonds. Initially, only [author
 
 ## [Bond](./bond.md)
 
-A new `Bond` contract is created for issuance. The entity creating the bond is know as a [borrower](https://docs.porter.finance/portal/participants/borrowers). `Bond` implements the standard EIP-20/ERC20 token methods as well as Porter specific methods. Each `Bond` represents a [zero coupon bond](https://docs.porter.finance/portal/financial-concepts/zero-coupon-bonds) that can be purchased by [lenders](https://docs.porter.finance/portal/participants/lenders).
+A new `Bond` contract is created for issuance. The entity creating the bond is know as a [borrower](https://docs.arbor.garden/portal/participants/borrowers). `Bond` implements the standard EIP-20/ERC20 token methods as well as Arbor specific methods. Each `Bond` represents a [zero coupon bond](https://docs.arbor.garden/portal/financial-concepts/zero-coupon-bonds) that can be purchased by [lenders](https://docs.arbor.garden/portal/participants/lenders).
 
 # User Roles
 
@@ -108,7 +108,7 @@ After paying, the borrower can call this method to withdraw any collateral that 
 
 ### Sell Bonds
 
-Borrowers can sell their bond shares through the [Porter App](https://app.porter.finance) which uses [Gnosis Auction](https://github.com/gnosis/ido-contracts) for price discovery and bond share distribution.
+Borrowers can sell their bond shares through the [Arbor App](https://app.arbor.garden) which uses [Gnosis Auction](https://github.com/gnosis/ido-contracts) for price discovery and bond share distribution.
 
 ## Lenders
 

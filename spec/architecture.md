@@ -44,26 +44,26 @@ erDiagram
 
 A typical lifecycle starts from issuance and ends when all bond shares have either been redeemed / converted by the bond holders, or burnt by the issuer.
 
-### 1. Porter Finance Initializes BondFactory Contract
+### 1. Arbor Finance Initializes BondFactory Contract
 
-The Bond Factory contract is deployed by the Porter Admin (multi-sig). The contract assigns the admin role to the deployer and the proxy contract is [initialized](/contracts/BondFactory.sol#L97) with the token implementation (Bond contract).
+The Bond Factory contract is deployed by the Arbor Admin (multi-sig). The contract assigns the admin role to the deployer and the proxy contract is [initialized](/contracts/BondFactory.sol#L97) with the token implementation (Bond contract).
 
 ```mermaid
 flowchart LR
-   porterAdmin((Porter Admin))
+   arborAdmin((Arbor Admin))
    bondFactory[Bond Factory]
    bond["Bond Implementation"]
 
    bondFactory<-.uses.->bond
-   porterAdmin--deploys---->bondFactory
-   bondFactory--grant admin role---->porterAdmin
+   arborAdmin--deploys---->bondFactory
+   bondFactory--grant admin role---->arborAdmin
 
 ```
 
-### 2. Issuer Contacts Porter Finance
+### 2. Issuer Contacts Arbor Finance
 
-- Porter Finance evaluates Issuer's credit worthiness
-- Porter Finance recommends parameters for the issuance
+- Arbor Finance evaluates Issuer's credit worthiness
+- Arbor Finance recommends parameters for the issuance
   - Amount of ERC20 token backing each bond share or
     - This is known as the **collateral token**
   - Amount of collateral each bond share would convert into
@@ -73,14 +73,14 @@ flowchart LR
     - This is known as the **total supply**
   - The ERC20 token the Bond is denominated
     - This is known as the **payment token**
-- Porter Finance adds Issuer to the Issuer Allow List
-- Porter Finance adds both the Collateral & Payment Tokens to the token allow list
+- Arbor Finance adds Issuer to the Issuer Allow List
+- Arbor Finance adds both the Collateral & Payment Tokens to the token allow list
 
 ### 3. Issuer Creates a Bond
 
-After the issuance has been approved, the issuer will be on the allowed issuer list and their intended collateral token and payment token will be added to the allowed token list. The Bonds are created (minted) at the same time that the collateral is deposited. After a Bond is created, the issuer can sell the Bond through the [Porter Finance App](https://app.porter.finance) (we use [Gnosis' Batch Auction](https://github.com/gnosis/ido-contracts)).
+After the issuance has been approved, the issuer will be on the allowed issuer list and their intended collateral token and payment token will be added to the allowed token list. The Bonds are created (minted) at the same time that the collateral is deposited. After a Bond is created, the issuer can sell the Bond through the [Arbor Finance App](https://app.arbor.garden) (we use [Gnosis' Batch Auction](https://github.com/gnosis/ido-contracts)).
 
-These are sold as [Zero Coupon Bonds](https://docs.porter.finance/portal/financial-concepts/zero-coupon-bonds). Another party will purchase these bond shares at a discount by paying with the Payment Token. The purchasers are known as **bond holders**. At maturity, the bond holders can redeem their bond shares at 1 to 1 for Payment Tokens.
+These are sold as [Zero Coupon Bonds](https://docs.arbor.garden/portal/financial-concepts/zero-coupon-bonds). Another party will purchase these bond shares at a discount by paying with the Payment Token. The purchasers are known as **bond holders**. At maturity, the bond holders can redeem their bond shares at 1 to 1 for Payment Tokens.
 
 ```mermaid
 flowchart TB

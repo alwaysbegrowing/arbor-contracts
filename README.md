@@ -1,23 +1,22 @@
-[![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/159949634-988ce327-3261-463f-a1d0-3a3e2d3015dc.png)](https://porter.finance/#gh-dark-mode-only)
-[![Porter Smart Contracts](https://user-images.githubusercontent.com/7458951/159949612-a695787d-d1d4-4311-90f6-2142aa334e2d.png)](https://porter.finance/#gh-light-mode-only)
+# Arbor Smart Contracts
 
 <table align="center">
- <td><a href="https://app.porter.finance">app</a></td>
- <td><a href="https://rinkeby.porter.finance">testnet</a></td>
- <td><a href="https://porter.finance">landing</a></td>
- <td><a href="https://docs.porter.finance">docs</a></td>
- <td><a href="https://discord.gg/porter">discord</a></td>
- <td><a href="https://blog.porter.finance">blog</a></td>
- <td><a href="https://twitter.com/porterfinance_">twitter</a></td>
+ <td><a href="https://app.arbor.garden">app</a></td>
+ <td><a href="https://rinkeby.arbor.garden">testnet</a></td>
+ <td><a href="https://arbor.garden">landing</a></td>
+ <td><a href="https://docs.arbor.garden">docs</a></td>
+ <td><a href="https://discord.gg/Z4saV8m4ec">discord</a></td>
+ <td><a href="https://blog.arbor.garden">blog</a></td>
+ <td><a href="https://twitter.com/arborfinance">twitter</a></td>
 </table>
 
 # Security
 
-Please report any security issues to security@porter.finance
+Please report any security issues to security@arbor.garden
 
 # V1
 
-Smart Contracts powering the Porter protocol.
+Smart Contracts powering the Arbor protocol.
 
 ## Contracts
 
@@ -41,9 +40,9 @@ Smart Contracts powering the Porter protocol.
 
 ## What does it do? How does it work?
 
-The Porter V1 protocol allows a borrower to create a Bond. Each minted bond share has some amount of collateral backing and will be redeemable 1 share for 1 stablecoin at maturity. To incentivize lenders, the bond shares will be sold at a discount either OTC or through an auction.
+The Arbor protocol allows a borrower to create a Bond. Each minted bond share has some amount of collateral backing and will be redeemable 1 share for 1 stablecoin at maturity. To incentivize lenders, the bond shares will be sold at a discount either OTC or through an auction.
 
-For more information on this process, the [documentation site](https://docs.porter.finance) gives an overview of **what** the protocol does and some of the concepts like zero coupon bonds and the difference between "Simple" and "Convert" Bond types. For **how** the protocol works, check out the [spec](/spec/):
+For more information on this process, the [documentation site](https://docs.arbor.garden) gives an overview of **what** the protocol does and some of the concepts like zero coupon bonds and the difference between "Simple" and "Convert" Bond types. For **how** the protocol works, check out the [spec](/spec/):
 
 - [overview](/spec/overview.md) — An overview of the Bond and BondFactory as well as what actions Borrowers and Lenders can perform.
   - [bond](/spec/bond.md) — More detailed look at the Bond actions and design decisions.
