@@ -16,12 +16,12 @@ import {
   TWENTY_FIVE_MILLION,
 } from "../test/constants";
 import { BondDeploymentConfiguration } from "../test/interfaces";
-import { network } from "hardhat";
 
 module.exports = async function ({
   deployments,
   getNamedAccounts,
   ethers,
+  network,
 }: HardhatRuntimeEnvironment) {
   // Configuration used for this deployment
   const DECIMALS = 6;
@@ -124,7 +124,7 @@ module.exports = async function ({
   // Create an auction and place bids. This uses half of the deployer's supply
   const auction = await ethers.getContractAt(
     easyAuctionAbi,
-    addresses.EasyAuction.goerli
+    addresses.EasyAuction[network.name]
   );
   if ((await paymentTokenContract.allowance(deployer, auction.address)).eq(0)) {
     console.log(`Approving auction (${auction.address}) for payment token.`);
@@ -152,7 +152,7 @@ module.exports = async function ({
   try {
     auctionId = await auction.auctionCounter();
   } catch (error) {
-    console.log("Error with auction, are you on goerli or forking hardhat?");
+    console.log("Error with auction, are you on testnet or forking hardhat?");
   }
 
   const auctionData = await auction.auctionData(auctionId);

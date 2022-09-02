@@ -218,9 +218,13 @@ export const deploymentBonds: BondDeploymentConfiguration[] = [
 
 const easyAuction = require("../contracts/external/EasyAuction");
 export const easyAuctionAbi = easyAuction.abi as any[];
-export const addresses = {
+// export type Address = {
+//   [key as string]
+// }
+export const addresses: Record<string, Record<string, string>> = {
   EasyAuction: {
     goerli: "0x1fbab40c338e2e7243da945820ba680c92ef8281",
     mumbai: "0xbfd4F9cBC5D043E65f4C1f976E3c1d37AD92dc72",
+    rinkeby: "0xC5992c0e0A3267C7F75493D0F717201E26BE35f7",
   },
 };

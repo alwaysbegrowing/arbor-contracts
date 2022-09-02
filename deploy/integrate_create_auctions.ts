@@ -12,6 +12,7 @@ module.exports = async function ({
   deployments,
   getNamedAccounts,
   ethers,
+  network,
 }: HardhatRuntimeEnvironment) {
   const { get } = deployments;
   const { deployer } = await getNamedAccounts();
@@ -36,7 +37,7 @@ module.exports = async function ({
     const bond = (await ethers.getContractAt("Bond", address)) as Bond;
     const auction = await ethers.getContractAt(
       easyAuctionAbi,
-      addresses.EasyAuction.goerli
+      addresses.EasyAuction[network.name]
     );
     const signer = await ethers.getSigner(deployer);
     try {

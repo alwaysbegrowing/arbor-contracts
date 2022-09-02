@@ -24,17 +24,19 @@ Smart Contracts powering the Arbor protocol.
   <tr>
     <th></th>
     <th>mainnet</th>
+    <th>rinkeby</th>
     <th>goerli</th>
   </tr>
   <tr>
     <td>BondFactory</td>
     <td><a href="https://etherscan.io/address/0x9f20521ef789fd2020e708390b1e6c701d8218ba">0x9f20521ef789fd2020e708390b1e6c701d8218ba</a></td>
-    <td><a href="https://goerli.etherscan.io/address/0x1533Eb8c6cc510863b496D182596AB0e9E77A00c">0x1533Eb8c6cc510863b496D182596AB0e9E77A00c</a></td>
+    <td><a href="https://rinkeby.etherscan.io/address/0x1533Eb8c6cc510863b496D182596AB0e9E77A00c">0x1533Eb8c6cc510863b496D182596AB0e9E77A00c</a></td><td><a href="https://goerli.etherscan.io/address/0x1533Eb8c6cc510863b496D182596AB0e9E77A00c">0x1533Eb8c6cc510863b496D182596AB0e9E77A00c</a></td>
   </tr>
   <tr>
     <td>Bond Implementation</td>
     <td><a href="https://etherscan.io/address/0x79537dcba69fea2b8dc8292b3726195fe947e332">0x79537dcba69fea2b8dc8292b3726195fe947e332</a></td>
-    <td><a href="https://goerli.etherscan.io/address/0x6285d6b0ccac4ecaf4f7a2738fec03330809b162">0x6285d6b0ccac4ecaf4f7a2738fec03330809b162</a></td>
+    <td><a href="https://rinkeby.etherscan.io/address/0x6285d6b0ccac4ecaf4f7a2738fec03330809b162">0x6285d6b0ccac4ecaf4f7a2738fec03330809b162</a></td>
+    <td><a href="https://goerli.etherscan.io/address/fixme">0x6285D6b0Ccac4ecaF4f7a2738fEc03330809B162</a></td>
   </tr>
 </table>
 
