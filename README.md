@@ -5,7 +5,7 @@
  <td><a href="https://goerli.arbor.garden">testnet</a></td>
  <td><a href="https://arbor.garden">landing</a></td>
  <td><a href="https://docs.arbor.garden">docs</a></td>
- <td><a href="https://discord.gg/Z4saV8m4ec">discord</a></td>
+ <td><a href="https://discord.gg/znhkdtgXWc">discord</a></td>
  <td><a href="https://blog.arbor.garden">blog</a></td>
  <td><a href="https://twitter.com/arborfinance">twitter</a></td>
 </table>
