@@ -2,7 +2,7 @@
 
 <table align="center">
  <td><a href="https://app.arbor.garden">app</a></td>
- <td><a href="https://goerli.arbor.garden">testnet</a></td>
+ <td><a href="https://rinkeby.arbor.garden">testnet</a></td>
  <td><a href="https://arbor.garden">landing</a></td>
  <td><a href="https://docs.arbor.garden">docs</a></td>
  <td><a href="https://discord.gg/znhkdtgXWc">discord</a></td>
@@ -79,7 +79,7 @@ npx hardhat deploy --tags auctions # and start bond auctions
 npx hardhat deploy --tags actions # and do bond actions
 ```
 
-Additionally, all of the above commands can be run with `--network goerli` to deploy to the Goerli test network.
+Additionally, all of the above commands can be run with `--network rinkeby` to deploy to the Rinkeby test network.
 
 Note: The deploy script will run with the `npx hardhat node` as well as the `npx hardhat test` tasks.
 
