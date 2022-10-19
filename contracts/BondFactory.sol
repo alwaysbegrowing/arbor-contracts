@@ -1,15 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-/*                   
- *******************************************************************************
- **   Arbor allows DAOs and other on-chain entities to borrow stablecoins     **
- **   using their tokens as collateral with fixed rates and no liquidations.  **
- **                                                                           **
- **    For more information about Arbor Finance, visit https://arbor.garden   **
- **                                                                           **
- **                 Authors: Bookland Luckyrobot Namaskar                     **
- *******************************************************************************
- */
+/*      -.:````:::..        Arbor allows DAOs and other on-chain        .A
+      /`:``-..-`   ..:.     entities to borrow stablecoins using       .AAA:
+   ./`.:       \:``   :.    their tokens as collateral with fixed    .AAAAAA:
+ ./`::`          \.--`` :.       rates and no liquidations.       .:AA.:AAAA:
+./_.::            \.    .:                                       :AA..AAAAAA:
+||  ::             |--``::.                                     :AA..AAAAAAA:
+||_ ::             |.___.::                        ...         :AA..AAAAAAA`
+|| `::             ||`|`:::                   .:AAAAAAAAA:.    .A..AAAAAAA`
+||_\::             || | |::                  .AAAAAAAAAAAAAAA:  A..AAAA`
+|| `::             ||\|/|::                .AAAAA.  AAAAAAAAAA:.:.``
+||_\::             || | |::               .AAAAAAA```..........`:`..AA.
+|| `:: An Arbor to ||/|\|::                    ``AAAAAAAAAAAAA` .AA..AAA.
+||_\::  help DAOs  || | |::                          ``````     AAAA..ABG.
+|| `::    Grow     ||\|/|::                                    .AAAAA..AAA.
+||_\::             || | |::      For more information about    .AAAAAAA.AA.
+|| `::             ||/|\|::         Arbor Finance, visit        .AAAAAAA.AA.
+||_\::             ||_  |::         https://arbor.garden         .AAAAAA:AA.
+`` `::                `` ::                                        .AAAAAAAA.
+    ::                   ::                                            .AAAAA.
+    ::                      Authors: Bookland Luckyrobot Namaskar          `*/
 
 pragma solidity 0.8.9;
 
