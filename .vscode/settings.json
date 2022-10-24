@@ -1,3 +1,4 @@
 {
-  "mochaExplorer.files": "test/**/*.{j,t}s"
+  "mochaExplorer.files": "test/**/*.{j,t}s",
+  "solidity.compileUsingRemoteVersion": "v0.8.9+commit.e5eed63a"
 }

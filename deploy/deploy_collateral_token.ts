@@ -1,4 +1,3 @@
-import { network } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TokenDeploymentArguments } from "../test/interfaces";
 import { waitUntilMined } from "../test/utilities";
@@ -62,12 +61,10 @@ module.exports = async function ({
       );
     }
   }
-  if (network.live && network.name !== "rinkeby") {
-    try {
-      await run("verify:verify", { address, constructorArguments: args });
-    } catch (error) {
-      console.log("TestERC20 already verified?");
-    }
+  try {
+    await run("verify:verify", { address, constructorArguments: args });
+  } catch (error) {
+    console.log("TestERC20 already verified?");
   }
 };
 

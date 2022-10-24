@@ -208,15 +208,15 @@ const LONG_MATURITY_CONVERTIBLE_PAID_EARLY_LONG_AUCTION_CANCELLATION = {
 };
 
 export const deploymentBonds: BondDeploymentConfiguration[] = [
-  SHORT_MATURITY_NON_CONVERTIBLE,
-  SHORT_MATURITY_CONVERTIBLE,
-  SHORT_MATURITY_UNCOLLATERALIZED_SHORT_ORDER_CANCELLATION,
-  LONG_MATURITY_CONVERTIBLE,
-  LONG_MATURITY_CONVERTIBLE_LONG_AUCTION_CANCELLATION,
-  LONG_MATURITY_CONVERTIBLE_PAID_EARLY_LONG_AUCTION_CANCELLATION,
+  LONG_MATURITY_NON_CONVERTIBLE_SHORT_AUCTION_END,
 ];
 
 const easyAuction = require("../contracts/external/EasyAuction");
 export const easyAuctionAbi = easyAuction.abi as any[];
-export const rinkebyGnosis = "0xC5992c0e0A3267C7F75493D0F717201E26BE35f7";
-export const mumbaiGnosis = "0xbfd4F9cBC5D043E65f4C1f976E3c1d37AD92dc72";
+
+export const addresses: Record<string, Record<string, string>> = {
+  EasyAuction: {
+    goerli: "0x1fbab40c338e2e7243da945820ba680c92ef8281",
+    mumbai: "0xbfd4F9cBC5D043E65f4C1f976E3c1d37AD92dc72",
+  },
+};
