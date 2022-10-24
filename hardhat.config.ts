@@ -22,20 +22,17 @@ const config: HardhatUserConfig = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
       goerli: process.env.ETHERSCAN_API_KEY,
-      rinkeby: process.env.ETHERSCAN_API_KEY,
     },
   },
   namedAccounts: {
     deployer: {
       default: 0,
       1: process.env.MAINNET_DEPLOYER_ADDRESS || "",
-      4: process.env.RINKEBY_DEPLOYER_ADDRESS || "",
       5: process.env.GOERLI_DEPLOYER_ADDRESS || "",
     },
     bondHolder: {
       default: 1,
       1: process.env.MAINNET_DEPLOYER_ADDRESS || "",
-      4: process.env.RINKEBY_BOND_HOLDER_ADDRESS || "",
       5: process.env.GOERLI_BOND_HOLDER_ADDRESS || "",
     },
   },
@@ -59,20 +56,6 @@ const config: HardhatUserConfig = {
           ? [
               process.env.GOERLI_DEPLOYER_PRIVATE_KEY,
               process.env.GOERLI_BOND_HOLDER_PRIVATE_KEY,
-            ]
-          : [],
-    },
-    rinkeby: {
-      live: true,
-      url: process.env.RINKEBY_RPC_URL || "",
-      gasMultiplier: 2,
-      gasPrice: 4_000_000_000,
-      accounts:
-        process.env.RINKEBY_DEPLOYER_PRIVATE_KEY !== undefined &&
-        process.env.RINKEBY_BOND_HOLDER_PRIVATE_KEY !== undefined
-          ? [
-              process.env.RINKEBY_DEPLOYER_PRIVATE_KEY,
-              process.env.RINKEBY_BOND_HOLDER_PRIVATE_KEY,
             ]
           : [],
     },
