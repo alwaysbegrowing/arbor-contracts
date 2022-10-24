@@ -48,8 +48,6 @@ const config: HardhatUserConfig = {
     goerli: {
       live: true,
       url: process.env.GOERLI_RPC_URL || "",
-      gasMultiplier: 2,
-      gasPrice: 4_000_000_000,
       accounts:
         process.env.GOERLI_DEPLOYER_PRIVATE_KEY !== undefined &&
         process.env.GOERLI_BOND_HOLDER_PRIVATE_KEY !== undefined
