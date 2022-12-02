@@ -6,13 +6,16 @@
  <td><a href="https://arbor.garden">landing</a></td>
  <td><a href="https://docs.arbor.garden">docs</a></td>
  <td><a href="https://discord.gg/facdBD3ZtA">discord</a></td>
- <td><a href="https://blog.arbor.garden">blog</a></td>
+ <td><a href="https://medium.com/arbor-finance">blog</a></td>
  <td><a href="https://twitter.com/arborfinance">twitter</a></td>
 </table>
 
 # Security
 
 Please report any security issues to security@arbor.garden
+
+## Bug Bounty
+Both the Bond and BondFactory contracts have an open [Bug Bounty](https://immunefi.com/bounty/arborfinance/) on Immunefi.
 
 # V1
 
